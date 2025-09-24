@@ -1,0 +1,42 @@
+{
+  "datasets": {
+    "mmlu": {
+      "huggingface_id": "cais/mmlu",
+      "split": "test",
+      "question_field": "question",
+      "load_name": "all",
+      "personas": [
+        {
+          "name": "high_school_macroeconomics",
+          "field": "macroeconomics",
+          "static_persona": "You are a knowledgeable macroeconomist"
+        }
+      ]
+    },
+    "gsm8k": {
+      "huggingface_id": "openai/gsm8k",
+      "split": "test",
+      "question_field": "question",
+      "load_name": "main",
+      "personas": [
+        {
+          "name": "general",
+          "field": "mathematician",
+          "static_persona": "You are a knowledgeable mathematician"
+        }
+      ]
+    },
+    "samsum": {
+      "huggingface_id": "knkarthick/samsum",
+      "split": "test",
+      "question_field": "dialogue",
+      "personas": [
+        {
+          "name": "general",
+          "field": "summarization",
+          "static_persona": "You are an expert in summarization"
+        }
+      ]
+    }
+  }
+}
