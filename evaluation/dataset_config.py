@@ -1,11 +1,11 @@
-from typing import Dict, Optional, List
+from typing import Optional
 
 from pydantic import BaseModel
 
 class DatasetConfig(BaseModel):
-    id: str
+    dataset_id: str
     huggingface_id: str
     split: str
     question_field: str
+    task_column: str
     load_name: Optional[str] = None
-    personas: Optional[List[Dict[str, str]]] = None

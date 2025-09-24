@@ -5,7 +5,8 @@
       "split": "test",
       "question_field": "question",
       "load_name": "all",
-      "personas": [
+      "task_column": "subject",
+      "tasks": [
         {
           "name": "high_school_macroeconomics",
           "field": "macroeconomics",
@@ -18,10 +19,11 @@
       "split": "test",
       "question_field": "question",
       "load_name": "main",
-      "personas": [
+      "task_column": "",
+      "tasks": [
         {
           "name": "general",
-          "field": "mathematician",
+          "field": "mathematics",
           "static_persona": "You are a knowledgeable mathematician"
         }
       ]
@@ -30,7 +32,8 @@
       "huggingface_id": "knkarthick/samsum",
       "split": "test",
       "question_field": "dialogue",
-      "personas": [
+      "task_column": "",
+      "tasks": [
         {
           "name": "general",
           "field": "summarization",
