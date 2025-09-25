@@ -6,7 +6,7 @@ from collections import defaultdict
 
 import pandas as pd
 from openai import OpenAI
-from datasets import load_dataset, disable_progress_bar
+from datasets import load_dataset, disable_progress_bar, Dataset
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
@@ -26,7 +26,7 @@ class Evaluator:
         self.dataset_path = Path("data")
 
         self.dataset_ids: List[str] = []
-        self.datasets: Dict[str, any] = dict()
+        self.datasets: Dict[str, pd.DataFrame] = dict()
         self.dataset_configs: Dict[str, DatasetConfig] = dict()
         self.task_configs: Dict[str, List[TaskConfig]] = defaultdict(list)
 
@@ -76,7 +76,7 @@ class Evaluator:
             dataset_id: str,
             huggingface_id: str,
             dataset_split: str,
-            dataset_name: str = None
+            dataset_name: Optional[str] = None
     ) -> pd.DataFrame:
         """Reads or downloads a dataset.
 
@@ -98,14 +98,16 @@ class Evaluator:
         if not dataset_file.is_file():
             log.info(f"Dataset {dataset_id} could not be found locally, commencing with download")
             # Download dataset
-            hf_load_kwargs = {"split": dataset_split}
             if dataset_name:
-                hf_load_kwargs["name"] = dataset_name
-            dataset = load_dataset(huggingface_id, **hf_load_kwargs)
+                dataset = load_dataset(huggingface_id, split=dataset_split, name=dataset_name)
+            else:
+                dataset = load_dataset(huggingface_id, split=dataset_split)
+            
+            assert isinstance(dataset, Dataset), f"Error while loading {dataset_id}: Wrong dataset type {type(dataset)}, should be Dataset."
             dataset.to_parquet(dataset_file)
 
-        dataset = pd.read_parquet(dataset_file)
-        return dataset
+        df = pd.read_parquet(dataset_file)
+        return df
 
     def _iter_dataset_ids(self, desc: str) -> Iterator[str]:
         """Helper function for iterating the dataset.
