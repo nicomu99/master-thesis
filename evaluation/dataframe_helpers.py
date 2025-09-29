@@ -39,7 +39,7 @@ def construct_row_mask(
     Returns:
         slice | pd.Series[bool]: _description_
     """
-    if mask_column is None or mask is None:
+    if not mask_column or not mask:
         return slice(None)      # Selects all rows
     return dataframe[mask_column] == mask
 

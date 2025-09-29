@@ -15,7 +15,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 
 from task_config import TaskConfig
 from dataset_config import DatasetConfig
-from log_conf import get_logger
+from log_conf import get_logger, logging
 
 log = get_logger(__name__)
 disable_progress_bar()
@@ -32,18 +32,20 @@ class DatasetHandler:
         self.dataset_configs: Dict[str, DatasetConfig] = {}
 
     @overload
-    def iter_datasets(self, desc: str, kind: Literal["ids"]) -> Generator[str]: ...
+    def iter_datasets(self, desc: str, logger: logging.Logger, kind: Literal["ids"]) -> Generator[str]: ...
 
     @overload
     def iter_datasets(
             self,
             desc: str,
+            logger: logging.Logger,
             kind: Literal["items"]
     ) -> Generator[tuple[str, DatasetConfig, pd.DataFrame]]: ...
 
     def iter_datasets(
         self,
         desc: str,
+        logger: logging.Logger,
         kind: Literal["ids", "items"] = "ids"
     ) -> Generator[tuple[str, DatasetConfig, DataFrame] | str, None]:
 
@@ -62,7 +64,7 @@ class DatasetHandler:
 
         """
         dataset_iterator = tqdm(self.dataset_ids, desc=desc)
-        with logging_redirect_tqdm(loggers=[log]):
+        with logging_redirect_tqdm(loggers=[logger]):
             for dataset_id in dataset_iterator:
                 dataset_iterator.set_description(f"{desc} {dataset_id}")
                 if kind == "items":
@@ -90,6 +92,7 @@ class DatasetHandler:
         """
 
         log.info("Starting dataset preparation")
+        self.dataset_path.mkdir(parents=True, exist_ok=True)
 
         with open("config.json", "r", encoding="utf-8") as f:
             configs = json.load(f)
@@ -99,10 +102,12 @@ class DatasetHandler:
         self._select_dataset_ids(dataset_ids, include_datasets, exclude_datasets)
 
         task_configs = defaultdict(list)
-        for dataset_id in self.iter_datasets("Loading dataset", kind="ids"):
+        for dataset_id in self.iter_datasets("Loading dataset", log, kind="ids"):
             raw_dataset_config = raw_configs[dataset_id]
 
-            dataset_config = {k: v for k, v in raw_dataset_config.items() if k in {f.name for f in fields(DatasetConfig)}}
+            dataset_config = {
+                k: v for k, v in raw_dataset_config.items() if k in {f.name for f in fields(DatasetConfig)}
+            }
             config = DatasetConfig(dataset_id=dataset_id, **dataset_config)
             self.dataset_configs[dataset_id] = config
             self.dataframes[dataset_id] = self._read_or_download_dataset(
@@ -196,7 +201,13 @@ class DatasetHandler:
 
             assert isinstance(dataset, Dataset), \
                 f"Error while loading {dataset_id}: Wrong dataset type {type(dataset)}, should be Dataset."
-            dataset.to_parquet(dataset_file)
+            dataframe = dataset.to_pandas()
+
+            assert isinstance(dataframe, pd.DataFrame), \
+                f"Error while loading {dataset_id}: Wrong dataset type {type(dataframe)}, should be pd.DataFrame."
+
+            dataframe.insert(0, "static_id", [f"{dataset_id}_{i}" for i in range(len(dataframe))])
+            dataframe.to_parquet(dataset_file)
 
         df = pd.read_parquet(dataset_file)
         return df

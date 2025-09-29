@@ -1,10 +1,13 @@
 from typing import Dict, Optional, Iterable, List, Any
 
-from collections import defaultdict
+import json
 from pathlib import Path
+from collections import defaultdict
 
 import pandas as pd
 from openai import OpenAI
+from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 from dataset_handler import DatasetHandler
 from dataset_config import DatasetConfig
@@ -20,7 +23,8 @@ from prompt_templates import (
     STATIC_SHORT_TEMPLATE,
     STATIC_LONG_TEMPLATE,
     DYNAMIC_SHORT_TEMPLATE,
-    DYNAMIC_LONG_TEMPLATE
+    DYNAMIC_LONG_TEMPLATE,
+    MC_QUESTION_TEMPLATE
 )
 
 from log_conf import get_logger
@@ -33,6 +37,7 @@ class Evaluator:
     """
     def __init__(self):
         self.config_path = Path("config.json")
+        self.out_path = Path("out")
         self.dataset_handler = DatasetHandler()
 
         self.task_configs: Dict[str, List[TaskConfig]] = defaultdict(list)
@@ -63,11 +68,12 @@ class Evaluator:
         """
         self.task_configs = self.dataset_handler.load(include_datasets, exclude_datasets)
         self.generate_personas()
+        self.process_samples()
 
     def get_openai_api_response(
             self,
             template: str,
-            prompt_cache_key: str,
+            prompt_cache_key: str | None = None,
             **kwargs: Any
     ) -> str:
         """Helper function for getting output from the OpenAI API.
@@ -84,11 +90,17 @@ class Evaluator:
             str: The generated text returned by the API.
         """
         prompt = template.format(**kwargs)
-        response = self.client.responses.create(
-            model="gpt-5-nano",
-            input=prompt,
-            prompt_cache_key=prompt_cache_key
-        )
+        if prompt_cache_key:
+            response = self.client.responses.create(
+                model="gpt-5-nano",
+                input=prompt,
+                prompt_cache_key=prompt_cache_key
+            )
+        else:
+            response = self.client.responses.create(
+                model="gpt-5-nano",
+                input=prompt,
+            )
 
         return response.output_text
 
@@ -131,24 +143,13 @@ class Evaluator:
                     static_persona_type,
                     **client_kwargs
                 )
-            else:
+
                 dataframe.loc[row_mask, static_persona_type] = persona
+            else:
 
                 # Keep value in case if short persona gets skipped
                 log.debug("Personas already exist %s", static_persona_type)
                 persona = get_unique_value(dataframe, static_persona_type, row_mask)
-
-    def _write_dataframe(
-            self,
-            dataset_id: str,
-            dataset: pd.DataFrame
-    ):
-        """Writes the dataframe to the data folder.
-
-        Args:
-            dataset_id: A string identifier that will be used as the name of the file.
-            dataset: A dataframe object that should be written to a file.
-        """
 
     def generate_personas(self):
         """Helper script for generating personas.
@@ -159,7 +160,10 @@ class Evaluator:
         log.info("Generating static personas")
 
         # First, for each dataset category, create the static personas
-        for dataset_id, dataset_config, dataframe in self.dataset_handler.iter_datasets("Processing", kind="items"):
+        for dataset_id, dataset_config, dataframe in self.dataset_handler.iter_datasets(
+            "Processing",
+            log, kind="items"
+        ):
             log.debug("Generating personas for dataset %s", dataset_id)
 
             # Add new column, if it does not exist yet
@@ -178,7 +182,64 @@ class Evaluator:
         #     task_data = task_data.filter(lambda x: x[data_config] == task.name)
         # Save everything to disk
 
+    def process_row(
+        self,
+        row: Any,
+        question_field: str,
+        choice_field: str
+    ):
+        out = {
+            'static_id': row["static_id"],
+            'question': row[question_field]
+        }
+        for static_persona_type in ["base_persona", "static_short_persona", "static_long_persona"]:
+            # for each persona type, get answer with persona from api
+            # return updated row
+            persona = row[static_persona_type]
+            response = self.get_openai_api_response(
+                MC_QUESTION_TEMPLATE,
+                persona=persona,
+                question=row[question_field],
+                choice_1=row[choice_field][0],
+                choice_2=row[choice_field][1],
+                choice_3=row[choice_field][2],
+                choice_4=row[choice_field][3],
+            )
+            out[f"{static_persona_type}_answer"] = response
+        return out
+
+    def process_task(
+        self,
+        task_config: TaskConfig,
+        dataframe: pd.DataFrame,
+        dataset_config: DatasetConfig,
+    ):
+        with open(f"{self.out_path}/updates.jsonl", "a") as f:
+            with logging_redirect_tqdm(loggers=[log]):
+                for row in tqdm(dataframe.itertuples(index=False), total=len(dataframe)):
+                    row_as_dict = row._asdict()
+                    update = self.process_row(row_as_dict, dataset_config.question_field, dataset_config.answer_field)
+                    # TODO: Add Templates for other tasks
+                    # TODO: Implement check for which template to use
+                    # TODO: Handle data classes with empty values
+                    # TODO: Add check for processed samples
+                    f.write(json.dumps(update) + "\n")
+
+    def process_samples(self):
+        for dataset_id, dataset_config, dataframe in self.dataset_handler.iter_datasets(
+            "Processing",
+            log, kind="items"
+        ):
+            log.debug("Processing dataset %s", dataset_id)
+            self.out_path.mkdir(parents=True, exist_ok=True)
+
+            for task_config in self.task_configs[dataset_id]:
+                task_df = dataframe[dataframe[dataset_config.task_column] == task_config.name]
+                self.process_task(task_config, task_df, dataset_config)
+
+            # TODO: Join dataframes and save
+
 
 if __name__ == "__main__":
     evaluator = Evaluator()
-    evaluator.main()
+    evaluator.main(include_datasets=["mmlu"])

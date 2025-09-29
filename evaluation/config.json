@@ -3,7 +3,9 @@
     "mmlu": {
       "huggingface_id": "cais/mmlu",
       "split": "test",
+      "question_type": "mc",
       "question_field": "question",
+      "answer_field": "choices",
       "load_name": "all",
       "task_column": "subject",
       "tasks": [
@@ -17,6 +19,7 @@
     "gsm8k": {
       "huggingface_id": "openai/gsm8k",
       "split": "test",
+      "question_type": "no_answer",
       "question_field": "question",
       "load_name": "main",
       "task_column": "",
@@ -31,6 +34,7 @@
     "samsum": {
       "huggingface_id": "knkarthick/samsum",
       "split": "test",
+      "question_type": "summarization",
       "question_field": "dialogue",
       "task_column": "",
       "tasks": [
