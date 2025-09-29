@@ -1,8 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from dataclasses import dataclass
 
-class DatasetConfig(BaseModel):
+
+@dataclass(frozen=True)
+class DatasetConfig:
     dataset_id: str
     huggingface_id: str
     split: str
