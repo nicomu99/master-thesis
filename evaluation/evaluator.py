@@ -30,6 +30,7 @@ from prompt_templates import (
 from log_conf import get_logger
 
 log = get_logger(__name__)
+# TODO: Handle data classes with empty values
 
 
 class Evaluator:
@@ -213,17 +214,50 @@ class Evaluator:
         task_config: TaskConfig,
         dataframe: pd.DataFrame,
         dataset_config: DatasetConfig,
+        template: str,
     ):
-        with open(f"{self.out_path}/updates.jsonl", "a") as f:
+        task_file = f"{self.out_path}/{dataset_config.dataset_id}_{task_config.name}request.jsonl"
+
+        with open(task_file, "w") as f:
             with logging_redirect_tqdm(loggers=[log]):
                 for row in tqdm(dataframe.itertuples(index=False), total=len(dataframe)):
-                    row_as_dict = row._asdict()
-                    update = self.process_row(row_as_dict, dataset_config.question_field, dataset_config.answer_field)
-                    # TODO: Add Templates for other tasks
-                    # TODO: Implement check for which template to use
-                    # TODO: Handle data classes with empty values
-                    # TODO: Add check for processed samples
-                    f.write(json.dumps(update) + "\n")
+                    row_dict = row._asdict()  # pyright: ignore[reportCallIssue]
+
+                    prompt_kwargs = {
+                        f"choice_{i + 1}": row_dict[dataset_config.answer_field][i] for i in range(4)
+                    }
+                    prompt_kwargs["question"] = row_dict[dataset_config.question_field]
+                    prompt = template.format(**prompt_kwargs)
+                    for persona_type in ["base_persona", "static_short_persona", "static_long_persona"]:
+                        api_request_dict = {
+                            "custom_id": f"{row_dict["static_id"]}_{persona_type}",
+                            "method": "POST",
+                            "url": "/v1/responses",
+                            "body": {
+                                "model": "gpt-5-nano",
+                                "instructions": row_dict[persona_type],
+                                "input": prompt,
+                            }
+                        }
+
+                        f.write(json.dumps(api_request_dict) + "\n")
+
+        batch_input_file = self.client.files.create(
+            file=open(task_file, "rb"),
+            purpose="batch"
+        )
+
+        batch_input_file_id = batch_input_file.id
+        batch_job = self.client.batches.create(
+            input_file_id=batch_input_file_id,
+            endpoint="/v1/responses",
+            completion_window="24h",
+        )
+
+        # TODO: Add Templates for other tasks
+        # TODO: Implement check for which template to use
+        # TODO: Add check for processed samples
+        print(batch_job.id)
 
     def process_samples(self):
         for dataset_id, dataset_config, dataframe in self.dataset_handler.iter_datasets(
@@ -235,7 +269,7 @@ class Evaluator:
 
             for task_config in self.task_configs[dataset_id]:
                 task_df = dataframe[dataframe[dataset_config.task_column] == task_config.name]
-                self.process_task(task_config, task_df, dataset_config)
+                self.process_task(task_config, task_df, dataset_config, MC_QUESTION_TEMPLATE)
 
             # TODO: Join dataframes and save
 

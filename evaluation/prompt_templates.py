@@ -29,8 +29,6 @@ QUESTION_TEMPLATE = """
 """
 
 MC_QUESTION_TEMPLATE = """
-{persona} Answer the following question.
-
 {question}\n\n
 
 (A) {choice_1}\n
