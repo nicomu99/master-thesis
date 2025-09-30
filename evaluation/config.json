@@ -3,7 +3,7 @@
     "mmlu": {
       "huggingface_id": "cais/mmlu",
       "split": "test",
-      "question_type": "mc",
+      "question_type": "mc_question",
       "question_field": "question",
       "answer_field": "choices",
       "load_name": "all",
@@ -19,13 +19,13 @@
     "gsm8k": {
       "huggingface_id": "openai/gsm8k",
       "split": "test",
-      "question_type": "no_answer",
+      "question_type": "open_question",
       "question_field": "question",
       "load_name": "main",
       "task_column": "",
       "tasks": [
         {
-          "name": "general",
+          "name": "",
           "field": "mathematics",
           "static_persona": "You are a knowledgeable mathematician"
         }
@@ -39,7 +39,7 @@
       "task_column": "",
       "tasks": [
         {
-          "name": "general",
+          "name": "",
           "field": "summarization",
           "static_persona": "You are an expert in summarization"
         }
