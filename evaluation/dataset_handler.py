@@ -13,9 +13,9 @@ from pandas import DataFrame
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
-from evaluation.task_config import TaskConfig
-from evaluation.dataset_config import DatasetConfig
-from evaluation.log_conf import get_logger, logging
+from task_config import TaskConfig
+from dataset_config import DatasetConfig
+from log_conf import get_logger, logging
 
 log = get_logger(__name__)
 disable_progress_bar()
@@ -123,6 +123,7 @@ class DatasetHandler:
                 task_config = TaskConfig(task_id=task_id, dataset_id=dataset_id, **task)
                 task_configs[dataset_id].append(task_config)
 
+        log.debug("Finished dataset preparation")
         return task_configs
 
     def write_dataframe(
