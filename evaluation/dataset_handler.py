@@ -13,9 +13,9 @@ from pandas import DataFrame
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
-from task_config import TaskConfig
-from dataset_config import DatasetConfig
-from log_conf import get_logger, logging
+from evaluation.task_config import TaskConfig
+from evaluation.dataset_config import DatasetConfig
+from evaluation.log_conf import get_logger, logging
 
 log = get_logger(__name__)
 disable_progress_bar()
@@ -56,6 +56,7 @@ class DatasetHandler:
 
         Args:
             desc: Description to be shown in the tqdm progress bar.
+            logger: The logger to use the redirect of the tqdm bar on.
             kind: Values to return. If 'items', dataset ids, data configuration and dataframes will be returned. Else
                 only the dataset ids.
 
@@ -118,7 +119,8 @@ class DatasetHandler:
             )
 
             for task in raw_dataset_config["tasks"]:
-                task_config = TaskConfig(dataset_id=dataset_id, **task)
+                task_id = f"{config.dataset_id}_{task["name"]}"
+                task_config = TaskConfig(task_id=task_id, dataset_id=dataset_id, **task)
                 task_configs[dataset_id].append(task_config)
 
         return task_configs
