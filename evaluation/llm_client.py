@@ -6,8 +6,8 @@ from pathlib import Path
 
 from openai import OpenAI
 
-from batch_info import BatchInfo
-from log_conf import get_logger
+from .batch_info import BatchInfo
+from .log_conf import get_logger
 
 log = get_logger(__name__)
 

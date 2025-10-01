@@ -1,47 +1,60 @@
-from typing import Dict, Optional, Iterable, List, Any
+from typing import Dict, Optional, Iterable, List
 
 import json
 from pathlib import Path
-from collections import defaultdict
 
 import pandas as pd
-from openai import OpenAI
 from tqdm import tqdm
-from tqdm.contrib.logging import logging_redirect_tqdm
 
-from dataset_handler import DatasetHandler
-from dataset_config import DatasetConfig
-from task_config import TaskConfig
-from dataframe_helpers import (
+from .dataset_handler import DatasetHandler
+from .dataset_config import DatasetConfig
+from .task_config import TaskConfig
+from .llm_client import LLMClient
+from .dataframe_helpers import (
     add_empty_column,
     insert_if_empty,
     is_not_full_column,
     construct_row_mask,
     get_unique_value
 )
-from prompt_templates import (
+from .prompt_templates import (
     STATIC_SHORT_TEMPLATE,
     STATIC_LONG_TEMPLATE,
     DYNAMIC_SHORT_TEMPLATE,
     DYNAMIC_LONG_TEMPLATE,
-    MC_QUESTION_TEMPLATE
+    OPEN_QUESTION_TEMPLATE,
+    MC_QUESTION_TEMPLATE,
+    SUMMARIZATION_TEMPLATE
 )
 
-from log_conf import get_logger
+from .log_conf import get_logger
 
 log = get_logger(__name__)
-# TODO: Handle data classes with empty values
+
+# TODO: Download open ai client responses
+# TODO: Send requests: Check if personas have already been generated
+# For now, we save each task id and batch id from the api
+
+# Will have two types of requests: New personas and new Q/A answers
 
 
 class Evaluator:
     """Main evaluation class
     """
-    def __init__(self):
-        self.config_path = Path("config.json")
-        self.out_path = Path("out")
+    def __init__(
+        self,
+        llm_client: LLMClient,
+        include_datasets: Optional[Iterable[str]] = None,
+        exclude_datasets: Optional[Iterable[str]] = None,
+    ):
+        self.temp_path = Path("temp")
         self.dataset_handler = DatasetHandler()
+        self.llm_client = llm_client
 
-        self.task_configs: Dict[str, List[TaskConfig]] = defaultdict(list)
+        self.task_configs: Dict[str, List[TaskConfig]] = self.dataset_handler.load(
+            include_datasets,
+            exclude_datasets
+        )
 
         self.persona_types = [
             "base_persona", "static_short_persona", "static_long_persona",
@@ -54,58 +67,7 @@ class Evaluator:
             "dynamic_long_persona":     DYNAMIC_LONG_TEMPLATE
         }
 
-        self.client = OpenAI()
-
-    def main(
-        self,
-        include_datasets: Optional[Iterable[str]] = None,
-        exclude_datasets: Optional[Iterable[str]] = None,
-    ) -> None:
-        """_summary_
-
-        Args:
-            include_datasets (Optional[Iterable[str]], optional): _description_. Defaults to None.
-            exclude_datasets (Optional[Iterable[str]], optional): _description_. Defaults to None.
-        """
-        self.task_configs = self.dataset_handler.load(include_datasets, exclude_datasets)
-        self.generate_personas()
-        self.process_samples()
-
-    def get_openai_api_response(
-            self,
-            template: str,
-            prompt_cache_key: str | None = None,
-            **kwargs: Any
-    ) -> str:
-        """Helper function for getting output from the OpenAI API.
-
-        The function fills the template with the given keyword arguments and sends the prompt to the
-        OpenAI API.
-
-        Args:
-            template: A string template with placeholders.
-            prompt_cache_key: A key to be used for caching API calls.
-            **kwargs: Keyword arguments to be inserted into ``template``. Must match the placeholders.
-
-        Returns:
-            str: The generated text returned by the API.
-        """
-        prompt = template.format(**kwargs)
-        if prompt_cache_key:
-            response = self.client.responses.create(
-                model="gpt-5-nano",
-                input=prompt,
-                prompt_cache_key=prompt_cache_key
-            )
-        else:
-            response = self.client.responses.create(
-                model="gpt-5-nano",
-                input=prompt,
-            )
-
-        return response.output_text
-
-    def create_static_personas(
+    def generate_static_personas(
             self,
             dataframe: pd.DataFrame,
             task_config: TaskConfig,
@@ -119,7 +81,7 @@ class Evaluator:
 
         Args:
             task_config: A task configuration with information about the task.
-            dataset: A DataFrame holding samples for which the personas should be generated.
+            dataframe: A DataFrame holding samples for which the personas should be generated.
             dataset_config: A DataConfig object holding information about ``dataset``.
         """
         task_name = task_config.name
@@ -136,10 +98,10 @@ class Evaluator:
                 log.debug("Creating persona %s", static_persona_type)
                 prompt_template = self.persona_prompt_templates[static_persona_type]
                 client_kwargs: Dict[str, str] = {
-                    "task_type": task_config.name,
+                    "task_type": task_config.field,
                     "persona_string": persona
                 }
-                persona = self.get_openai_api_response(
+                persona = self.llm_client.get_api_response(
                     prompt_template,
                     static_persona_type,
                     **client_kwargs
@@ -149,7 +111,7 @@ class Evaluator:
             else:
 
                 # Keep value in case if short persona gets skipped
-                log.debug("Personas already exist %s", static_persona_type)
+                log.debug("Persona type %s already exists", static_persona_type)
                 persona = get_unique_value(dataframe, static_persona_type, row_mask)
 
     def generate_personas(self):
@@ -158,7 +120,7 @@ class Evaluator:
         Iterates all task configurations and creates personas for them.
         """
         # Assume data is loaded already
-        log.info("Generating static personas")
+        log.info("Starting persona generation")
 
         # First, for each dataset category, create the static personas
         for dataset_id, dataset_config, dataframe in self.dataset_handler.iter_datasets(
@@ -172,108 +134,130 @@ class Evaluator:
                 add_empty_column(dataframe, persona_type)
 
             for task_config in self.task_configs[dataset_id]:
-                self.create_static_personas(dataframe, task_config, dataset_config)
+                self.generate_static_personas(dataframe, task_config, dataset_config)
                 self.dataset_handler.write_dataframe(dataset_id)
+                # self.generate_dynamic_personas(dataframe, task_config, dataset_config)
                 # Create the task specific personas
 
-        log.info("Finished generating static personas")
+        log.debug("Finished generating static personas")
         # Then, create personas specific to the sample
         # if data_config.task_column != "":
         #     # Some datasets do not have subtasks, in which case we do not have to filter
         #     task_data = task_data.filter(lambda x: x[data_config] == task.name)
         # Save everything to disk
 
-    def process_row(
-        self,
-        row: Any,
-        question_field: str,
-        choice_field: str
-    ):
-        out = {
-            'static_id': row["static_id"],
-            'question': row[question_field]
-        }
-        for static_persona_type in ["base_persona", "static_short_persona", "static_long_persona"]:
-            # for each persona type, get answer with persona from api
-            # return updated row
-            persona = row[static_persona_type]
-            response = self.get_openai_api_response(
-                MC_QUESTION_TEMPLATE,
-                persona=persona,
-                question=row[question_field],
-                choice_1=row[choice_field][0],
-                choice_2=row[choice_field][1],
-                choice_3=row[choice_field][2],
-                choice_4=row[choice_field][3],
-            )
-            out[f"{static_persona_type}_answer"] = response
-        return out
+    @staticmethod
+    def create_question_prompt(
+        question_type: str,
+        task_data: Dict[str, str],
+        question_key: str,
+        answer_key: Optional[str] = None,
+    ) -> str:
+        """Returns a filled question prompt template.
 
-    def process_task(
+        For a given question type, fetches the correct prompt template and fills all placeholders.
+
+        Args:
+            question_type (str): String identifier of the correct question template. Must be 'open_question',
+                'mc_question' or 'summarization'.
+            task_data (Dict[str, str]): A dictionary containing the relevant information to fill into placeholders.
+            question_key (str): A string identifier corresponding to the key of the question in ``task_data``.
+            answer_key (Optional[str], optional): A string identifier corresponding to the key of the answers in
+                ``task_data``. Defaults to None.
+
+        Returns:
+            str: Returns the filled template string.
+
+        Raises:
+            ValueError: Wrong question type used.
+        """
+        if question_type == "mc_question":
+            template = MC_QUESTION_TEMPLATE
+
+            assert isinstance(answer_key, str)
+            prompt_kwargs = {
+                f"choice_{i + 1}": task_data[answer_key][i] for i in range(4)
+            }
+            prompt_kwargs["question"] = task_data[question_key]
+        elif question_type == "open_question":
+            template = OPEN_QUESTION_TEMPLATE
+            prompt_kwargs = {"question": task_data[question_key]}
+        elif question_type == "summarization":
+            template = SUMMARIZATION_TEMPLATE
+            prompt_kwargs = {"text": task_data[question_key]}
+        else:
+            raise ValueError(
+                f"Question type {question_type} not recognized. "
+                "Should be 'mc_question', 'open_question' or 'summarization'"
+            )
+
+        return template.format(**prompt_kwargs)
+
+    def create_task_request_file(
         self,
         task_config: TaskConfig,
         dataframe: pd.DataFrame,
         dataset_config: DatasetConfig,
-        template: str,
-    ):
-        task_file = f"{self.out_path}/{dataset_config.dataset_id}_{task_config.name}request.jsonl"
+    ) -> str:
+        """_summary_
 
-        with open(task_file, "w") as f:
-            with logging_redirect_tqdm(loggers=[log]):
-                for row in tqdm(dataframe.itertuples(index=False), total=len(dataframe)):
-                    row_dict = row._asdict()  # pyright: ignore[reportCallIssue]
+        Args:
+            task_config (TaskConfig): _description_
+            dataframe (pd.DataFrame): _description_
+            dataset_config (DatasetConfig): _description_
 
-                    prompt_kwargs = {
-                        f"choice_{i + 1}": row_dict[dataset_config.answer_field][i] for i in range(4)
-                    }
-                    prompt_kwargs["question"] = row_dict[dataset_config.question_field]
-                    prompt = template.format(**prompt_kwargs)
-                    for persona_type in ["base_persona", "static_short_persona", "static_long_persona"]:
-                        api_request_dict = {
-                            "custom_id": f"{row_dict["static_id"]}_{persona_type}",
-                            "method": "POST",
-                            "url": "/v1/responses",
-                            "body": {
-                                "model": "gpt-5-nano",
-                                "instructions": row_dict[persona_type],
-                                "input": prompt,
-                            }
+        Returns:
+            str: _description_
+        """
+        task_request_file = f"{self.temp_path}/{task_config.task_id}_request.jsonl"
+
+        with open(task_request_file, "w", encoding="utf-8") as f:
+            for row in tqdm(dataframe.itertuples(index=False), total=len(dataframe)):
+                # noinspection PyCallingNonCallable
+                row_dict = row._asdict()  # type: ignore
+
+                prompt = self.create_question_prompt(
+                    dataset_config.question_type,
+                    row_dict,
+                    dataset_config.question_field,
+                    dataset_config.answer_field
+                )
+                for persona_type in ["base_persona", "static_short_persona", "static_long_persona"]:
+                    api_request_dict = {
+                        "custom_id": f"{row_dict["static_id"]}_{persona_type}",
+                        "method": "POST",
+                        "url": "/v1/responses",
+                        "body": {
+                            "model": "gpt-5-nano",
+                            "instructions": row_dict[persona_type],
+                            "input": prompt,
                         }
+                    }
 
-                        f.write(json.dumps(api_request_dict) + "\n")
+                    f.write(json.dumps(api_request_dict) + "\n")
+        return task_request_file
 
-        batch_input_file = self.client.files.create(
-            file=open(task_file, "rb"),
-            purpose="batch"
-        )
+    def send_task_requests(self):
+        """
 
-        batch_input_file_id = batch_input_file.id
-        batch_job = self.client.batches.create(
-            input_file_id=batch_input_file_id,
-            endpoint="/v1/responses",
-            completion_window="24h",
-        )
+        Returns:
 
-        # TODO: Add Templates for other tasks
-        # TODO: Implement check for which template to use
-        # TODO: Add check for processed samples
-        print(batch_job.id)
+        """
+        log.info("Sending task requests")
+        self.temp_path.mkdir(parents=True, exist_ok=True)
 
-    def process_samples(self):
         for dataset_id, dataset_config, dataframe in self.dataset_handler.iter_datasets(
             "Processing",
             log, kind="items"
         ):
-            log.debug("Processing dataset %s", dataset_id)
-            self.out_path.mkdir(parents=True, exist_ok=True)
-
             for task_config in self.task_configs[dataset_id]:
-                task_df = dataframe[dataframe[dataset_config.task_column] == task_config.name]
-                self.process_task(task_config, task_df, dataset_config, MC_QUESTION_TEMPLATE)
+                if task_config.task_id in self.llm_client.batches_info_store:
+                    log.debug("Skipping %s, batch already sent", task_config.task_id)
+                    continue
 
-            # TODO: Join dataframes and save
+                row_mask = construct_row_mask(dataframe, dataset_config.task_column, task_config.name)
+                task_df = dataframe[row_mask]
+                task_file = self.create_task_request_file(task_config, task_df, dataset_config)
 
-
-if __name__ == "__main__":
-    evaluator = Evaluator()
-    evaluator.main(include_datasets=["mmlu"])
+                self.llm_client.send_batch(task_file, task_config.task_id)
+        log.debug("Finished sending task requests")

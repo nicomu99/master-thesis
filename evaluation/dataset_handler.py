@@ -13,9 +13,9 @@ from pandas import DataFrame
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
-from task_config import TaskConfig
-from dataset_config import DatasetConfig
-from log_conf import get_logger, logging
+from .task_config import TaskConfig
+from .dataset_config import DatasetConfig
+from .log_conf import get_logger, logging
 
 log = get_logger(__name__)
 disable_progress_bar()
