@@ -21,6 +21,7 @@
       "split": "test",
       "question_type": "open_question",
       "question_field": "question",
+      "answer_field": "",
       "load_name": "main",
       "task_column": "",
       "tasks": [

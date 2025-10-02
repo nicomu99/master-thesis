@@ -1,6 +1,5 @@
 from typing import Any, Dict
 
-import json
 import pickle
 from pathlib import Path
 
@@ -13,6 +12,8 @@ log = get_logger(__name__)
 
 
 class LLMClient:
+    """Primary class for communicating with the open ai api."""
+
     def __init__(self):
         self.client = OpenAI()
 
@@ -44,13 +45,13 @@ class LLMClient:
         prompt = template.format(**kwargs)
         if prompt_cache_key:
             response = self.client.responses.create(
-                model="gpt-5-nano",
+                model="gpt-5-mini",
                 input=prompt,
                 prompt_cache_key=prompt_cache_key
             )
         else:
             response = self.client.responses.create(
-                model="gpt-5-nano",
+                model="gpt-5-mini",
                 input=prompt,
             )
 
@@ -61,6 +62,13 @@ class LLMClient:
         batch_file_name: str,
         task_id: str
     ):
+        """Sends batch files to the llm api.
+
+        Args:
+            batch_file_name (str): File name of the file containing the request objects.
+            task_id (str): String identifier of the task the batch file belongs to.
+        """
+
         log.info("Sending batch for task %s", task_id)
 
         with open(batch_file_name, "rb") as f:
@@ -82,6 +90,8 @@ class LLMClient:
             self._save_batch_info()
 
     def check_batch_statuses(self):
+        """Fetches and prints statuses of batch requests."""
+
         log.info("Checking batch statuses; %s batches found.", len(self.batches_info_store))
         if len(self.batches_info_store) == 0:
             return
@@ -109,12 +119,14 @@ class LLMClient:
 
                     self.batches_info_store[task_id].status = "in_progress"
             elif batch.status == "completed":
-                self.batches_info_store[task_id].status = "completed"
                 self.batches_info_store[task_id].output_file_id = batch.output_file_id
+                self.batches_info_store[task_id].status = "completed"
 
         self._save_batch_info()
 
     def fetch_batch_responses(self):
+        """Fetches responses for batch requests and saves them to files."""
+
         log.info("Fetching batch responses")
         if len(self.batches_info_store) < 1:
             log.debug("No batches found")
@@ -128,12 +140,11 @@ class LLMClient:
             if not batch_info.output_file_id:
                 log.info("No output file found for task %s with batch id %s", task_id, batch_info.batch_id)
                 continue
-            batch_response = self.client.files.content(batch_info.output_file_id)
+            batch_response_stream = self.client.files.content(batch_info.output_file_id)
 
             batch_response_file = self.temp_path / f"{task_id}_{batch_info.batch_id}.jsonl"
-            with open(batch_response_file, "w", encoding="utf-8") as f:
-                for response_line in batch_response.text:
-                    f.write(json.dumps(response_line) + "\n")
+            with open(batch_response_file, "wb") as f:
+                f.write(batch_response_stream.read())
 
             # Retrieve batch
             self.batches_info_store[task_id].status = "retrieved"

@@ -3,10 +3,12 @@ from .llm_client import LLMClient
 
 
 class App:
+    """Small CLI application to control the program."""
+
     def __init__(self):
         self.run = True
         self.llm_client = LLMClient()
-        self.evaluator = Evaluator(self.llm_client, include_datasets=["mmlu"])
+        self.evaluator = Evaluator(self.llm_client, include_datasets=["mmlu", "gsm8k"])
 
         self.commands = {
             "q": ("Quit program", self.quit_program),
@@ -18,8 +20,7 @@ class App:
         }
 
     def main(self) -> None:
-        """_summary_
-        """
+        """Main loop that listens for user input."""
 
         while self.run:
             user_input = input("Enter next command (type h for help): ").strip()
@@ -31,9 +32,13 @@ class App:
                 print("Command unknown. Type \"h\" for help.")
 
     def quit_program(self):
+        """Quits the program."""
+
         self.run = False
 
     def show_help(self):
+        """Prints the help menu."""
+
         print("\nCommands: ")
         for command, (description, _) in self.commands.items():
             print(f"    {command}: {description}")
