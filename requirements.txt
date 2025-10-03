@@ -2,3 +2,5 @@ datasets
 pandas
 openai
 pydantic
+matplotlib
+PyQt6
