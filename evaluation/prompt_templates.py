@@ -2,7 +2,7 @@ STATIC_SHORT_TEMPLATE = (
     "For the field of {task_type}, create a persona string containing one sentence, written in second person "
     "perspective. The persona string should start with \"{persona_string}\"."
 )
-
+# You are a knowledgeable macroeconomist
 STATIC_LONG_TEMPLATE = (
     "For the field of {task_type}, create a persona string containing three sentences, written in second person "
     "perspective. The persona string should start with \"{persona_string}\"."

@@ -31,8 +31,7 @@ from .log_conf import get_logger
 
 log = get_logger(__name__)
 
-# TODO: Download open ai client responses
-# TODO: Send requests: Check if personas have already been generated
+# TODO: Allow several batches per task
 # For now, we save each task id and batch id from the api
 
 # Will have two types of requests: New personas and new Q/A answers
@@ -43,13 +42,12 @@ class Evaluator:
     """
     def __init__(
         self,
-        llm_client: LLMClient,
         include_datasets: Optional[Iterable[str]] = None,
         exclude_datasets: Optional[Iterable[str]] = None,
     ):
         self.temp_path = Path("temp")
         self.dataset_handler = DatasetHandler()
-        self.llm_client = llm_client
+        self.llm_client = LLMClient()
 
         self.task_configs: Dict[str, List[TaskConfig]] = self.dataset_handler.load(
             include_datasets,
@@ -228,7 +226,7 @@ class Evaluator:
                         "method": "POST",
                         "url": "/v1/responses",
                         "body": {
-                            "model": "gpt-5-nano",
+                            "model": "gpt-5-mini",
                             "instructions": row_dict[persona_type],
                             "input": prompt,
                         }
@@ -236,6 +234,16 @@ class Evaluator:
 
                     f.write(json.dumps(api_request_dict) + "\n")
         return task_request_file
+
+    @staticmethod
+    def _check_persona_existance(
+        dataframe: pd.DataFrame,
+        row_mask: Optional[slice | pd.Series] = None
+    ):
+        for persona_type in ["base_persona", "static_short_persona", "static_long_persona"]:
+            if is_not_full_column(dataframe, persona_type, row_mask):
+                return False
+        return True
 
     def send_task_requests(self):
         """
@@ -251,13 +259,47 @@ class Evaluator:
             log, kind="items"
         ):
             for task_config in self.task_configs[dataset_id]:
-                if task_config.task_id in self.llm_client.batches_info_store:
+                if not self.llm_client.should_send_batch(task_config.task_id):
                     log.debug("Skipping %s, batch already sent", task_config.task_id)
                     continue
 
+                log.debug("Sending %s", task_config.task_id)
+
                 row_mask = construct_row_mask(dataframe, dataset_config.task_column, task_config.name)
+                if not self._check_persona_existance(dataframe, row_mask):
+                    log.warning(
+                    "Peronas for task %s not created yet. Please run persona creation first.",
+                        task_config.task_id
+                    )
+                    continue
+
                 task_df = dataframe[row_mask]
                 task_file = self.create_task_request_file(task_config, task_df, dataset_config)
 
                 self.llm_client.send_batch(task_file, task_config.task_id)
         log.debug("Finished sending task requests")
+
+    def check_batch_statuses(self):
+        """Prints the batch statuses."""
+        self.llm_client.check_batch_statuses()
+
+    def fetch_batch_responses(self):
+        """Fetches batch responses and saves them to disk."""
+        self.llm_client.fetch_batch_responses()
+
+    def get_batch_infos(self):
+        """Retrieves the batch info store"""
+        return self.llm_client.batches_info_store
+
+    def update_batch_info(
+        self,
+        task_id: str,
+        new_status: str
+    ):
+        """Retrieves batch infos.
+
+        Args:
+            task_id (str): String identifier of the task specific task.
+            new_status (str): Updated status.
+        """
+        self.llm_client.update_batch_info(task_id, new_status)

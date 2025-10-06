@@ -1,5 +1,8 @@
 from .evaluator import Evaluator
-from .llm_client import LLMClient
+
+from .log_conf import get_logger
+
+log = get_logger(__name__)
 
 
 class App:
@@ -7,21 +10,22 @@ class App:
 
     def __init__(self):
         self.run = True
-        self.llm_client = LLMClient()
-        self.evaluator = Evaluator(self.llm_client, include_datasets=["mmlu", "gsm8k"])
+        self.evaluator = Evaluator(include_datasets=["mmlu", "gsm8k"])
 
         self.commands = {
             "q": ("Quit program", self.quit_program),
             "p": ("Generate personas", self.evaluator.generate_personas),
             "t": ("Send task requests", self.evaluator.send_task_requests),
-            "s": ("Check batch statuses", self.llm_client.check_batch_statuses),
-            "f": ("Fetch batch responses", self.llm_client.fetch_batch_responses),
+            "s": ("Check batch statuses", self.evaluator.check_batch_statuses),
+            "f": ("Fetch batch responses", self.evaluator.fetch_batch_responses),
+            "a": ("Rerun menu", self.ask_task_resend),
             "h": ("Show this help", self.show_help),
         }
 
     def main(self) -> None:
         """Main loop that listens for user input."""
 
+        self.show_help()
         while self.run:
             user_input = input("Enter next command (type h for help): ").strip()
 
@@ -35,6 +39,16 @@ class App:
         """Quits the program."""
 
         self.run = False
+
+    def ask_task_resend(self):
+        """Lets the user pick tasks to resend."""
+        batch_infos = self.evaluator.get_batch_infos()
+        for task_id, batch_info in batch_infos.items():
+            log.info("Task %s has status %s", task_id, batch_info.status)
+            user_input = input("Rerun task y|[n]?: ").strip()
+
+            if user_input == "y":
+                self.evaluator.update_batch_info(task_id, "send")
 
     def show_help(self):
         """Prints the help menu."""

@@ -150,6 +150,23 @@ class LLMClient:
             self.batches_info_store[task_id].status = "retrieved"
         self._save_batch_info()
 
+    def update_batch_info(
+        self,
+        task_id: str,
+        new_status: str = "sent"
+    ):
+        self.batches_info_store[task_id].status = new_status
+        print(self.batches_info_store[task_id].status, task_id)
+        self._save_batch_info()
+
+    def should_send_batch(
+        self,
+        task_id: str
+    ):
+        if task_id not in self.batches_info_store:
+            return True
+        return self.batches_info_store[task_id].status == "send"
+
     def _load_batches_info(self) -> None:
         if not self.batches_info_file.exists():
             return

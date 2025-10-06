@@ -69,7 +69,7 @@ def insert_if_empty(
 def is_not_full_column(
     dataframe: pd.DataFrame,
     column_name: str,
-    row_mask: slice | pd.Series
+    row_mask: Optional[slice | pd.Series] = None
 ) -> bool:
     """Checks whether a column contains empty values.
 
@@ -84,7 +84,12 @@ def is_not_full_column(
     Returns:
         bool: Returns true if any row in ``column_name`` is empty. Else false.
     """
-    return dataframe.loc[row_mask, column_name].isnull().any()
+    if column_name not in dataframe.columns:
+        return True
+
+    if row_mask is not None:
+        return bool(dataframe.loc[row_mask, column_name].isnull().any())
+    return bool(dataframe.loc[column_name].isnull().any())
 
 
 def get_unique_value(

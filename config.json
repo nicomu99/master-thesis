@@ -13,6 +13,21 @@
           "name": "high_school_macroeconomics",
           "field": "macroeconomics",
           "static_persona": "You are a knowledgeable macroeconomist"
+        },
+                {
+          "name": "college_chemistry",
+          "field": "chemistry",
+          "static_persona": "You are a knowledgeable chemist"
+        },
+                {
+          "name": "college_computer_science",
+          "field": "computer_science",
+          "static_persona": "You are a knowledgeable compuer scientist"
+        },
+        {
+          "name": "college_physics",
+          "field": "physics",
+          "static_persona": "You are a knowledgeable physicist"
         }
       ]
     },
