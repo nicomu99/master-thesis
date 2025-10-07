@@ -8,7 +8,7 @@ class TaskConfig:
     task_id: str
     dataset_id: str
     name: Optional[str]       # If task name is "general", the whole dataset will be used
-    field: str      # In this case, the field will be an empty string
+    field: str
     static_persona: str
 
     def __post_init__(self):

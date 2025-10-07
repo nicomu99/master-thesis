@@ -16,6 +16,10 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from .task_config import TaskConfig
 from .dataset_config import DatasetConfig
 from .log_conf import get_logger, logging
+from .dataframe_helpers import (
+    add_empty_column,
+    get_with_row_mask
+)
 
 log = get_logger(__name__)
 disable_progress_bar()
@@ -39,6 +43,14 @@ class DatasetHandler:
             self,
             desc: str,
             logger: logging.Logger,
+            kind: Literal["configs"]
+    ) -> Generator[tuple[str, DatasetConfig]]: ...
+
+    @overload
+    def iter_datasets(
+            self,
+            desc: str,
+            logger: logging.Logger,
             kind: Literal["items"]
     ) -> Generator[tuple[str, DatasetConfig, pd.DataFrame]]: ...
 
@@ -46,8 +58,8 @@ class DatasetHandler:
         self,
         desc: str,
         logger: logging.Logger,
-        kind: Literal["ids", "items"] = "ids"
-    ) -> Generator[tuple[str, DatasetConfig, DataFrame] | str, None]:
+        kind: Literal["ids", "configs", "items"] = "ids"
+    ) -> Generator[tuple[str, DatasetConfig, DataFrame] | tuple[str, DatasetConfig] | str, None]:
 
         """Helper function for iterating the dataset.
 
@@ -70,6 +82,8 @@ class DatasetHandler:
                 dataset_iterator.set_description(f"{desc} {dataset_id}")
                 if kind == "items":
                     yield dataset_id, self.dataset_configs[dataset_id], self.dataframes[dataset_id]
+                elif kind == "configs":
+                    yield dataset_id, self.dataset_configs[dataset_id]
                 else:
                     yield dataset_id
 
@@ -214,3 +228,37 @@ class DatasetHandler:
 
         df = pd.read_parquet(dataset_file)
         return df
+
+    def insert_columns(
+        self,
+        dataset_id: str,
+        columns: List[str]
+    ):
+        dataframe = self.dataframes[dataset_id]
+        for column in columns:
+            add_empty_column(dataframe, column)
+
+    def get_task_dataframe(
+        self,
+        dataset_id: str,
+        task_name: Optional[str]
+    ):
+        dataframe = self.dataframes[dataset_id]
+        task_column = self.dataset_configs[dataset_id].task_column
+        return get_with_row_mask(dataframe, task_column, task_name)
+
+    def merge_and_write(
+        self,
+        dataset_id: str,
+        subset_df: pd.DataFrame
+    ):
+        dataframe = self.dataframes[dataset_id]
+        dataframe.set_index("static_id", inplace=True)
+        subset_df.set_index("static_id", inplace=True)
+
+        # Update matching rows in df with values from subset_df
+        dataframe.update(subset_df)
+
+        # Optional: reset index if you want to keep 'static_id' as a column
+        dataframe.reset_index(inplace=True)
+        self.write_dataframe(dataset_id)

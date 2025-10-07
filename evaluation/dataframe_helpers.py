@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 import pandas as pd
 
@@ -43,12 +43,20 @@ def construct_row_mask(
         return slice(None)      # Selects all rows
     return dataframe[mask_column] == mask
 
+def get_with_row_mask(
+    dataframe: pd.DataFrame,
+    mask_column: str | None,
+    mask: str | None,
+):
+    row_mask = construct_row_mask(dataframe, mask_column, mask)
+    return dataframe[row_mask]
+
 
 def insert_if_empty(
     dataframe: pd.DataFrame,
     insert_column: str,
     insert_value: Any,
-    row_mask: slice | pd.Series
+    row_mask: Optional[slice | pd.Series] = None
 ):
     """Inserts a static value to rows in a certain column.
 
@@ -61,12 +69,17 @@ def insert_if_empty(
         insert_value (Any): The value to write into the column.
         row_mask (slice | pd.Series[bool]): A row mask.
     """
-    if dataframe.loc[row_mask, insert_column].isnull().any():
-        # Only insert if some rows have an empty base persona
-        dataframe.loc[row_mask, insert_column] = insert_value
+    if row_mask is not None:
+        if dataframe.loc[row_mask, insert_column].isnull().any():
+            # Only insert if some rows have an empty base persona
+            dataframe.loc[row_mask, insert_column] = insert_value
+    else:
+        if dataframe.loc[:, insert_column].isnull().any():
+            # Only insert if some rows have an empty base persona
+            dataframe.loc[:, insert_column] = insert_value
 
 
-def is_not_full_column(
+def column_not_full(
     dataframe: pd.DataFrame,
     column_name: str,
     row_mask: Optional[slice | pd.Series] = None
@@ -90,6 +103,29 @@ def is_not_full_column(
     if row_mask is not None:
         return bool(dataframe.loc[row_mask, column_name].isnull().any())
     return bool(dataframe.loc[column_name].isnull().any())
+
+def columns_not_full(
+    dataframe: pd.DataFrame,
+    column_names: List[str],
+    row_mask: Optional[slice | pd.Series] = None
+) -> bool:
+    """Check whether any of the given columns contain empty values.
+
+    The check can be further refined using a row_mask.
+
+    Args:
+        dataframe (pd.DataFrame): pandas DataFrame.
+        column_name (List[str]): Column used to check for empty values.
+        row_mask (slice | pd.Series[bool] | None): A row mask.
+
+    Returns:
+        bool: True if any of the specified columns contain missing values, False otherwise.
+    """
+    if not set(column_names).issubset(dataframe.columns):
+        return True
+
+    df = dataframe.loc[row_mask, column_names] if row_mask is not None else dataframe[column_names]
+    return bool(df.isnull().any().any())
 
 
 def get_unique_value(

@@ -1,0 +1,160 @@
+from typing import Any, Dict, Optional, List
+
+import json
+from pathlib import Path
+
+import pandas as pd
+
+from .dataset_config import DatasetConfig
+from .task_config import TaskConfig
+from .prompt_templates import (
+    OPEN_QUESTION_TEMPLATE,
+    MC_QUESTION_TEMPLATE,
+    SUMMARIZATION_TEMPLATE
+)
+
+
+class BatchRequestCreator:
+    def __init__(self):
+        self.temp_path = Path("temp")
+        self.temp_path.mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def _write_prompt_to_file(
+        f: Any,
+        custom_id: str,
+        prompt: str,
+        instruction: Optional[str] = None
+    ):
+        body = {
+            "model": "gpt-5-mini",
+            "input": prompt
+        }
+        if instruction:
+            body["instructions"] = instruction
+
+        api_request_dict = {
+            "custom_id": custom_id,
+            "method": "POST",
+            "url": "/v1/responses",
+            "body": body
+        }
+
+        f.write(json.dumps(api_request_dict) + "\n")
+
+    @staticmethod
+    def create_question_prompt(
+        question_type: str,
+        task_data: Dict[str, str],
+        question_key: str,
+        answer_key: Optional[str] = None,
+    ) -> str:
+        """Returns a filled question prompt template.
+
+        For a given question type, fetches the correct prompt template and fills all placeholders.
+
+        Args:
+            question_type (str): String identifier of the correct question template. Must be 'open_question',
+                'mc_question' or 'summarization'.
+            task_data (Dict[str, str]): A dictionary containing the relevant information to fill into placeholders.
+            question_key (str): A string identifier corresponding to the key of the question in ``task_data``.
+            answer_key (Optional[str], optional): A string identifier corresponding to the key of the answers in
+                ``task_data``. Defaults to None.
+
+        Returns:
+            str: Returns the filled template string.
+
+        Raises:
+            ValueError: Wrong question type used.
+        """
+        if question_type == "mc_question":
+            template = MC_QUESTION_TEMPLATE
+
+            assert isinstance(answer_key, str)
+            prompt_kwargs = {
+                f"choice_{i + 1}": task_data[answer_key][i] for i in range(4)
+            }
+            prompt_kwargs["question"] = task_data[question_key]
+        elif question_type == "open_question":
+            template = OPEN_QUESTION_TEMPLATE
+            prompt_kwargs = {"question": task_data[question_key]}
+        elif question_type == "summarization":
+            template = SUMMARIZATION_TEMPLATE
+            prompt_kwargs = {"text": task_data[question_key]}
+        else:
+            raise ValueError(
+                f"Question type {question_type} not recognized. "
+                "Should be 'mc_question', 'open_question' or 'summarization'"
+            )
+
+        return template.format(**prompt_kwargs)
+
+    def create_task_request_file(
+        self,
+        task_config: TaskConfig,
+        dataframe: pd.DataFrame,
+        dataset_config: DatasetConfig,
+        persona_types: List[str]
+    ) -> str:
+        """_summary_
+
+        Args:
+            task_config (TaskConfig): _description_
+            dataframe (pd.DataFrame): _description_
+            dataset_config (DatasetConfig): _description_
+
+        Returns:
+            str: _description_
+        """
+        task_request_file = f"{self.temp_path}/{task_config.task_id}_request.jsonl"
+
+        with open(task_request_file, "w", encoding="utf-8") as f:
+            for row in dataframe.itertuples(index=False):
+                # noinspection PyCallingNonCallable
+                row_dict = row._asdict()  # type: ignore
+
+                prompt = self.create_question_prompt(
+                    dataset_config.question_type,
+                    row_dict,
+                    dataset_config.question_field,
+                    dataset_config.answer_field
+                )
+                for persona_type in persona_types:
+                    custom_id = f"{row_dict["static_id"]}_{persona_type}"
+                    self._write_prompt_to_file(f, custom_id, prompt, row_dict[persona_type])
+        return task_request_file
+
+    def create_persona_request_file(
+        self,
+        task_config: TaskConfig,
+        dataframe: pd.DataFrame,
+        dataset_config: DatasetConfig,
+        persona_templates: Dict[str, str]
+    ) -> str:
+        """_summary_
+
+        Args:
+            task_config (TaskConfig): _description_
+            dataframe (pd.DataFrame): _description_
+            dataset_config (DatasetConfig): _description_
+
+        Returns:
+            str: _description_
+        """
+        persona_request_file = f"{self.temp_path}/{task_config.task_id}_persona_request.jsonl"
+
+        with open(persona_request_file, "w", encoding="utf-8") as f:
+            for row in dataframe.itertuples(index=False):
+                # noinspection PyCallingNonCallable
+                row_dict = row._asdict()  # type: ignore
+
+                for persona_type, prompt_template in persona_templates.items():
+                    prompt = prompt_template.format(
+                        task_config.field,
+                        persona_string=task_config.static_persona,
+                        question=row_dict[dataset_config.question_field]
+                    )
+                    custom_id = f"{row_dict["static_id"]}_{persona_type}"
+                    self._write_prompt_to_file(f, custom_id, prompt)
+
+        return persona_request_file
