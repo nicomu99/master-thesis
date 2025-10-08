@@ -30,6 +30,9 @@ class PersonaRegistry:
     def get_static_names(self) -> List[str]:
         return [n for n, p in self.personas.items() if p.category != "dynamic"]
 
+    def get_dynamic_names(self) -> List[str]:
+        return [n for n, p in self.personas.items() if p.category == "dynamic"]
+
     def get_static_templates(self) -> Dict[str, str]:
         return {n: p.template for n, p in self.personas.items() if p.category == "static" and p.template is not None}
 
