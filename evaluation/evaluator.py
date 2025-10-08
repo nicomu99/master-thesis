@@ -1,17 +1,14 @@
 from typing import Dict, Optional, Iterable, List
 
-import pandas as pd
+from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 from .dataset_handler import DatasetHandler
 from .batch_request_creator import BatchRequestCreator
 from .task_config import TaskConfig
 from .llm_client import LLMClient
 from .persona_registry import PersonaRegistry
-from .dataframe_helpers import (
-    columns_not_full,
-    insert_if_empty,
-    get_with_row_mask
-)
+from .dataframe_helpers import columns_not_full
 
 from .log_conf import get_logger
 
@@ -35,7 +32,7 @@ class Evaluator:
         self.llm_client = LLMClient()
         self.batch_request_creator = BatchRequestCreator()
 
-        self.task_configs: Dict[str, List[TaskConfig]] = self.dataset_handler.load(
+        self.task_configs: List[TaskConfig] = self.dataset_handler.load(
             include_datasets,
             exclude_datasets
         )
@@ -60,9 +57,8 @@ class Evaluator:
         # Insert base persona first
         personas = {"base_persona": persona}
         for persona_type, prompt_template in self.persona_registry.get_static_templates().items():
-            log.debug("Creating persona %s", persona_type)
 
-            client_kwargs: Dict[str, str] = {"task_type": task_config.field, "persona_string": persona }
+            client_kwargs: Dict[str, str] = {"task_type": task_config.field, "persona_string": persona}
             persona = self.llm_client.get_api_response(
                 prompt_template,
                 persona_type,
@@ -81,40 +77,31 @@ class Evaluator:
         log.info("Starting persona generation")
 
         # First, for each dataset category, create the static personas
-        for dataset_id, dataset_config in self.dataset_handler.iter_datasets(
-            "Processing",
-            log, kind="configs"
-        ):
-            log.debug("Generating personas for dataset %s", dataset_id)
+        for task_config in self.task_iterator(desc="Processing"):
+            log.info("Processing %s", task_config.task_id)
 
             # Add new column, if it does not exist yet
+            dataset_id = task_config.dataset_id
             self.dataset_handler.insert_columns(dataset_id, self.persona_registry.get_names())
 
-            for task_config in self.task_configs[dataset_id]:
-                task_df = self.dataset_handler.get_task_dataframe(dataset_id, task_config.name)
+            task_df = self.dataset_handler.get_task_dataframe(dataset_id, task_config.name)
+            if columns_not_full(task_df, self.persona_registry.get_static_names()):
+                log.debug("Creating static personas.")
 
-                if columns_not_full(task_df, self.persona_registry.get_static_names()):
-                    static_personas = self.generate_static_personas(task_config)
-                    for name, value in static_personas.items():
-                        insert_if_empty(task_df, name, value)
-                    self.dataset_handler.merge_and_write(dataset_id, task_df)
+                static_personas = self.generate_static_personas(task_config)
+                task_df = task_df.assign(**static_personas)
+                self.dataset_handler.merge_and_write(dataset_id, task_df)
 
-                persona_request_file = self.batch_request_creator.create_persona_request_file(
-                    task_config,
-                    task_df,
-                    dataset_config,
-                    self.persona_registry.get_dynamic_templates()
-                )
-                self.llm_client.send_batch(f"{task_config.task_id}_personas", persona_request_file)
+
+            # persona_request_file = self.batch_request_creator.create_persona_request_file(
+            #     task_config,
+            #     task_df,
+            #     dataset_config,
+            #     self.persona_registry.get_dynamic_templates()
+            # )
+            # self.llm_client.send_batch(f"{task_config.task_id}_personas", persona_request_file)
 
         log.debug("Finished generating static personas")
-
-    def _check_persona_existence(
-        self,
-        dataframe: pd.DataFrame,
-        row_mask: Optional[slice | pd.Series] = None
-    ):
-        return columns_not_full(dataframe, self.persona_registry.get_static_names(), row_mask)
 
     def send_task_requests(self):
         """
@@ -122,36 +109,44 @@ class Evaluator:
         Returns:
 
         """
-        log.info("Sending task requests")
+        log.info("Sending task requests.")
 
-        for dataset_id, dataset_config, dataframe in self.dataset_handler.iter_datasets(
-            "Processing",
-            log, kind="items"
-        ):
-            for task_config in self.task_configs[dataset_id]:
-                if not self.llm_client.should_send_batch(task_config.task_id):
-                    log.debug("Skipping %s, batch already sent", task_config.task_id)
-                    continue
+        for task_config in self.task_iterator(desc="Processing"):
+            if not self.llm_client.should_send_batch(task_config.task_id):
+                log.debug("Skipping %s, batch already sent", task_config.task_id)
+                continue
 
-                log.debug("Sending %s", task_config.task_id)
+            log.debug("Sending %s", task_config.task_id)
 
-                task_df = get_with_row_mask(dataframe, dataset_config.task_column, task_config.name)
-                if not self._check_persona_existence(task_df):
-                    log.warning(
-                    "Peronas for task %s not created yet. Please run persona creation first.",
-                        task_config.task_id
-                    )
-                    continue
-
-                task_file = self.batch_request_creator.create_task_request_file(
-                    task_config,
-                    task_df,
-                    dataset_config,
-                    self.persona_registry.get_names()
+            dataset_id = task_config.dataset_id
+            dataset_config = self.dataset_handler.get_config(dataset_id)
+            task_df = self.dataset_handler.get_task_dataframe(dataset_id, task_config.name)
+            if columns_not_full(task_df, self.persona_registry.get_static_names()):
+                log.warning(
+                "Peronas for task %s not created yet. Please run persona creation first.",
+                    task_config.task_id
                 )
+                continue
 
-                self.llm_client.send_batch(task_file, task_config.task_id)
+            task_file = self.batch_request_creator.create_task_request_file(
+                task_config,
+                task_df,
+                dataset_config,
+                self.persona_registry.get_names()
+            )
+
+            self.llm_client.send_batch(task_file, task_config.task_id)
         log.debug("Finished sending task requests")
+
+    def task_iterator(
+        self,
+        desc: str,
+    ):
+        task_iterator = tqdm(self.task_configs, desc=desc)
+        with logging_redirect_tqdm(loggers=[log]):
+            for task_config in task_iterator:
+                task_iterator.set_description(f"{desc} {task_config.task_id}")
+                yield task_config
 
     def check_batch_statuses(self):
         """Prints the batch statuses."""

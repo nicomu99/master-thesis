@@ -4,7 +4,7 @@ from typing import List, Dict, Optional, Iterable, Literal, overload, Generator
 
 import json
 from pathlib import Path
-from collections import defaultdict
+
 from dataclasses import fields
 
 import pandas as pd
@@ -91,7 +91,7 @@ class DatasetHandler:
         self,
         include_datasets: Optional[Iterable[str]] = None,
         exclude_datasets: Optional[Iterable[str]] = None
-    ) -> Dict[str, List[TaskConfig]]:
+    ) -> List[TaskConfig]:
         """Loads the task configurations, dataset configurations and samples into memory.
 
         The function downloads any datasets not present in the local file system and stores them to disk. If
@@ -116,7 +116,7 @@ class DatasetHandler:
         dataset_ids = raw_configs.keys()
         self._select_dataset_ids(dataset_ids, include_datasets, exclude_datasets)
 
-        task_configs = defaultdict(list)
+        task_configs = []
         for dataset_id in self.iter_datasets("Loading dataset", log, kind="ids"):
             raw_dataset_config = raw_configs[dataset_id]
 
@@ -133,9 +133,9 @@ class DatasetHandler:
             )
 
             for task in raw_dataset_config["tasks"]:
-                task_id = f"{config.dataset_id}_{task["name"]}"
+                task_id = f"{dataset_id}_{task["name"]}"
                 task_config = TaskConfig(task_id=task_id, dataset_id=dataset_id, **task)
-                task_configs[dataset_id].append(task_config)
+                task_configs.append(task_config)
 
         log.debug("Finished dataset preparation")
         return task_configs
@@ -228,6 +228,12 @@ class DatasetHandler:
 
         df = pd.read_parquet(dataset_file)
         return df
+
+    def get_config(
+        self,
+        dataset_id: str
+    ):
+        return self.dataset_configs[dataset_id]
 
     def insert_columns(
         self,

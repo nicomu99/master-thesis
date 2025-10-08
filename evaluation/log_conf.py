@@ -6,7 +6,8 @@ factory = logging.getLogRecordFactory()
 
 def record_factory(*args, **kwargs):
     record = factory(*args, **kwargs)
-    record.origin = f'{record.name}:{record.funcName}'
+    class_name = record.name.split(".")[-1]
+    record.origin = f'{class_name}:{record.funcName}'
     return record
 
 
@@ -21,7 +22,7 @@ def get_logger(name: str) -> logging.Logger:
         ch.setLevel(logging.DEBUG)
 
         formatter = logging.Formatter(
-            '%(asctime)s  %(levelname)-8s %(origin)-40s %(message)s',
+            '%(asctime)s  %(levelname)-8s %(origin)-30s %(message)s',
             datefmt="%Y-%m-%d %H:%M:%S"
         )
 

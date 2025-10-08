@@ -14,3 +14,4 @@ class TaskConfig:
     def __post_init__(self):
         if self.name == "":
             self.name = None
+            self.task_id = f"{self.dataset_id}_all"
