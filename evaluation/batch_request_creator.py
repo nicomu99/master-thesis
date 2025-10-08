@@ -116,8 +116,8 @@ class BatchRequestCreator:
                 prompt = self.create_question_prompt(
                     dataset_config.question_type,
                     row_dict,
-                    dataset_config.question_field,
-                    dataset_config.answer_field
+                    dataset_config.question_column,
+                    dataset_config.answer_column
                 )
                 for persona_type in persona_types:
                     custom_id = f"{row_dict["static_id"]}_{persona_type}"
@@ -150,9 +150,9 @@ class BatchRequestCreator:
 
                 for persona_type, prompt_template in persona_templates.items():
                     prompt = prompt_template.format(
-                        task_config.field,
+                        task_type=task_config.field,
                         persona_string=task_config.static_persona,
-                        question=row_dict[dataset_config.question_field]
+                        question=row_dict[dataset_config.question_column]
                     )
                     custom_id = f"{row_dict["static_id"]}_{persona_type}"
                     self._write_prompt_to_file(f, custom_id, prompt)

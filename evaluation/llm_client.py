@@ -59,14 +59,14 @@ class LLMClient:
 
     def send_batch(
         self,
-        batch_file_name: str,
-        task_id: str
+        task_id: str,
+        batch_file_name: str
     ):
         """Sends batch files to the llm api.
 
         Args:
-            batch_file_name (str): File name of the file containing the request objects.
             task_id (str): String identifier of the task the batch file belongs to.
+            batch_file_name (str): File name of the file containing the request objects.
         """
 
         log.info("Sending batch for task %s", task_id)

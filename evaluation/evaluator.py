@@ -92,16 +92,17 @@ class Evaluator:
                 task_df = task_df.assign(**static_personas)
                 self.dataset_handler.merge_and_write(dataset_id, task_df)
 
+            if columns_not_full(task_df, self.persona_registry.get_dynamic_names()):
+                dataset_config = self.dataset_handler.get_config(dataset_id)
+                persona_request_file = self.batch_request_creator.create_persona_request_file(
+                    task_config,
+                    task_df,
+                    dataset_config,
+                    self.persona_registry.get_dynamic_templates()
+                )
+                self.llm_client.send_batch(f"{task_config.task_id}_personas", persona_request_file)
 
-            # persona_request_file = self.batch_request_creator.create_persona_request_file(
-            #     task_config,
-            #     task_df,
-            #     dataset_config,
-            #     self.persona_registry.get_dynamic_templates()
-            # )
-            # self.llm_client.send_batch(f"{task_config.task_id}_personas", persona_request_file)
-
-        log.debug("Finished generating static personas")
+        log.debug("Finished generating personas")
 
     def send_task_requests(self):
         """
@@ -135,7 +136,7 @@ class Evaluator:
                 self.persona_registry.get_names()
             )
 
-            self.llm_client.send_batch(task_file, task_config.task_id)
+            self.llm_client.send_batch(task_config.task_id, task_file)
         log.debug("Finished sending task requests")
 
     def task_iterator(
