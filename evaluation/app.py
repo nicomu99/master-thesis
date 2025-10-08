@@ -10,7 +10,7 @@ class App:
 
     def __init__(self):
         self.run = True
-        self.evaluator = Evaluator(include_datasets=["mmlu", "gsm8k"])
+        self.evaluator = Evaluator(include_datasets=["mmlu-pro"])
 
         self.commands = {
             "q": ("Quit program", self.quit_program),
@@ -42,6 +42,7 @@ class App:
 
     def ask_task_resend(self):
         """Lets the user pick tasks to resend."""
+
         batch_infos = self.evaluator.get_batch_infos()
         for task_id, batch_info in batch_infos.items():
             log.info("Task %s has status %s", task_id, batch_info.status)

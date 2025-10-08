@@ -9,10 +9,12 @@ from .prompt_templates import (
     DYNAMIC_LONG_TEMPLATE
 )
 
+
 @dataclass
 class PersonaConfig:
     category: str
     template: str | None = None
+
 
 class PersonaRegistry:
     def __init__(self):

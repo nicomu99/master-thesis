@@ -15,9 +15,6 @@ from .log_conf import get_logger
 log = get_logger(__name__)
 
 # TODO: Allow several batches per task
-# For now, we save each task id and batch id from the api
-
-# Will have two types of requests: New personas and new Q/A answers
 
 
 class Evaluator:
@@ -124,7 +121,7 @@ class Evaluator:
             task_df = self.dataset_handler.get_task_dataframe(dataset_id, task_config.name)
             if columns_not_full(task_df, self.persona_registry.get_static_names()):
                 log.warning(
-                "Peronas for task %s not created yet. Please run persona creation first.",
+                    "Personas for task %s not created yet. Please run persona creation first.",
                     task_config.task_id
                 )
                 continue

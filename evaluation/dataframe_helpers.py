@@ -43,6 +43,7 @@ def construct_row_mask(
         return slice(None)      # Selects all rows
     return dataframe[mask_column] == mask
 
+
 def get_with_row_mask(
     dataframe: pd.DataFrame,
     mask_column: str | None,
@@ -104,6 +105,7 @@ def column_not_full(
         return bool(dataframe.loc[row_mask, column_name].isnull().any())
     return bool(dataframe.loc[column_name].isnull().any())
 
+
 def columns_not_full(
     dataframe: pd.DataFrame,
     column_names: List[str],
@@ -115,7 +117,7 @@ def columns_not_full(
 
     Args:
         dataframe (pd.DataFrame): pandas DataFrame.
-        column_name (List[str]): Column used to check for empty values.
+        column_names (List[str]): Column used to check for empty values.
         row_mask (slice | pd.Series[bool] | None): A row mask.
 
     Returns:

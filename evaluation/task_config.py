@@ -17,6 +17,7 @@ class TaskConfig:
         field (str): High-level field of study of this task.
         static_persona (str): A single-sentence, base persona string in the format "You are <occupation>". 
     """
+
     task_id: str
     dataset_id: str
     name: Optional[str]

@@ -12,7 +12,7 @@ log = get_logger(__name__)
 
 
 class LLMClient:
-    """Primary class for communicating with the open ai api."""
+    """Primary class for communicating with the api."""
 
     def __init__(self):
         self.client = OpenAI()
@@ -104,7 +104,7 @@ class LLMClient:
                 assert batch.errors is not None
                 assert batch.errors.data is not None
                 for error in batch.errors.data:
-                    log.info("Error %s: %s", error.code, error.message)
+                    log.error("Error %s: %s", error.code, error.message)
 
                 self.batches_info_store[task_id].status = "failed"
             elif batch.status == "in_progress":
