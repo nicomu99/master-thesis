@@ -13,13 +13,13 @@ from pandas import DataFrame
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
-from .task_config import TaskConfig
 from .dataset_config import DatasetConfig
 from .log_conf import get_logger, logging
 from .dataframe_helpers import (
     add_empty_column,
     get_with_row_mask
 )
+from .constants import QUESTION_COLUMN, ANSWER_COLUMN
 
 log = get_logger(__name__)
 disable_progress_bar()
@@ -28,12 +28,17 @@ disable_progress_bar()
 class DatasetHandler:
     """Handles dataset loading and saving.
     """
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        include_datasets: Optional[Iterable[str]] = None,
+        exclude_datasets: Optional[Iterable[str]] = None,
+    ) -> None:
         self.dataset_path = Path("data")
 
         self.dataset_ids: List[str] = []
         self.dataframes: Dict[str, pd.DataFrame] = {}
         self.dataset_configs: Dict[str, DatasetConfig] = {}
+        self.load(include_datasets, exclude_datasets)
 
     @overload
     def iter_datasets(self, desc: str, logger: logging.Logger, kind: Literal["ids"]) -> Generator[str]: ...
@@ -91,7 +96,7 @@ class DatasetHandler:
         self,
         include_datasets: Optional[Iterable[str]] = None,
         exclude_datasets: Optional[Iterable[str]] = None
-    ) -> List[TaskConfig]:
+    ):
         """Loads the task configurations, dataset configurations and samples into memory.
 
         The function downloads any datasets not present in the local file system and stores them to disk. If
@@ -106,39 +111,27 @@ class DatasetHandler:
             dict: Dictionary with dataset id as keys and list of task configuration as values
         """
 
-        log.info("Starting dataset preparation")
+        log.info("Preparing datasets")
         self.dataset_path.mkdir(parents=True, exist_ok=True)
 
-        with open("config.json", "r", encoding="utf-8") as f:
-            configs = json.load(f)
-        raw_configs = configs.get("datasets", {})
+        with open("config_dataset.json", "r", encoding="utf-8") as f:
+            raw_configs = json.load(f)
 
-        dataset_ids = raw_configs.keys()
-        self._select_dataset_ids(dataset_ids, include_datasets, exclude_datasets)
+            dataset_ids = raw_configs.keys()
+            self._select_dataset_ids(dataset_ids, include_datasets, exclude_datasets)
 
-        task_configs = []
-        for dataset_id in self.iter_datasets("Loading dataset", log, kind="ids"):
-            raw_dataset_config = raw_configs[dataset_id]
+            for dataset_id in self.iter_datasets("Loading dataset", log, kind="ids"):
+                raw_dataset_config = raw_configs[dataset_id]
 
-            dataset_config = {
-                k: v for k, v in raw_dataset_config.items() if k in {f.name for f in fields(DatasetConfig)}
-            }
-            config = DatasetConfig(dataset_id=dataset_id, **dataset_config)
-            self.dataset_configs[dataset_id] = config
-            self.dataframes[dataset_id] = self._read_or_download_dataset(
-                dataset_id,
-                config.huggingface_id,
-                config.split,
-                config.load_name
-            )
-
-            for task in raw_dataset_config["tasks"]:
-                task_id = f"{dataset_id}_{task["name"]}"
-                task_config = TaskConfig(task_id=task_id, dataset_id=dataset_id, **task)
-                task_configs.append(task_config)
-
-        log.debug("Finished dataset preparation")
-        return task_configs
+                dataset_config = {
+                    k: v for k, v in raw_dataset_config.items() if k in {f.name for f in fields(DatasetConfig)}
+                }
+                dataset_config = DatasetConfig(dataset_id=dataset_id, **dataset_config)
+                self.dataset_configs[dataset_id] = dataset_config
+                self.dataframes[dataset_id] = self._download_dataset(
+                    dataset_id,
+                    dataset_config
+                )
 
     def write_dataframe(
         self,
@@ -182,12 +175,10 @@ class DatasetHandler:
             dataset_ids = [d for d in dataset_ids if d not in exclude_datasets]
         self.dataset_ids = dataset_ids
 
-    def _read_or_download_dataset(
+    def _download_dataset(
             self,
             dataset_id: str,
-            huggingface_id: str,
-            dataset_split: str,
-            dataset_name: Optional[str] = None
+            dataset_config: DatasetConfig
     ) -> pd.DataFrame:
         """Reads or downloads a dataset.
 
@@ -206,15 +197,21 @@ class DatasetHandler:
             Returns a pandas DataFrame containing the samples of the specified dataset.
 
         """
-        dataset_file = Path(f"{self.dataset_path}/{dataset_id}.parquet")
 
+        log.info("Loading %s", dataset_id)
+
+        dataset_file = Path(f"{self.dataset_path}/{dataset_id}.parquet")
         if not dataset_file.is_file():
             log.info("Dataset %s could not be found locally, commencing with download", dataset_file)
+
             # Download dataset
-            if dataset_name:
-                dataset = load_dataset(huggingface_id, split=dataset_split, name=dataset_name)
+            load_name = dataset_config.load_name
+            hf_id = dataset_config.huggingface_id
+            dataset_split = dataset_config.split
+            if load_name:
+                dataset = load_dataset(hf_id, split=dataset_split, name=load_name)
             else:
-                dataset = load_dataset(huggingface_id, split=dataset_split)
+                dataset = load_dataset(hf_id, split=dataset_split)
 
             assert isinstance(dataset, Dataset), \
                 f"Error while loading {dataset_id}: Wrong dataset type {type(dataset)}, should be Dataset."
@@ -223,11 +220,18 @@ class DatasetHandler:
             assert isinstance(dataframe, pd.DataFrame), \
                 f"Error while loading {dataset_id}: Wrong dataset type {type(dataframe)}, should be pd.DataFrame."
 
+
+            rename_columns = {dataset_config.question_column: QUESTION_COLUMN}
+            if dataset_config.answer_column:
+                rename_columns[dataset_config.answer_column] = ANSWER_COLUMN
+            dataframe.rename(columns=rename_columns, inplace=True)
+
             dataframe.insert(0, "static_id", [f"{dataset_id}_{i}" for i in range(len(dataframe))])
             dataframe.to_parquet(dataset_file)
+        else:
+            dataframe = pd.read_parquet(dataset_file)
 
-        df = pd.read_parquet(dataset_file)
-        return df
+        return dataframe
 
     def get_config(
         self,
@@ -250,21 +254,21 @@ class DatasetHandler:
         task_name: Optional[str]
     ):
         dataframe = self.dataframes[dataset_id]
-        task_column = self.dataset_configs[dataset_id].task_column
+        task_column = self.dataset_configs[dataset_id].category_column
         return get_with_row_mask(dataframe, task_column, task_name)
 
     def merge_and_write(
         self,
         dataset_id: str,
-        subset_df: pd.DataFrame
+        subset_df: pd.DataFrame | List[Dict]
     ):
         dataframe = self.dataframes[dataset_id]
-        dataframe.set_index("static_id", inplace=True)
-        subset_df.set_index("static_id", inplace=True)
+        if isinstance(subset_df, List):
+            subset_df = pd.DataFrame(subset_df)
 
-        # Update matching rows in df with values from subset_df
+        dataframe.set_index("static_id")
+        subset_df.set_index("static_id")
         dataframe.update(subset_df)
+        dataframe.reset_index()
 
-        # Optional: reset index if you want to keep 'static_id' as a column
-        dataframe.reset_index(inplace=True)
         self.write_dataframe(dataset_id)

@@ -1,0 +1,10 @@
+{
+    "mmlu-pro_chemistry": {
+        "dataset_id": "mmlu-pro",
+        "field": "chemistry",
+        "static_persona": "You are a knowledgeable chemist",
+        "generate_personas": false,
+        "generate_answers": true,
+        "category_name": "chemistry"
+    }
+}

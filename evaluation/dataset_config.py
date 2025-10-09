@@ -25,14 +25,6 @@ class DatasetConfig:
     split: str
     question_type: str
     question_column: str
-    answer_column: Optional[str]
-    task_column: Optional[str]
-    load_name: Optional[str]
-
-    def __post_init__(self):
-        if self.task_column == "":
-            self.task_column = None
-        if self.answer_column == "":
-            self.answer_column = None
-        if self.load_name == "":
-            self.load_name = None
+    category_column: Optional[str] = None
+    answer_column: Optional[str] = None
+    load_name: Optional[str] = None

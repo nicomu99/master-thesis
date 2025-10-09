@@ -1,0 +1,10 @@
+{
+  "mmlu-pro": {
+    "huggingface_id": "TIGER-Lab/MMLU-Pro",
+    "split": "test",
+    "question_type": "mc_question",
+    "question_column": "question",
+    "category_column": "category",
+    "answer_column": "options"
+  }
+}

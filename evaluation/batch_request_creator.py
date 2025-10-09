@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pandas as pd
 
-from .dataset_config import DatasetConfig
 from .task_config import TaskConfig
 from .prompt_templates import (
     OPEN_QUESTION_TEMPLATE,
     MC_QUESTION_TEMPLATE,
     SUMMARIZATION_TEMPLATE
 )
+from .constants import QUESTION_COLUMN, ANSWER_COLUMN
 
 
 class BatchRequestCreator:
@@ -21,6 +21,8 @@ class BatchRequestCreator:
         temp_path (Path): A temporary directory path. Request files will be saved into this directory.
     """
     def __init__(self):
+        self.model = "gpt-5-nano"
+
         self.temp_path = Path("temp")
         self.temp_path.mkdir(parents=True, exist_ok=True)
 
@@ -46,7 +48,7 @@ class BatchRequestCreator:
             "method": "POST",
             "url": "/v1/responses",
             "body": {
-                "model": "gpt-5-mini",
+                "model": self.model,
                 "input": prompt,
                 **({"instructions": instruction if instruction else {}})
             }
@@ -56,22 +58,17 @@ class BatchRequestCreator:
 
     @staticmethod
     def create_question_prompt(
-        question_type: str,
         task_data: Dict[str, str],
-        question_key: str,
-        answer_key: Optional[str] = None,
+        question_type: str,
     ) -> str:
         """Returns a question prompt template with filled out placeholders.
 
         For a given question type, fetches the correct prompt template and fills all placeholders.
 
         Args:
+            task_data (Dict[str, str]): A dictionary containing the relevant information to fill in placeholders.
             question_type (str): String identifier of the correct question template. Must be "open_question",
                 "mc_question" or "summarization".
-            task_data (Dict[str, str]): A dictionary containing the relevant information to fill in placeholders.
-            question_key (str): A string identifier corresponding to the key of the question in task_data.
-            answer_key (Optional[str], optional): A string identifier corresponding to the key of the answers in
-                task_data. Empty if the task does not contain answers. Defaults to None.
 
         Returns:
             str: Returns the filled template string.
@@ -83,17 +80,16 @@ class BatchRequestCreator:
         if question_type == "mc_question":
             template = MC_QUESTION_TEMPLATE
 
-            assert isinstance(answer_key, str)
             prompt_kwargs = {
-                f"choice_{i + 1}": task_data[answer_key][i] for i in range(4)
+                f"choice_{i + 1}": task_data[ANSWER_COLUMN][i] for i in range(4)
             }
-            prompt_kwargs["question"] = task_data[question_key]
+            prompt_kwargs["question"] = task_data[QUESTION_COLUMN]
         elif question_type == "open_question":
             template = OPEN_QUESTION_TEMPLATE
-            prompt_kwargs = {"question": task_data[question_key]}
+            prompt_kwargs = {"question": task_data[QUESTION_COLUMN]}
         elif question_type == "summarization":
             template = SUMMARIZATION_TEMPLATE
-            prompt_kwargs = {"text": task_data[question_key]}
+            prompt_kwargs = {"text": task_data[QUESTION_COLUMN]}
         else:
             raise ValueError(
                 f"Question type {question_type} not recognized. "
@@ -106,7 +102,7 @@ class BatchRequestCreator:
         self,
         task_config: TaskConfig,
         dataframe: pd.DataFrame,
-        dataset_config: DatasetConfig,
+        question_type: str,
         persona_types: List[str]
     ) -> str:
         """Creates a request file for task question answering.
@@ -114,7 +110,8 @@ class BatchRequestCreator:
         Args:
             task_config (TaskConfig): Task configuration attributes.
             dataframe (pd.DataFrame): Dataframe containing samples of the task.
-            dataset_config (DatasetConfig): Dataset configuration.
+            question_type (str): The question type of this task. Can be "mc_question", 
+                "open_question" or "summarization".
             persona_types (List[str]): Persona types for which a request should be sent to the API.
 
         Returns:
@@ -129,10 +126,8 @@ class BatchRequestCreator:
                 row_dict = row._asdict()  # type: ignore
 
                 prompt = self.create_question_prompt(
-                    dataset_config.question_type,
                     row_dict,
-                    dataset_config.question_column,
-                    dataset_config.answer_column
+                    question_type
                 )
                 for persona_type in persona_types:
                     custom_id = f"{row_dict["static_id"]}_{persona_type}"
@@ -143,7 +138,6 @@ class BatchRequestCreator:
         self,
         task_config: TaskConfig,
         dataframe: pd.DataFrame,
-        dataset_config: DatasetConfig,
         persona_templates: Dict[str, str]
     ) -> str:
         """Creates a request file for persona generation.
@@ -151,7 +145,6 @@ class BatchRequestCreator:
         Args:
             task_config (TaskConfig): Task configuration attributes.
             dataframe (pd.DataFrame): Dataframe containing samples of the task.
-            dataset_config (DatasetConfig): Dataset configuration.
             persona_templates (Dict[str, str]): Persona types and templates for which a request should be sent to the
                 API.
 
@@ -170,7 +163,7 @@ class BatchRequestCreator:
                     prompt = prompt_template.format(
                         task_type=task_config.field,
                         persona_string=task_config.static_persona,
-                        question=row_dict[dataset_config.question_column]
+                        question=row_dict[QUESTION_COLUMN]
                     )
                     custom_id = f"{row_dict["static_id"]}_{persona_type}"
                     self._write_prompt_to_file(f, custom_id, prompt)

@@ -22,7 +22,7 @@ def get_logger(name: str) -> logging.Logger:
         ch.setLevel(logging.DEBUG)
 
         formatter = logging.Formatter(
-            '%(asctime)s  %(levelname)-8s %(origin)-30s %(message)s',
+            '%(asctime)s  %(levelname)-8s %(origin)-35s %(message)s',
             datefmt="%Y-%m-%d %H:%M:%S"
         )
 

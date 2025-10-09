@@ -20,11 +20,8 @@ class TaskConfig:
 
     task_id: str
     dataset_id: str
-    name: Optional[str]
     field: str
     static_persona: str
-
-    def __post_init__(self):
-        if self.name == "":
-            self.name = None
-            self.task_id = f"{self.dataset_id}_all"
+    generate_personas: bool
+    generate_answers: bool
+    category_name: Optional[str] = None
