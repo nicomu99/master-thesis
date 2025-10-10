@@ -4,8 +4,10 @@ from dataclasses import dataclass
 
 from .prompt_templates import (
     STATIC_SHORT_TEMPLATE,
+    # STATIC_MEDIUM_TEMPLATE,
     STATIC_LONG_TEMPLATE,
     DYNAMIC_SHORT_TEMPLATE,
+    # DYNAMIC_MEDIUM_TEMPLATE,
     DYNAMIC_LONG_TEMPLATE
 )
 

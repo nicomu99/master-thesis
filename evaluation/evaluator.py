@@ -1,26 +1,23 @@
-from typing import Dict, Optional, Iterable, List
+from typing import Dict, Optional, Iterable, List, Set
 
 import json
-from pathlib import Path
-from dataclasses import asdict
 from collections import defaultdict
 
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 from .dataset_handler import DatasetHandler
-from .batch_request_creator import BatchRequestCreator
-from .task_config import TaskConfig
 from .llm_client import LLMClient
 from .persona_registry import PersonaRegistry
-from .dataframe_helpers import columns_not_full
+from .utils import columns_not_full, load_dataclass_dict, save_dataclass_dict
+from .utils import TaskConfig, BatchType
 
-from .log_conf import get_logger
+from .utils import get_logger
 
 log = get_logger(__name__)
 
-# TODO: Allow several batches per task
 # TODO: Update batch info update (now in TaskConfig)
+# TODO: For batches: Create second storage data struct for batches that have been downloaded already.
 
 
 class Evaluator:
@@ -35,26 +32,24 @@ class Evaluator:
 
         self.llm_client = LLMClient()
         self.persona_registry = PersonaRegistry()
-        self.batch_request_creator = BatchRequestCreator()
 
+        self.config_path = "config_task.json"
         self.task_configs: Dict[str, TaskConfig] = {}
         self._load()
 
     def _load(self):
-        with open("config_task.json", "r", encoding="utf-8") as f:
-            raw_configs = json.load(f)
-        self.task_configs = {
-            task_id: TaskConfig(task_id=task_id, **task_config) for task_id, task_config in raw_configs.items()
-        }
+        self.task_configs = load_dataclass_dict(
+            self.config_path,
+            TaskConfig,
+            "task_id"
+        )
 
     def _save(self):
-        save_dict = {
-            task_id: {
-                k: v for k, v in asdict(task_config).items() if k != "task_id"
-            } for task_id, task_config in self.task_configs.items()
-        }
-        with open("config_task.json", "w", encoding="utf-8") as f:
-            json.dump(save_dict, f, indent=4, ensure_ascii=False)
+        save_dataclass_dict(
+            self.config_path,
+            self.task_configs,
+            "task_id"
+        )
 
     def generate_static_personas(
             self,
@@ -115,12 +110,10 @@ class Evaluator:
             if columns_not_full(task_df, self.persona_registry.get_dynamic_names()):
                 log.debug("Creating dynamic personas")
 
-                persona_request_file = self.batch_request_creator.create_persona_request_file(
-                    task_config,
-                    task_df,
-                    self.persona_registry.get_dynamic_templates()
-                )
-                self.llm_client.send_batch(task_id, "personas", persona_request_file)
+                self.llm_client.send_persona_batch(
+                    task_config, task_df,
+                    self.persona_registry.get_dynamic_templates())
+
             task_config.generate_personas = False
         self._save()
 
@@ -156,14 +149,9 @@ class Evaluator:
                 )
                 continue
 
-            task_file = self.batch_request_creator.create_task_request_file(
-                task_config,
-                task_df,
-                question_type,
-                persona_names
-            )
+            self.llm_client.send_task_batch(
+                task_config, task_df, question_type, persona_names)
 
-            self.llm_client.send_batch(task_id, "answers", task_file)
             task_config.generate_answers = False
         self._save()
 
@@ -182,7 +170,7 @@ class Evaluator:
         self.llm_client.check_batch_statuses()
 
     @staticmethod
-    def get_response_data(file_name: Path) -> List[Dict]:
+    def get_response_data(file_name: str) -> List[Dict]:
         response_data = defaultdict(lambda: defaultdict(str))
 
         with open(file_name, "rb") as f:
@@ -213,17 +201,40 @@ class Evaluator:
 
         return structured_response
 
+    @staticmethod
+    def get_error_data(file_name: str) -> Set[str]:
+
+        error_messages = set()
+        with open(file_name, "rb") as f:
+            for line in f:
+                response_line = json.loads(line)
+                response = response_line["response"]["body"]["error"]["message"]
+                error_messages.add(response)
+
+        return error_messages
+
     def fetch_batch_responses(self):
         """Fetches batch responses and saves them to disk."""
         retrieved_batches = self.llm_client.fetch_batch_responses()
         for batch_info in retrieved_batches:
             task_id = batch_info.task_id
-            output_file = batch_info.local_output_file
-            if output_file is not None:
-                response_dict = self.get_response_data(output_file)
+            dataset_id = self.task_configs[task_id].dataset_id
 
-                dataset_id = self.task_configs[task_id].dataset_id
+            output_file = batch_info.local_output_file
+            if output_file:
+                response_dict = self.get_response_data(output_file)
                 self.dataset_handler.merge_and_write(dataset_id, response_dict)
+
+            error_file = batch_info.local_error_file
+            if error_file:
+                error_messages = self.get_error_data(error_file)
+                batch_type = batch_info.batch_type
+                if batch_type == BatchType.PERSONAS:
+                    self.task_configs[task_id].generate_personas = True
+                for message in error_messages:
+                    log.error("Task %s %s failed", task_id, batch_info.batch_type)
+                    log.error(message)
+        self._save()
 
     def get_batch_infos(self):
         """Retrieves the batch info store"""

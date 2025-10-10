@@ -1,6 +1,6 @@
 from typing import Optional
-
 from dataclasses import dataclass
+from .enums import QuestionType
 
 
 @dataclass
@@ -23,7 +23,7 @@ class DatasetConfig:
     dataset_id: str
     huggingface_id: str
     split: str
-    question_type: str
+    question_type: QuestionType
     question_column: str
     category_column: Optional[str] = None
     answer_column: Optional[str] = None

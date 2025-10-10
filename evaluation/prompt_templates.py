@@ -144,5 +144,5 @@ MC_QUESTION_TEMPLATE = (
 )
 
 SUMMARIZATION_TEMPLATE = (
-    "Please summarize the following text: \n{text}"
+    "Please summarize the following text: \n{question}"
 )

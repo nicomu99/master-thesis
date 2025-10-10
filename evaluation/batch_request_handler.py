@@ -5,16 +5,12 @@ from pathlib import Path
 
 import pandas as pd
 
-from .task_config import TaskConfig
-from .prompt_templates import (
-    OPEN_QUESTION_TEMPLATE,
-    MC_QUESTION_TEMPLATE,
-    SUMMARIZATION_TEMPLATE
-)
-from .constants import QUESTION_COLUMN, ANSWER_COLUMN
+from .utils import TaskConfig, QuestionType
+from .utils import QUESTION_COLUMN, ANSWER_COLUMN
+from .prompt_templates import OPEN_QUESTION_TEMPLATE, MC_QUESTION_TEMPLATE, SUMMARIZATION_TEMPLATE
 
 
-class BatchRequestCreator:
+class BatchRequestHandler:
     """Helper class used to create json files with request data.
     
     Attributes:
@@ -26,8 +22,8 @@ class BatchRequestCreator:
         self.temp_path = Path("temp")
         self.temp_path.mkdir(parents=True, exist_ok=True)
 
-    @staticmethod
     def _write_prompt_to_file(
+        self,
         f: Any,
         custom_id: str,
         prompt: str,
@@ -42,16 +38,15 @@ class BatchRequestCreator:
             instruction (str | None): A system prompt overwrite string. If this is empty, the default system prompt
                 will be used. Defaults to None.
         """
+        body = {"model": self.model, "input": prompt}
+        if instruction:
+            body["instructions"] = instruction
 
         api_request_dict = {
             "custom_id": custom_id,
             "method": "POST",
             "url": "/v1/responses",
-            "body": {
-                "model": self.model,
-                "input": prompt,
-                **({"instructions": instruction if instruction else {}})
-            }
+            "body": body
         }
 
         f.write(json.dumps(api_request_dict) + "\n")
@@ -59,7 +54,7 @@ class BatchRequestCreator:
     @staticmethod
     def create_question_prompt(
         task_data: Dict[str, str],
-        question_type: str,
+        question_type: QuestionType,
     ) -> str:
         """Returns a question prompt template with filled out placeholders.
 
@@ -77,23 +72,20 @@ class BatchRequestCreator:
             ValueError: Wrong question type used.
         """
 
-        if question_type == "mc_question":
+        prompt_kwargs = {"question": task_data[QUESTION_COLUMN]}
+        if question_type == QuestionType.MC:
             template = MC_QUESTION_TEMPLATE
-
-            prompt_kwargs = {
-                f"choice_{i + 1}": task_data[ANSWER_COLUMN][i] for i in range(4)
-            }
-            prompt_kwargs["question"] = task_data[QUESTION_COLUMN]
-        elif question_type == "open_question":
+            for idx, answer in enumerate(task_data[ANSWER_COLUMN]):
+                prompt_kwargs[f"choice_{idx + 1}"] = answer
+        elif question_type == QuestionType.OPEN:
             template = OPEN_QUESTION_TEMPLATE
-            prompt_kwargs = {"question": task_data[QUESTION_COLUMN]}
-        elif question_type == "summarization":
+        elif question_type == QuestionType.SUMMARIZATION:
             template = SUMMARIZATION_TEMPLATE
-            prompt_kwargs = {"text": task_data[QUESTION_COLUMN]}
+
         else:
             raise ValueError(
                 f"Question type {question_type} not recognized. "
-                "Should be 'mc_question', 'open_question' or 'summarization'"
+                "Should be 'mc', 'open' or 'summarization'"
             )
 
         return template.format(**prompt_kwargs)
@@ -102,7 +94,7 @@ class BatchRequestCreator:
         self,
         task_config: TaskConfig,
         dataframe: pd.DataFrame,
-        question_type: str,
+        question_type: QuestionType,
         persona_types: List[str]
     ) -> str:
         """Creates a request file for task question answering.

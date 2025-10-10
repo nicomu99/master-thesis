@@ -1,25 +1,17 @@
-from __future__ import annotations
-
-from typing import List, Dict, Optional, Iterable, Literal, overload, Generator
+from typing import List, Dict, Optional, Iterable
 
 import json
 from pathlib import Path
-
 from dataclasses import fields
 
 import pandas as pd
 from datasets import disable_progress_bar, load_dataset, Dataset
-from pandas import DataFrame
-from tqdm import tqdm
-from tqdm.contrib.logging import logging_redirect_tqdm
 
-from .dataset_config import DatasetConfig
-from .log_conf import get_logger, logging
-from .dataframe_helpers import (
-    add_empty_column,
-    get_with_row_mask
-)
-from .constants import QUESTION_COLUMN, ANSWER_COLUMN
+from .utils import DatasetConfig
+from .utils import add_empty_column, get_with_row_mask
+from .utils import QUESTION_COLUMN, ANSWER_COLUMN
+from .utils import get_logger
+
 
 log = get_logger(__name__)
 disable_progress_bar()
@@ -38,61 +30,9 @@ class DatasetHandler:
         self.dataset_ids: List[str] = []
         self.dataframes: Dict[str, pd.DataFrame] = {}
         self.dataset_configs: Dict[str, DatasetConfig] = {}
-        self.load(include_datasets, exclude_datasets)
+        self._load(include_datasets, exclude_datasets)
 
-    @overload
-    def iter_datasets(self, desc: str, logger: logging.Logger, kind: Literal["ids"]) -> Generator[str]: ...
-
-    @overload
-    def iter_datasets(
-            self,
-            desc: str,
-            logger: logging.Logger,
-            kind: Literal["configs"]
-    ) -> Generator[tuple[str, DatasetConfig]]: ...
-
-    @overload
-    def iter_datasets(
-            self,
-            desc: str,
-            logger: logging.Logger,
-            kind: Literal["items"]
-    ) -> Generator[tuple[str, DatasetConfig, pd.DataFrame]]: ...
-
-    def iter_datasets(
-        self,
-        desc: str,
-        logger: logging.Logger,
-        kind: Literal["ids", "configs", "items"] = "ids"
-    ) -> Generator[tuple[str, DatasetConfig, DataFrame] | tuple[str, DatasetConfig] | str, None]:
-
-        """Helper function for iterating the dataset.
-
-        Iterates and yields over the dataset ids. The function makes sure the logging output does not interfere with
-        tqdm and vice versa.
-
-        Args:
-            desc: Description to be shown in the tqdm progress bar.
-            logger: The logger to use the redirect of the tqdm bar on.
-            kind: Values to return. If 'items', dataset ids, data configuration and dataframes will be returned. Else
-                only the dataset ids.
-
-        Yields:
-            str: The next dataset ID from the dataset_ids list.
-
-        """
-        dataset_iterator = tqdm(self.dataset_ids, desc=desc)
-        with logging_redirect_tqdm(loggers=[logger]):
-            for dataset_id in dataset_iterator:
-                dataset_iterator.set_description(f"{desc} {dataset_id}")
-                if kind == "items":
-                    yield dataset_id, self.dataset_configs[dataset_id], self.dataframes[dataset_id]
-                elif kind == "configs":
-                    yield dataset_id, self.dataset_configs[dataset_id]
-                else:
-                    yield dataset_id
-
-    def load(
+    def _load(
         self,
         include_datasets: Optional[Iterable[str]] = None,
         exclude_datasets: Optional[Iterable[str]] = None
@@ -120,7 +60,7 @@ class DatasetHandler:
             dataset_ids = raw_configs.keys()
             self._select_dataset_ids(dataset_ids, include_datasets, exclude_datasets)
 
-            for dataset_id in self.iter_datasets("Loading dataset", log, kind="ids"):
+            for dataset_id in self.dataset_ids:
                 raw_dataset_config = raw_configs[dataset_id]
 
                 dataset_config = {
@@ -132,48 +72,6 @@ class DatasetHandler:
                     dataset_id,
                     dataset_config
                 )
-
-    def write_dataframe(
-        self,
-        dataset_id: str
-    ):
-        """Writes a dataframe to disk.
-
-        Args:
-            dataset_id (str): String identifier of the data frame.
-        """
-        dataframe_file = Path(f"{self.dataset_path}/{dataset_id}.parquet")
-        self.dataframes[dataset_id].to_parquet(dataframe_file)
-
-    def _select_dataset_ids(
-        self,
-        dataset_ids: Iterable[str],
-        include_datasets: Optional[Iterable[str]] = None,
-        exclude_datasets: Optional[Iterable[str]] = None,
-    ):
-        """Filters dataset_names.
-
-        Filters out any datasets not present in include_datasets, if the parameter is not `None`.
-        If include_datasets is not passed, all datasets remain in consideration. If any datasets
-        are present in exclude_datasets, they also will be deleted from consideration.
-
-        Args:
-            dataset_ids: Dataset keys.
-            include_datasets: Dataset keys that should be kept in consideration. If `None`,
-            all will be kept.
-            exclude_datasets: Dataset keys that should not be kept. If `None`, no keys will be
-                                deleted.
-
-        Returns:
-            List[str]: A refined list with dataset keys.
-
-        """
-        dataset_ids = list(dataset_ids)
-        if include_datasets:
-            dataset_ids = [d for d in dataset_ids if d in include_datasets]
-        if exclude_datasets:
-            dataset_ids = [d for d in dataset_ids if d not in exclude_datasets]
-        self.dataset_ids = dataset_ids
 
     def _download_dataset(
             self,
@@ -232,6 +130,48 @@ class DatasetHandler:
             dataframe = pd.read_parquet(dataset_file)
 
         return dataframe
+
+    def write_dataframe(
+        self,
+        dataset_id: str
+    ):
+        """Writes a dataframe to disk.
+
+        Args:
+            dataset_id (str): String identifier of the data frame.
+        """
+        dataframe_file = Path(f"{self.dataset_path}/{dataset_id}.parquet")
+        self.dataframes[dataset_id].to_parquet(dataframe_file)
+
+    def _select_dataset_ids(
+        self,
+        dataset_ids: Iterable[str],
+        include_datasets: Optional[Iterable[str]] = None,
+        exclude_datasets: Optional[Iterable[str]] = None,
+    ):
+        """Filters dataset_names.
+
+        Filters out any datasets not present in include_datasets, if the parameter is not `None`.
+        If include_datasets is not passed, all datasets remain in consideration. If any datasets
+        are present in exclude_datasets, they also will be deleted from consideration.
+
+        Args:
+            dataset_ids: Dataset keys.
+            include_datasets: Dataset keys that should be kept in consideration. If `None`,
+            all will be kept.
+            exclude_datasets: Dataset keys that should not be kept. If `None`, no keys will be
+                                deleted.
+
+        Returns:
+            List[str]: A refined list with dataset keys.
+
+        """
+        dataset_ids = list(dataset_ids)
+        if include_datasets:
+            dataset_ids = [d for d in dataset_ids if d in include_datasets]
+        if exclude_datasets:
+            dataset_ids = [d for d in dataset_ids if d not in exclude_datasets]
+        self.dataset_ids = dataset_ids
 
     def get_config(
         self,

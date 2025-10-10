@@ -1,13 +1,14 @@
 from typing import Any, Dict, List
 
-import json
 from pathlib import Path
-from dataclasses import asdict
 
+import pandas as pd
 from openai import OpenAI
 
-from .batch_info import BatchInfo
-from .log_conf import get_logger
+from .batch_request_handler import BatchRequestHandler
+from .utils import TaskConfig, BatchInfo, BatchType, QuestionType
+from .utils import load_dataclass_dict, save_dataclass_dict
+from .utils import get_logger
 
 log = get_logger(__name__)
 
@@ -16,34 +17,24 @@ class LLMClient:
     """Primary class for communicating with the api."""
 
     def __init__(self):
-        self.client = OpenAI()
         self.model = "gpt-5-nano"
+        self.client = OpenAI()
+        self.batch_request_creator = BatchRequestHandler()
 
         self.temp_path = Path("temp")
-        self.batches_info_file = self.temp_path / "batches_info_file.pickle"
-
+        self.batches_info_file = self.temp_path / "batches_info_file.json"
         self.batches_info_store: Dict[str, BatchInfo] = {}
         self._load()
 
     def _load(self) -> None:
-        if not self.batches_info_file.exists():
-            return
-
-        with open(self.batches_info_file, "r", encoding="utf-8") as f:
-            raw_batch_infos = json.load(f)
-        self.batches_info_store = {
-            batch_id: BatchInfo(batch_id=batch_id, **batch_info) for batch_id, batch_info in raw_batch_infos.items()
-        }
+        self.batches_info_store: Dict[str, BatchInfo] = load_dataclass_dict(
+            self.batches_info_file,
+            BatchInfo,
+            "batch_id"
+        )
 
     def _save(self):
-        save_dict = {
-            batch_id: {
-                k: v for k, v in asdict(batch_info).items() if k != "batch_id"
-            } for batch_id, batch_info in self.batches_info_store.items()
-        }
-
-        with open(self.batches_info_file, "w", encoding="utf-8") as f:
-            json.dump(save_dict, f, indent=4, ensure_ascii=False)
+        save_dataclass_dict(self.batches_info_file, self.batches_info_store, "batch_id")
 
     def get_api_response(
         self,
@@ -79,24 +70,49 @@ class LLMClient:
 
         return response.output_text
 
+    def send_persona_batch(
+        self,
+        task_config: TaskConfig,
+        task_df: pd.DataFrame,
+        persona_templates: Dict[str, str]
+    ) -> None:
+        batch_file_name = self.batch_request_creator.create_persona_request_file(
+            task_config, task_df, persona_templates)
+
+        self.send_batch(
+            task_config.task_id, batch_file_name, BatchType.PERSONAS)
+
+    def send_task_batch(
+        self,
+        task_config: TaskConfig,
+        task_df: pd.DataFrame,
+        question_type: QuestionType,
+        persona_types: List[str]
+    ) -> None:
+        batch_file_name = self.batch_request_creator.create_task_request_file(
+            task_config, task_df, question_type, persona_types)
+
+        self.send_batch(
+            task_config.task_id, batch_file_name, BatchType.ANSWERS)
+
     def send_batch(
         self,
         task_id: str,
-        batch_type: str,
-        batch_file_name: str
+        batch_file: str,
+        batch_type: BatchType
     ):
         """Sends batch files to the llm api.
 
         Args:
             task_id (str): String identifier of the task the batch file belongs to.
+            batch_file_name (str): File name of the file containing the request objects.
             batch_type (str): Enumeration indicating whether the batch contains persona generation requests
                 or task answering prompts.
-            batch_file_name (str): File name of the file containing the request objects.
         """
 
         log.info("Sending batch for task %s", task_id)
 
-        with open(batch_file_name, "rb") as f:
+        with open(batch_file, "rb") as f:
             batch_input_file = self.client.files.create(
                 file=f,
                 purpose="batch"
@@ -109,7 +125,7 @@ class LLMClient:
                 completion_window="24h",
             )
 
-            batch_info = BatchInfo(batch_job.id, task_id, "sent", batch_type, None, None)
+            batch_info = BatchInfo(batch_job.id, task_id, batch_type)
             self.batches_info_store[batch_job.id] = batch_info
 
             self._save()
@@ -123,9 +139,11 @@ class LLMClient:
 
         for batch_id, batch_info in self.batches_info_store.items():
             batch = self.client.batches.retrieve(batch_id)
+            if batch_info.status in ["retrieved", "error"]:
+                continue
 
             task_id = batch_info.task_id
-            log.info("Task %s status is: %s", task_id, batch.status)
+            log.info("Task %s %-8s status is: %s", task_id, batch_info.batch_type, batch.status)
             if batch.status == "failed":
                 assert batch.errors is not None
                 assert batch.errors.data is not None
@@ -145,10 +163,22 @@ class LLMClient:
 
                     batch_info.status = "in_progress"
             elif batch.status == "completed":
-                batch_info.output_file_id = batch.output_file_id
                 batch_info.status = "completed"
+                batch_info.output_file_id = batch.output_file_id
+                if batch.error_file_id:
+                    batch_info.error_file_id = batch.error_file_id
 
         self._save()
+
+    def _save_batch_response(
+        self,
+        remote_file_id: str,
+        local_file_path: Path
+    ):
+        batch_response_stream = self.client.files.content(remote_file_id)
+
+        with open(local_file_path, "wb") as f:
+            f.write(batch_response_stream.read())
 
     def fetch_batch_responses(self)  -> List[BatchInfo]:
         """Fetches responses for batch requests and saves them to files."""
@@ -160,24 +190,24 @@ class LLMClient:
 
         retrieved_batches = []
         for batch_id, batch_info in self.batches_info_store.items():
-            task_id = batch_info.task_id
             if not batch_info.status == "completed":
-                log.debug("Task %s not finished yet", task_id)
                 continue
 
-            if not batch_info.output_file_id:
-                log.info("No output file found for task %s with batch id %s", task_id, batch_info.batch_id)
-                continue
-            batch_response_stream = self.client.files.content(batch_info.output_file_id)
+            task_id = batch_info.task_id
+            for remote_file_id_attr, file_type, local_file_attr in [
+                ("output_file_id",  "output",   "local_output_file"),
+                ("error_file_id",   "error",    "local_error_file")
+            ]:
+                remote_file_id = getattr(batch_info, remote_file_id_attr)
+                if not remote_file_id:
+                    continue
 
-            batch_response_file = self.temp_path / f"{task_id}_{batch_id}.jsonl"
-            with open(batch_response_file, "wb") as f:
-                f.write(batch_response_stream.read())
+                local_batch_file = self.temp_path / f"{task_id}_{batch_id}_{file_type}.jsonl"
+                self._save_batch_response(remote_file_id, local_batch_file)
+                setattr(batch_info, local_file_attr, str(local_batch_file))
+                batch_info.status = "error" if file_type == "error" else "retrieved"
+                retrieved_batches.append(batch_info)
 
-            # Retrieve batch
-            batch_info.status = "retrieved"
-            batch_info.local_output_file = batch_response_file
-            retrieved_batches.append(batch_info)
         self._save()
 
         return retrieved_batches
