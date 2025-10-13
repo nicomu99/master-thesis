@@ -2,13 +2,12 @@ from typing import List, Dict, Optional, Iterable
 
 import json
 from pathlib import Path
-from dataclasses import fields
 
 import pandas as pd
 from datasets import disable_progress_bar, load_dataset, Dataset
 
 from .utils import DatasetConfig
-from .utils import add_empty_column, get_with_row_mask, decode_dataclass
+from .utils import decode_dataclass
 from .utils import QUESTION_COLUMN, ANSWER_COLUMN, STATIC_ID_COLUMN
 from .utils import logging
 
@@ -177,23 +176,16 @@ class DatasetHandler:
     ):
         return self.dataset_configs[dataset_id]
 
-    def insert_columns(
-        self,
-        dataset_id: str,
-        columns: List[str]
-    ):
-        dataframe = self.dataframes[dataset_id]
-        for column in columns:
-            add_empty_column(dataframe, column)
-
     def get_task_dataframe(
         self,
         dataset_id: str,
         task_name: Optional[str]
     ):
         dataframe = self.dataframes[dataset_id]
-        task_column = self.dataset_configs[dataset_id].category_column
-        return get_with_row_mask(dataframe, task_column, task_name)
+        category_column = self.dataset_configs[dataset_id].category_column
+        if category_column:
+            return dataframe[dataframe[category_column] == task_name]
+        return dataframe
 
     def merge_and_write(
         self,
@@ -214,7 +206,7 @@ class DatasetHandler:
             subset_df = pd.DataFrame(subset_df)
 
         dataframe.set_index(STATIC_ID_COLUMN, inplace=True)
-        subset_df.set_index(STATIC_ID_COLUMN, inplace=True)
+        subset_df = subset_df.set_index(STATIC_ID_COLUMN)
         for col in subset_df.columns:
             if col not in dataframe.columns:
                 dataframe[col] = None
