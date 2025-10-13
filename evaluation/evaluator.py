@@ -16,7 +16,6 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 # TODO: Update batch info update (now in TaskConfig)
-# TODO: For batches: Create second storage data struct for batches that have been downloaded already.
 
 
 class Evaluator:
@@ -107,14 +106,12 @@ class Evaluator:
         # First, for each dataset category, create the static personas
         log.info("Generating personas for %s", task_id)
         task_config = self.task_configs[task_id]
-        if not self.llm_client.queue_is_empty():
-            log.info("Batch queue currently not empty. Please wait for other batches to finish first.")
-            return
+        # if not self.llm_client.queue_is_empty():
+        #     log.info("Batch queue currently not empty. Please wait for other batches to finish first.")
+        #     return
 
         # Add new column, if it does not exist yet
         dataset_id = task_config.dataset_id
-        self.dataset_handler.insert_columns(dataset_id, self.persona_registry.get_names())
-
         task_df = self.dataset_handler.get_task_dataframe(dataset_id, task_config.category_name)
         if columns_not_full(task_df, self.persona_registry.get_static_names()):
             log.debug("Creating static personas")
@@ -123,12 +120,12 @@ class Evaluator:
             task_df = task_df.assign(**static_personas)
             self.dataset_handler.merge_and_write(dataset_id, task_df)
 
-        if columns_not_full(task_df, self.persona_registry.get_dynamic_names()):
-            log.debug("Creating dynamic personas")
+        # if columns_not_full(task_df, self.persona_registry.get_dynamic_names()):
+        #     log.debug("Creating dynamic personas")
 
-            self.llm_client.send_persona_batch(
-                task_config, task_df,
-                self.persona_registry.get_dynamic_templates())
+        #     self.llm_client.send_persona_batch(
+        #         task_config, task_df,
+        #         self.persona_registry.get_dynamic_templates())
 
         task_config.status = TaskStatus.PERSONAS_REQUESTED
         self._save()
@@ -186,7 +183,13 @@ class Evaluator:
 
     def check_batch_statuses(self):
         """Prints the batch statuses."""
-        self.llm_client.check_batch_statuses()
+        failed_ids = self.llm_client.check_batch_statuses()
+        for failed_id in failed_ids:
+            task_config = self.task_configs[failed_id]
+            if task_config.status == TaskStatus.PERSONAS_REQUESTED:
+                task_config.status = TaskStatus.PERSONAS_PENDING
+            elif task_config.status == TaskStatus.ANSWERS_REQUESTED:
+                task_config.status = TaskStatus.ANSWERS_PENDING
 
     def fetch_batch_responses(self):
         """Fetches batch responses and saves them to disk."""
@@ -221,20 +224,3 @@ class Evaluator:
                     log.error("Task %s %s failed", task_id, batch_info.batch_type)
                     log.error(message)
         self._save()
-
-    def get_batch_infos(self):
-        """Retrieves the batch info store"""
-        return self.llm_client.batches_info_store
-
-    def update_batch_info(
-        self,
-        task_id: str,
-        new_status: str
-    ):
-        """Retrieves batch infos.
-
-        Args:
-            task_id (str): String identifier of the task specific task.
-            new_status (str): Updated status.
-        """
-        self.llm_client.update_batch_info(task_id, new_status)

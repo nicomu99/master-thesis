@@ -1,4 +1,4 @@
-from typing import Dict, Type, TypeVar
+from typing import Dict, Type, TypeVar, Any
 
 import json
 from enum import Enum
@@ -8,13 +8,36 @@ from dataclasses import fields, is_dataclass, asdict
 T = TypeVar("T")
 
 
-def encode_dataclass(obj):
+def encode_dataclass(obj: object):
+    """Converts enum objects to their values.
+    
+    This is a helper class for serializing enum members of dataclasses. It simply converts each enum member field to
+    its string value.
+
+    Args:
+        obj (object): The object which should be converted.
+
+    Raises:
+        TypeError: If obj is not an enum, an error is thrown.
+
+    Returns:
+        str: The string value of the enum object.
+    """
     if isinstance(obj, Enum):
         return obj.value
     raise TypeError(f"Type {type(obj)} not serializable")
 
 
-def decode_dataclass(data: dict, cls):
+def decode_dataclass(data: dict, cls: Any) -> Any:
+    """Helper function that recursively decodes dataclass data.
+
+    Args:
+        data (dict): A dictionary holding the data of a dataclass.
+        cls (Any): The dataclass template to use to decode the data dictionary.
+
+    Returns:
+        Any: A dataclass object.
+    """
     init_kwargs = {}
     for f in fields(cls):
         val = data.get(f.name)
@@ -32,6 +55,16 @@ def load_dataclass_dict(
     cls: Type[T],
     key_field: str
 ) -> Dict[str, T]:
+    """Loads a json file with dataclass objects into a dictionary.
+
+    Args:
+        file_path (str | Path): The path to the file to be loaded.
+        cls (Type[T]): The data class template to use.
+        key_field (str): The identifier field of the dataclass object.
+
+    Returns:
+        Dict[str, T]: A dictionary with dataclass identifiers as keys and the dataclass object as values.
+    """
     file_path = Path(file_path)
     if not file_path.exists():
         return {}
@@ -47,7 +80,13 @@ def save_dataclass_dict(
     data: dict[str, T],
     key_field: str,
 ) -> None:
-    """Save a dictionary of dataclasses to JSON."""
+    """Save a dictionary of dataclasses to JSON.
+
+    Args:
+        file_path (str | Path): The file path to use to save the data.
+        data (dict[str, T]): A dictionary containing dataclasses as values.
+        key_field (str): The field of the dataclass used as an identifier.
+    """
     save_dict = {
         k: {
             field: value for field, value in asdict(v).items() # pyright: ignore[reportArgumentType]

@@ -18,8 +18,8 @@ disable_progress_bar()
 
 
 class DatasetHandler:
-    """Handles dataset loading and saving.
-    """
+    """Handles dataset loading and saving."""
+
     def __init__(
         self,
         include_datasets: Optional[Iterable[str]] = None,
@@ -44,11 +44,10 @@ class DatasetHandler:
         datasets will be ignored.
 
         Args:
-            include_datasets: Dataset ids that should be loaded. If not specified, all datasets will be loaded.
-            exclude_datasets: Dataset ids that should be excluded from loading. If not specified, all will be loaded.
-
-        Returns:
-            dict: Dictionary with dataset id as keys and list of task configuration as values
+            include_datasets (Optional[Iterable[str]], optional): Dataset ids that should be loaded. If not specified, 
+                all datasets will be loaded. Defaults to None.
+            exclude_datasets (Optional[Iterable[str]], optional): Dataset ids that should be excluded from loading. 
+                If not specified, all will be loaded. Defaults to None.
         """
 
         log.info("Preparing datasets")
@@ -82,17 +81,13 @@ class DatasetHandler:
         and saved locally.
 
         Args:
-            dataset_id: The designated dataset id, taken from dataset_config.py.
+            dataset_id (str): The designated dataset id, taken from dataset_config.py.
                         The id is created manually.
-            huggingface_id: The corresponding repository on the huggingface hub.
-            dataset_split: Data splits that should be downloaded from the hub.
-            dataset_name: Data set name to be downloaded.
+            dataset_config (DatasetConfig): Configuration parameters for the dataset.
 
         Returns:
             Returns a pandas DataFrame containing the samples of the specified dataset.
-
         """
-
         log.info("Loading %s", dataset_id)
 
         dataset_file = Path(f"{self.dataset_path}/{dataset_id}.parquet")
@@ -153,15 +148,11 @@ class DatasetHandler:
         are present in exclude_datasets, they also will be deleted from consideration.
 
         Args:
-            dataset_ids: Dataset keys.
-            include_datasets: Dataset keys that should be kept in consideration. If `None`,
-            all will be kept.
-            exclude_datasets: Dataset keys that should not be kept. If `None`, no keys will be
-                                deleted.
-
-        Returns:
-            List[str]: A refined list with dataset keys.
-
+            dataset_ids (Iterable[str]): Dataset keys.
+            include_datasets (Optional[Iterable[str]], optional): Dataset keys that should be kept in consideration. 
+                If not specified, all will be kept. Defaults to None.
+            exclude_datasets (Optional[Iterable[str]], optional): Dataset keys that should not be kept. If not 
+                specified, no keys will be deleted. Defaults to None.
         """
         dataset_ids = list(dataset_ids)
         if include_datasets:
@@ -173,14 +164,32 @@ class DatasetHandler:
     def get_config(
         self,
         dataset_id: str
-    ):
+    ) -> DatasetConfig:
+        """Returns the dataset configuration of a dataset.
+
+        Args:
+            dataset_id (str): String identifier of the dataset.
+
+        Returns:
+            DatasetConfig: Dataset configuration class.
+        """
         return self.dataset_configs[dataset_id]
 
     def get_task_dataframe(
         self,
         dataset_id: str,
         task_name: Optional[str]
-    ):
+    ) -> pd.DataFrame:
+        """Returns a dataframe with task samples.
+
+        Args:
+            dataset_id (str): String identifier of the dataset.
+            task_name (Optional[str]): Name of the task. If a dataset contains several tasks, this value is used to 
+                pick correct samples.
+
+        Returns:
+            pd.DataFrame: Dataframe with task samples.
+        """
         dataframe = self.dataframes[dataset_id]
         category_column = self.dataset_configs[dataset_id].category_column
         if category_column:

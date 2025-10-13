@@ -5,6 +5,7 @@ factory = logging.getLogRecordFactory()
 
 
 def record_factory(*args, **kwargs):
+    """Creates a combined field for the class and function name."""
     record = factory(*args, **kwargs)
     class_name = record.name.split(".")[-1]
     record.origin = f'{class_name}:{record.funcName}'

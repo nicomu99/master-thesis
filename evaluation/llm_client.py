@@ -37,7 +37,12 @@ class LLMClient:
     def _save(self):
         save_dataclass_dict(self.batches_info_file, self.batches_info_store, "batch_id")
 
-    def queue_is_empty(self):
+    def queue_is_empty(self) -> bool:
+        """Checks whether any batches are currently being processed.
+
+        Returns:
+            bool: Returns true if any batch is being processed at the moment. Else false.
+        """
         for _, batch_info in self.batches_info_store.items():
             if batch_info.status in ("in_progress", "sent"):
                 return False
@@ -83,6 +88,13 @@ class LLMClient:
         task_df: pd.DataFrame,
         persona_templates: Dict[str, str]
     ) -> None:
+        """Sends a persona batch request to the LLM API.
+
+        Args:
+            task_config (TaskConfig): Configuration parameters of the task.
+            task_df (pd.DataFrame): Dataframe containing task samples.
+            persona_templates (Dict[str, str]): Template to use for persona generation.
+        """
         batch_file_name = self.batch_request_creator.create_persona_request_file(
             task_config, task_df, persona_templates)
 
@@ -96,6 +108,14 @@ class LLMClient:
         question_type: QuestionType,
         persona_types: List[str]
     ) -> None:
+        """Sends a task question answering request to the LLM API.
+
+        Args:
+            task_config (TaskConfig): Configuration parameters of the task.
+            task_df (pd.DataFrame): Dataframe containing task samples.
+            question_type (QuestionType): The type of questions of the task samples.
+            persona_types (List[str]): The persona types to use for generating answers.
+        """
         batch_file_name = self.batch_request_creator.create_task_request_file(
             task_config, task_df, question_type, persona_types)
 
@@ -137,8 +157,12 @@ class LLMClient:
 
             self._save()
 
-    def check_batch_statuses(self):
-        """Fetches and prints statuses of batch requests."""
+    def check_batch_statuses(self) -> List[str]:
+        """Fetches and prints statuses of batch requests.
+        
+        Returns:
+            List[str]: A list of batch identifiers of batches that did not finish correctly.
+        """
 
         active_batches = {
             k:v
@@ -147,7 +171,7 @@ class LLMClient:
         }
         log.info("Checking batch statuses; %s active batches found.", len(active_batches))
 
-        failed_ids = []
+        failed_task_ids = []
         for batch_id, batch_info in active_batches.items():
             batch = self.client.batches.retrieve(batch_id)
             if batch_info.status in ["retrieved", "error"]:
@@ -161,8 +185,8 @@ class LLMClient:
                 for error in batch.errors.data:
                     log.error("Error %s: %s", error.code, error.message)
 
-                batch_info.status = "failed"
-                failed_ids.append(batch_id)
+                batch_info.status = "error"
+                failed_task_ids.append(batch_info.task_id)
             elif batch.status == "in_progress":
                 request_counts = batch.request_counts
                 if request_counts is not None:
@@ -180,10 +204,8 @@ class LLMClient:
                 if batch.error_file_id:
                     batch_info.error_file_id = batch.error_file_id
 
-        for failed_id in failed_ids:
-            del self.batches_info_store[failed_id]
-
         self._save()
+        return failed_task_ids
 
     def _save_batch_response(
         self,
@@ -196,8 +218,11 @@ class LLMClient:
             f.write(batch_response_stream.read())
 
     def fetch_batch_responses(self)  -> List[BatchInfo]:
-        """Fetches responses for batch requests and saves them to files."""
+        """Fetches responses for batch requests and saves them to files.
 
+        Returns:
+            List[BatchInfo]: A list with batch information of batches that finished.
+        """
         log.info("Fetching batch responses")
         if len(self.batches_info_store) < 1:
             log.debug("No batches found")
@@ -224,16 +249,5 @@ class LLMClient:
                 batch_info.status = "error" if file_type == "error" else "retrieved"
                 retrieved_batches.append(batch_info)
 
-            # del self.batches_info_store[batch_id]
-
         self._save()
         return retrieved_batches
-
-    def update_batch_info(
-        self,
-        task_id: str,
-        new_status: str = "sent"
-    ):
-        self.batches_info_store[task_id].status = new_status
-        print(self.batches_info_store[task_id].status, task_id)
-        self._save()

@@ -16,6 +16,7 @@ class BatchRequestHandler:
     """Helper class used to create json files with request data.
     
     Attributes:
+        model (str): The model to use for completions.
         temp_path (Path): A temporary directory path. Request files will be saved into this directory.
     """
     def __init__(self):
@@ -171,6 +172,18 @@ class BatchRequestHandler:
         file_name: str,
         batch_type: BatchType = BatchType.PERSONAS
     ) -> pd.DataFrame:
+        """Helper function that reads the contents of a batch response json file.
+        
+        The contents are returned as a pandas dataframe.
+
+        Args:
+            file_name (str): Path to the json file to read.
+            batch_type (BatchType, optional): The batch type is used to define the column names of the output 
+                dataframe. Defaults to BatchType.PERSONAS.
+
+        Returns:
+            pd.DataFrame: Dataframe containing one row per sample and one column for each persona type.
+        """
         response_data = defaultdict(lambda: defaultdict(str))
 
         with open(file_name, "rb") as f:
@@ -207,6 +220,14 @@ class BatchRequestHandler:
 
     @staticmethod
     def read_error_file(file_name: str) -> List[str]:
+        """Reads the contents of a an error file and returns a list with each unique error message.
+
+        Args:
+            file_name (str): File path to the error file.
+
+        Returns:
+            List[str]: A list of error messages
+        """
 
         error_messages = set()
         with open(file_name, "rb") as f:

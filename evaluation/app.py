@@ -1,3 +1,6 @@
+import subprocess
+import platform
+
 from .evaluator import Evaluator
 from .utils import logging
 
@@ -18,13 +21,14 @@ class App:
             "t": ("Send task requests", self.generate_answers),
             "s": ("Check batch statuses", self.evaluator.check_batch_statuses),
             "f": ("Fetch batch responses", self.evaluator.fetch_batch_responses),
+            "c": ("Check task statuses", self.check_task_statuses),
+            "clear": ("Clears the CLI", self.clear_cli),
             # "a": ("Rerun menu", self.ask_task_resend),
             "h": ("Show this help", self.show_help),
         }
 
     def main(self) -> None:
         """Main loop that listens for user input."""
-
         self.show_help()
         while self.run:
             user_input = input("Enter next command (type h for help): ").strip()
@@ -36,6 +40,7 @@ class App:
                 print("Command unknown. Type \"h\" for help.")
 
     def generate_personas(self) -> None:
+        """Lets the user pick which task to generate personas for."""
         print("Due to API queue limits, only one request should be sent at the same time.")
         missing_map = {
             f"{i + 1}": m for i, m in enumerate(self.evaluator.get_unfinished_tasks_personas())
@@ -55,6 +60,7 @@ class App:
             self.evaluator.generate_personas(missing_map[user_input])
 
     def generate_answers(self) -> None:
+        """Lets the user pick for which task to generate answers."""
         print("Due to API queue limits, only one request should be sent at the same time.")
         missing_map = {
             f"{i + 1}": m for i, m in enumerate(self.evaluator.get_unfinished_tasks_answers())
@@ -75,23 +81,25 @@ class App:
 
     def quit_program(self):
         """Quits the program."""
-
         self.run = False
+
+    def check_task_statuses(self):
+        """Prints task status information."""
+        print("Printing task statuses:")
+        task_configs = self.evaluator.task_configs
+        for idx, (task_id, task_config) in enumerate(task_configs.items()):
+            print(f"    {f'({idx + 1})':>4} Task {task_id:25} status is     {task_config.status}")
+
+    def clear_cli(self):
+        """Clears the CLI."""
+        command = "cls" if platform.system() == "Windows" else "clear"
+        subprocess.run(command, shell=True, check=False)
 
     def ask_task_resend(self):
         """Lets the user pick tasks to resend."""
 
-        batch_infos = self.evaluator.get_batch_infos()
-        for task_id, batch_info in batch_infos.items():
-            log.info("Task %s has status %s", task_id, batch_info.status)
-            user_input = input("Rerun task y|[n]?: ").strip()
-
-            if user_input == "y":
-                self.evaluator.update_batch_info(task_id, "send")
-
     def show_help(self):
         """Prints the help menu."""
-
         print("\nCommands: ")
         for command, (description, _) in self.commands.items():
             print(f"    {command}: {description}")
