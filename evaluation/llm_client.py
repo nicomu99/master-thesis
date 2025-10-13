@@ -8,9 +8,10 @@ from openai import OpenAI
 from .batch_request_handler import BatchRequestHandler
 from .utils import TaskConfig, BatchInfo, BatchType, QuestionType
 from .utils import load_dataclass_dict, save_dataclass_dict
-from .utils import get_logger
+from .utils import logging
 
-log = get_logger(__name__)
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class LLMClient:
@@ -35,6 +36,12 @@ class LLMClient:
 
     def _save(self):
         save_dataclass_dict(self.batches_info_file, self.batches_info_store, "batch_id")
+
+    def queue_is_empty(self):
+        for _, batch_info in self.batches_info_store.items():
+            if batch_info.status in ("in_progress", "sent"):
+                return False
+        return True
 
     def get_api_response(
         self,
@@ -133,11 +140,15 @@ class LLMClient:
     def check_batch_statuses(self):
         """Fetches and prints statuses of batch requests."""
 
-        log.info("Checking batch statuses; %s batches found.", len(self.batches_info_store))
-        if len(self.batches_info_store) == 0:
-            return
+        active_batches = {
+            k:v
+            for k, v in self.batches_info_store.items()
+            if v.status not in ("retrieved", "error")
+        }
+        log.info("Checking batch statuses; %s active batches found.", len(active_batches))
 
-        for batch_id, batch_info in self.batches_info_store.items():
+        failed_ids = []
+        for batch_id, batch_info in active_batches.items():
             batch = self.client.batches.retrieve(batch_id)
             if batch_info.status in ["retrieved", "error"]:
                 continue
@@ -151,6 +162,7 @@ class LLMClient:
                     log.error("Error %s: %s", error.code, error.message)
 
                 batch_info.status = "failed"
+                failed_ids.append(batch_id)
             elif batch.status == "in_progress":
                 request_counts = batch.request_counts
                 if request_counts is not None:
@@ -167,6 +179,9 @@ class LLMClient:
                 batch_info.output_file_id = batch.output_file_id
                 if batch.error_file_id:
                     batch_info.error_file_id = batch.error_file_id
+
+        for failed_id in failed_ids:
+            del self.batches_info_store[failed_id]
 
         self._save()
 
@@ -189,7 +204,7 @@ class LLMClient:
             return []
 
         retrieved_batches = []
-        for batch_id, batch_info in self.batches_info_store.items():
+        for batch_id, batch_info in list(self.batches_info_store.items()):
             if not batch_info.status == "completed":
                 continue
 
@@ -205,11 +220,13 @@ class LLMClient:
                 local_batch_file = self.temp_path / f"{task_id}_{batch_id}_{file_type}.jsonl"
                 self._save_batch_response(remote_file_id, local_batch_file)
                 setattr(batch_info, local_file_attr, str(local_batch_file))
+
                 batch_info.status = "error" if file_type == "error" else "retrieved"
                 retrieved_batches.append(batch_info)
 
-        self._save()
+            # del self.batches_info_store[batch_id]
 
+        self._save()
         return retrieved_batches
 
     def update_batch_info(

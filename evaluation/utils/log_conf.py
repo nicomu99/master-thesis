@@ -11,23 +11,27 @@ def record_factory(*args, **kwargs):
     return record
 
 
-def get_logger(name: str) -> logging.Logger:
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+# def get_logger(name: str) -> logging.Logger:
+root_log = logging.getLogger()
+root_log.setLevel(logging.CRITICAL)
 
-    logging.setLogRecordFactory(record_factory)
 
-    if not logger.handlers:
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
+logging.setLogRecordFactory(record_factory)
 
-        formatter = logging.Formatter(
-            '%(asctime)s  %(levelname)-8s %(origin)-35s %(message)s',
-            datefmt="%Y-%m-%d %H:%M:%S"
-        )
+for handler in list(root_log.handlers):
+    root_log.removeHandler(handler)
 
-        ch.setFormatter(formatter)
-        logger.addHandler(ch)
-        logger.propagate = False    # Remove log handlers from libraries
+if not root_log.handlers:
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
 
-    return logger
+    formatter = logging.Formatter(
+        '%(asctime)s  %(levelname)-8s %(origin)-35s %(message)s',
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    ch.setFormatter(formatter)
+    root_log.addHandler(ch)
+    root_log.propagate = False
+
+#    return logger

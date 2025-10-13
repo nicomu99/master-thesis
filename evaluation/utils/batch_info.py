@@ -12,7 +12,7 @@ class BatchInfo:
         task_id (str): Identifier used to map the batch to a task.
         batch_type (BatchType): Indicates what information the batch contains. Can be "personas" or "answers".
         status (str): Possibly outdated process status, indicating what step the batch is currently going through. 
-            Can be "send", "sent", "failed", "in_progress", "completed" "error", or "retrieved". 
+            Can be "send", "sent", "failed", "in_progress", "completed", "error", or "retrieved". 
             
             If the status is "send", a request file has already been created, but the batch has not been sent to the 
             API. The statuses "failed", "in_progress" and "completed" correspond to the steps of the API. 

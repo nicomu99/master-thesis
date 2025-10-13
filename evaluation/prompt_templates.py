@@ -137,10 +137,7 @@ OPEN_QUESTION_TEMPLATE = "{question}"
 
 MC_QUESTION_TEMPLATE = (
     "{question}\n\n"
-    "(A) {choice_1}\n"
-    "(B) {choice_2}\n"
-    "(C) {choice_3}\n"
-    "(D) {choice_4}\n"
+    "{choices}"
 )
 
 SUMMARIZATION_TEMPLATE = (

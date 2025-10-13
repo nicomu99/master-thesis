@@ -1,11 +1,13 @@
 from typing import Any, Dict, Optional, List
 
 import json
+import string
 from pathlib import Path
+from collections import defaultdict
 
 import pandas as pd
 
-from .utils import TaskConfig, QuestionType
+from .utils import TaskConfig, QuestionType, BatchType
 from .utils import QUESTION_COLUMN, ANSWER_COLUMN
 from .prompt_templates import OPEN_QUESTION_TEMPLATE, MC_QUESTION_TEMPLATE, SUMMARIZATION_TEMPLATE
 
@@ -62,7 +64,7 @@ class BatchRequestHandler:
 
         Args:
             task_data (Dict[str, str]): A dictionary containing the relevant information to fill in placeholders.
-            question_type (str): String identifier of the correct question template. Must be "open_question",
+            question_type (QuestionType): String identifier of the correct question template. Must be "open_question",
                 "mc_question" or "summarization".
 
         Returns:
@@ -75,8 +77,11 @@ class BatchRequestHandler:
         prompt_kwargs = {"question": task_data[QUESTION_COLUMN]}
         if question_type == QuestionType.MC:
             template = MC_QUESTION_TEMPLATE
-            for idx, answer in enumerate(task_data[ANSWER_COLUMN]):
-                prompt_kwargs[f"choice_{idx + 1}"] = answer
+            letters = string.ascii_uppercase
+            choices = "\n".join(
+                f"({letters[i]}) {answer}" for i, answer in enumerate(task_data[ANSWER_COLUMN])
+            )
+            prompt_kwargs["choices"] = choices
         elif question_type == QuestionType.OPEN:
             template = OPEN_QUESTION_TEMPLATE
         elif question_type == QuestionType.SUMMARIZATION:
@@ -87,7 +92,6 @@ class BatchRequestHandler:
                 f"Question type {question_type} not recognized. "
                 "Should be 'mc', 'open' or 'summarization'"
             )
-
         return template.format(**prompt_kwargs)
 
     def create_task_request_file(
@@ -161,3 +165,54 @@ class BatchRequestHandler:
                     self._write_prompt_to_file(f, custom_id, prompt)
 
         return persona_request_file
+
+    @staticmethod
+    def read_response_file(
+        file_name: str,
+        batch_type: BatchType = BatchType.PERSONAS
+    ) -> pd.DataFrame:
+        response_data = defaultdict(lambda: defaultdict(str))
+
+        with open(file_name, "rb") as f:
+            for line in f:
+                response_line = json.loads(line)
+
+                # The custom id is constructred from the manually defined static_id and the persona type
+                response_id = response_line["custom_id"].split("_")
+                sample_id = "_".join(response_id[:2])
+                column_id = "_".join(response_id[2:])
+
+                response = response_line["response"]
+                if "body" in response:
+                    response = response["body"]
+
+                completion = "".join(
+                    c["text"]
+                    for o in response["output"]
+                    for c in o.get("content", [])
+                    if c.get("type") == "output_text"
+                )
+
+                if batch_type == BatchType.ANSWERS:
+                    column_id = column_id.replace("persona", "answer")
+
+                response_data[sample_id][column_id] = completion
+
+        structured_response = [
+            {"static_id": static_id, **responses}
+            for static_id, responses in response_data.items()
+        ]
+
+        return pd.DataFrame(structured_response)
+
+    @staticmethod
+    def read_error_file(file_name: str) -> List[str]:
+
+        error_messages = set()
+        with open(file_name, "rb") as f:
+            for line in f:
+                response_line = json.loads(line)
+                response = response_line["response"]["body"]["error"]["message"]
+                error_messages.add(response)
+
+        return list(error_messages)

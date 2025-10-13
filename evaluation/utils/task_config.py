@@ -1,6 +1,6 @@
 from typing import Optional
-
 from dataclasses import dataclass
+from .enums import TaskStatus
 
 
 @dataclass
@@ -22,6 +22,5 @@ class TaskConfig:
     dataset_id: str
     field: str
     static_persona: str
-    generate_personas: bool
-    generate_answers: bool
+    status: TaskStatus = TaskStatus.PERSONAS_PENDING
     category_name: Optional[str] = None

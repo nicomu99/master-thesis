@@ -51,7 +51,7 @@ def save_dataclass_dict(
     save_dict = {
         k: {
             field: value for field, value in asdict(v).items() # pyright: ignore[reportArgumentType]
-            if field != key_field 
+            if field != key_field
         }
         for k, v in data.items()
         if is_dataclass(v)

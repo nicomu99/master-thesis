@@ -8,12 +8,13 @@ import pandas as pd
 from datasets import disable_progress_bar, load_dataset, Dataset
 
 from .utils import DatasetConfig
-from .utils import add_empty_column, get_with_row_mask
-from .utils import QUESTION_COLUMN, ANSWER_COLUMN
-from .utils import get_logger
+from .utils import add_empty_column, get_with_row_mask, decode_dataclass
+from .utils import QUESTION_COLUMN, ANSWER_COLUMN, STATIC_ID_COLUMN
+from .utils import logging
 
 
-log = get_logger(__name__)
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 disable_progress_bar()
 
 
@@ -63,10 +64,7 @@ class DatasetHandler:
             for dataset_id in self.dataset_ids:
                 raw_dataset_config = raw_configs[dataset_id]
 
-                dataset_config = {
-                    k: v for k, v in raw_dataset_config.items() if k in {f.name for f in fields(DatasetConfig)}
-                }
-                dataset_config = DatasetConfig(dataset_id=dataset_id, **dataset_config)
+                dataset_config = decode_dataclass({"dataset_id": dataset_id, **raw_dataset_config}, DatasetConfig)
                 self.dataset_configs[dataset_id] = dataset_config
                 self.dataframes[dataset_id] = self._download_dataset(
                     dataset_id,
@@ -124,7 +122,7 @@ class DatasetHandler:
                 rename_columns[dataset_config.answer_column] = ANSWER_COLUMN
             dataframe.rename(columns=rename_columns, inplace=True)
 
-            dataframe.insert(0, "static_id", [f"{dataset_id}_{i}" for i in range(len(dataframe))])
+            dataframe.insert(0, STATIC_ID_COLUMN, [f"{dataset_id}_{i}" for i in range(len(dataframe))])
             dataframe.to_parquet(dataset_file)
         else:
             dataframe = pd.read_parquet(dataset_file)
@@ -202,13 +200,26 @@ class DatasetHandler:
         dataset_id: str,
         subset_df: pd.DataFrame | List[Dict]
     ):
+        """Merges a subset dataframe to the initial one by the static_id column.
+        
+        This function merges the subset into the parent dataframe. If any columns in the subset are not present in the
+        parent, they will be created. The merged dataframe will be saved to disk.
+
+        Args:
+            dataset_id (str): String identifier of the parent dataframe.
+            subset_df (pd.DataFrame | List[Dict]): Subset dataframe that will be merged to the parent.
+        """
         dataframe = self.dataframes[dataset_id]
         if isinstance(subset_df, List):
             subset_df = pd.DataFrame(subset_df)
 
-        dataframe.set_index("static_id")
-        subset_df.set_index("static_id")
+        dataframe.set_index(STATIC_ID_COLUMN, inplace=True)
+        subset_df.set_index(STATIC_ID_COLUMN, inplace=True)
+        for col in subset_df.columns:
+            if col not in dataframe.columns:
+                dataframe[col] = None
+
         dataframe.update(subset_df)
-        dataframe.reset_index()
+        dataframe.reset_index(inplace=True)
 
         self.write_dataframe(dataset_id)

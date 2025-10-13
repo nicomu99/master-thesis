@@ -1,7 +1,8 @@
 from .evaluator import Evaluator
-from .utils import get_logger
+from .utils import logging
 
-log = get_logger(__name__)
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class App:
@@ -13,11 +14,11 @@ class App:
 
         self.commands = {
             "q": ("Quit program", self.quit_program),
-            "p": ("Generate personas", self.evaluator.generate_personas),
-            "t": ("Send task requests", self.evaluator.send_task_requests),
+            "p": ("Generate personas", self.generate_personas),
+            "t": ("Send task requests", self.generate_answers),
             "s": ("Check batch statuses", self.evaluator.check_batch_statuses),
             "f": ("Fetch batch responses", self.evaluator.fetch_batch_responses),
-            "a": ("Rerun menu", self.ask_task_resend),
+            # "a": ("Rerun menu", self.ask_task_resend),
             "h": ("Show this help", self.show_help),
         }
 
@@ -33,6 +34,44 @@ class App:
                 func()
             else:
                 print("Command unknown. Type \"h\" for help.")
+
+    def generate_personas(self) -> None:
+        print("Due to API queue limits, only one request should be sent at the same time.")
+        missing_map = {
+            f"{i + 1}": m for i, m in enumerate(self.evaluator.get_unfinished_tasks_personas())
+        }
+
+        if len(missing_map) < 1:
+            print("No tasks with missing personas. Skipping.")
+            return
+
+        for k, v in missing_map.items():
+            print(f"     ({k}) {v}")
+
+        user_input = input("Choose task: ")
+        if user_input not in missing_map:
+            print("Task unknown. Please try again.")
+        else:
+            self.evaluator.generate_personas(missing_map[user_input])
+
+    def generate_answers(self) -> None:
+        print("Due to API queue limits, only one request should be sent at the same time.")
+        missing_map = {
+            f"{i + 1}": m for i, m in enumerate(self.evaluator.get_unfinished_tasks_answers())
+        }
+
+        if len(missing_map) < 1:
+            print("No tasks with missing answers.")
+            return
+
+        for k, v in missing_map.items():
+            print(f"     ({k}) {v}")
+
+        user_input = input("Choose task: ")
+        if user_input not in missing_map:
+            print("Task unknown. Please try again.")
+        else:
+            self.evaluator.send_task_requests(missing_map[user_input])
 
     def quit_program(self):
         """Quits the program."""
