@@ -24,7 +24,7 @@ DYNAMIC_SHORT_TEMPLATE = (
     "For the field of {task_type}, create a persona string containing one sentence, written in second person "
     "perspective. The string should include knowledge, experience and expertise one would need to answer the provided "
     "question correctly. Be as specific and detailed as possible, but refrain from giving any hints, clues, "
-    "implications or conclusions about the answer. " 
+    "implications or conclusions about the answer. "
     "Start your description with \"You are\". \n\n"
 
     "Use the following examples as guidance: \n"
@@ -64,7 +64,7 @@ DYNAMIC_MEDIUM_TEMPLATE = (
     "For the field of {task_type}, create a persona string containing three sentences, written in second person "
     "perspective. The string should include knowledge, experience and expertise one would need to answer the provided "
     "question correctly. Be as specific and detailed as possible, but refrain from giving any hints, clues, "
-    "implications or conclusions about the answer. " 
+    "implications or conclusions about the answer. "
     "Start your description with \"You are\". \n\n"
 
     "Use the following examples as guidance: \n"
@@ -104,7 +104,7 @@ DYNAMIC_LONG_TEMPLATE = (
     "For the field of {task_type}, create a persona string containing ten sentences, written in second person "
     "perspective. The string should include knowledge, experience and expertise one would need to answer the provided "
     "question correctly. Be as specific and detailed as possible, but refrain from giving any hints, clues, "
-    "implications or conclusions about the answer. " 
+    "implications or conclusions about the answer. "
     "Start your description with \"You are\". \n\n"
 
     "Use the following examples as guidance: \n"

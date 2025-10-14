@@ -8,29 +8,20 @@ from collections import defaultdict
 import pandas as pd
 
 from .utils import TaskConfig, QuestionType, BatchType
-from .utils import QUESTION_COLUMN, ANSWER_COLUMN
+from .utils import TEMP_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, ANSWER_COLUMN
 from .prompt_templates import OPEN_QUESTION_TEMPLATE, MC_QUESTION_TEMPLATE, SUMMARIZATION_TEMPLATE
 from .persona_registry import PersonaConfig
 
 
 class BatchRequestHandler:
-    """Helper class used to create json files with request data.
-    
-    Attributes:
-        model (str): The model to use for completions.
-        temp_path (Path): A temporary directory path. Request files will be saved into this directory.
-    """
-    def __init__(self):
-        self.model = "gpt-5-nano"
+    """Helper class used to read and write json files with request and response data."""
 
-        self.temp_path = Path("temp")
-        self.temp_path.mkdir(parents=True, exist_ok=True)
-
+    @staticmethod
     def _write_prompt_to_file(
-        self,
         f: Any,
         custom_id: str,
         prompt: str,
+        model: str,
         instruction: Optional[str] = None
     ):
         """Function that writes a prompt reqeust in JSON format to a file.
@@ -42,7 +33,7 @@ class BatchRequestHandler:
             instruction (str | None): A system prompt overwrite string. If this is empty, the default system prompt
                 will be used. Defaults to None.
         """
-        body = {"model": self.model, "input": prompt}
+        body = {"model": model, "input": prompt}
         if instruction:
             body["instructions"] = instruction
 
@@ -56,7 +47,7 @@ class BatchRequestHandler:
         f.write(json.dumps(api_request_dict) + "\n")
 
     @staticmethod
-    def create_question_prompt(
+    def _create_question_prompt(
         task_data: Dict[str, str],
         question_type: QuestionType,
     ) -> str:
@@ -96,34 +87,34 @@ class BatchRequestHandler:
             )
         return template.format(**prompt_kwargs)
 
+    @staticmethod
     def create_task_request_file(
-        self,
         task_config: TaskConfig,
         dataframe: pd.DataFrame,
         question_type: QuestionType,
-        persona_configs: List[PersonaConfig]
+        persona_configs: List[PersonaConfig],
+        model: str
     ) -> str:
         """Creates a request file for task question answering.
 
         Args:
             task_config (TaskConfig): Task configuration attributes.
             dataframe (pd.DataFrame): Dataframe containing samples of the task.
-            question_type (str): The question type of this task. Can be "mc_question", 
+            question_type (str): The question type of this task. Can be "mc_question",
                 "open_question" or "summarization".
             persona_configs (List[PersonaConfig]): List of persona configurations.
 
         Returns:
             str: A string identifier of the created task request.
         """
-
-        task_request_file = f"{self.temp_path}/{task_config.task_id}_request.jsonl"
+        task_request_file = f"{TEMP_PATH}/{task_config.task_id}_request.jsonl"
 
         with open(task_request_file, "w", encoding="utf-8") as f:
             for row in dataframe.itertuples(index=False):
                 # noinspection PyCallingNonCallable
                 row_dict = row._asdict()  # type: ignore
 
-                prompt = self.create_question_prompt(
+                prompt = BatchRequestHandler._create_question_prompt(
                     row_dict,
                     question_type
                 )
@@ -133,15 +124,16 @@ class BatchRequestHandler:
                     if answer_column in row_dict and row_dict[answer_column] is not None:
                         continue
 
-                    custom_id = f"{row_dict["static_id"]}_{persona_name}"
-                    self._write_prompt_to_file(f, custom_id, prompt, row_dict[persona_name])
+                    custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{persona_name}"
+                    BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model, row_dict[persona_name])
         return task_request_file
 
+    @staticmethod
     def create_persona_request_file(
-        self,
         task_config: TaskConfig,
         dataframe: pd.DataFrame,
-        persona_templates: Dict[str, str]
+        persona_templates: Dict[str, str],
+        model: str
     ) -> str:
         """Creates a request file for persona generation.
 
@@ -155,7 +147,7 @@ class BatchRequestHandler:
             str: A string identifier of the created request file.
         """
 
-        persona_request_file = f"{self.temp_path}/{task_config.task_id}_persona_request.jsonl"
+        persona_request_file = f"{TEMP_PATH}/{task_config.task_id}_persona_request.jsonl"
 
         with open(persona_request_file, "w", encoding="utf-8") as f:
             for row in dataframe.itertuples(index=False):
@@ -165,26 +157,25 @@ class BatchRequestHandler:
                 for persona_name, prompt_template in persona_templates.items():
                     prompt = prompt_template.format(
                         task_type=task_config.field,
-                        persona_string=task_config.static_persona,
                         question=row_dict[QUESTION_COLUMN]
                     )
-                    custom_id = f"{row_dict["static_id"]}_{persona_name}"
-                    self._write_prompt_to_file(f, custom_id, prompt)
+                    custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{persona_name}"
+                    BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model)
 
         return persona_request_file
 
     @staticmethod
     def read_response_file(
-        file_name: str,
+        file_name: Path,
         batch_type: BatchType = BatchType.PERSONAS
     ) -> pd.DataFrame:
         """Helper function that reads the contents of a batch response json file.
-        
+
         The contents are returned as a pandas dataframe.
 
         Args:
-            file_name (str): Path to the json file to read.
-            batch_type (BatchType, optional): The batch type is used to define the column names of the output 
+            file_name (Path): Path to the json file to read.
+            batch_type (BatchType, optional): The batch type is used to define the column names of the output
                 dataframe. Defaults to BatchType.PERSONAS.
 
         Returns:
@@ -218,18 +209,18 @@ class BatchRequestHandler:
                 response_data[sample_id][column_id] = completion
 
         structured_response = [
-            {"static_id": static_id, **responses}
+            {STATIC_ID_COLUMN: static_id, **responses}
             for static_id, responses in response_data.items()
         ]
 
         return pd.DataFrame(structured_response)
 
     @staticmethod
-    def read_error_file(file_name: str) -> List[str]:
+    def read_error_file(file_name: Path) -> List[str]:
         """Reads the contents of a an error file and returns a list with each unique error message.
 
         Args:
-            file_name (str): File path to the error file.
+            file_name (Path): File path to the error file.
 
         Returns:
             List[str]: A list of error messages

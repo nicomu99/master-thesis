@@ -6,10 +6,9 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from .dataset_handler import DatasetHandler
 from .llm_client import LLMClient
 from .persona_registry import PersonaRegistry
-from .prompt_templates import BASE_PERSONA
 from .batch_request_handler import BatchRequestHandler
 from .utils import columns_not_full, load_dataclass_dict, save_dataclass_dict
-from .utils import TaskConfig, BatchType, TaskStatus
+from .utils import TaskConfig
 
 from .utils import logging
 
@@ -56,7 +55,7 @@ class Evaluator:
         Returns:
             List[str]: A list of string identifiers of tasks that have missing personas.
         """
-        return [k for k, v in self.task_configs.items() if v.status == TaskStatus.PERSONAS_PENDING]
+        return [k for k, v in self.task_configs.items() if v.is_personas_pending()]
 
     def get_unfinished_tasks_answers(self) -> List[str]:
         """Returns a list with all tasks that have missing answers.
@@ -64,7 +63,7 @@ class Evaluator:
         Returns:
             List[str]: A list of string identifiers of tasks that have missing answers.
         """
-        return [k for k, v in self.task_configs.items() if v.status == TaskStatus.ANSWERS_PENDING]
+        return [k for k, v in self.task_configs.items() if v.is_answers_pending()]
 
     def generate_static_personas(
             self,
@@ -79,7 +78,7 @@ class Evaluator:
         Args:
             task_config: A task configuration with information about the task.
         """
-        persona = BASE_PERSONA
+        persona = self.persona_registry.get_base_persona_string()
         # Insert base persona first
         personas = {}
         for persona_name, prompt_template in self.persona_registry.get_static_templates().items():
@@ -99,17 +98,12 @@ class Evaluator:
 
         Iterates all task configurations and creates personas for them.
         """
-
-        # First, for each dataset category, create the static personas
         log.info("Generating personas for %s", task_id)
         task_config = self.task_configs[task_id]
-        # if not self.llm_client.queue_is_empty():
-        #     log.info("Batch queue currently not empty. Please wait for other batches to finish first.")
-        #     return
-
-        # Add new column, if it does not exist yet
         dataset_id = task_config.dataset_id
-        task_df = self.dataset_handler.get_task_dataframe(dataset_id, task_config.category_name)
+
+        task_df = self.dataset_handler.get_task_dataframe(
+            dataset_id, task_config.category_name)
         if columns_not_full(task_df, self.persona_registry.get_static_names()):
             log.debug("Creating static personas")
 
@@ -124,49 +118,39 @@ class Evaluator:
                 task_config, task_df,
                 self.persona_registry.get_dynamic_templates())
 
-        task_config.status = TaskStatus.PERSONAS_REQUESTED
+        task_config.increment_status()
         self._save()
-
 
     def send_task_requests(
         self,
         task_id: str
     ):
-        """
-
-        Returns:
-
-        """
-        # So we have batches_info_store that has batch_id, batch_info items.
-        # batch_info can both be persona batches or task batches.
-        # Before sending a task batch, we should check whether we have already sent a request for it
-        # Solutions:
-        # add flag to TaskConfig to check whether it has already been sent
-        # simply iterate batch info
         log.info("Sending answer request %s", task_id)
-
         task_config = self.task_configs[task_id]
-        persona_names = self.persona_registry.get_names()
-        persona_configs = self.persona_registry.persona_configs
-        if not task_config.status == TaskStatus.ANSWERS_PENDING:
-            log.debug("Skipping %s, batch already sent", task_id)
-            return
 
+        persona_names, persona_configs = self.persona_registry.get_names_and_configs()
         dataset_id = task_config.dataset_id
-        question_type = self.dataset_handler.get_config(dataset_id).question_type
+        dataset_config = self.dataset_handler.get_config(dataset_id)
+        question_type = dataset_config.question_type
 
         task_df = self.dataset_handler.get_task_dataframe(dataset_id, task_config.category_name)
+
+        if not task_config.is_answers_pending():
+            log.warning(
+                "Skipping %s, make sure personas were generated and no batch is currently being processed.",
+                task_id)
+            return
+
         if columns_not_full(task_df, persona_names):
             log.warning(
                 "Personas for task %s not created yet. Please run persona creation first.",
-                task_id
-            )
+                task_id)
             return
 
         self.llm_client.send_task_batch(
             task_config, task_df, question_type, persona_configs)
 
-        task_config.status = TaskStatus.ANSWERS_REQUESTED
+        task_config.increment_status()
         self._save()
 
     def task_iterator(
@@ -183,11 +167,7 @@ class Evaluator:
         """Prints the batch statuses."""
         failed_ids = self.llm_client.check_batch_statuses()
         for failed_id in failed_ids:
-            task_config = self.task_configs[failed_id]
-            if task_config.status == TaskStatus.PERSONAS_REQUESTED:
-                task_config.status = TaskStatus.PERSONAS_PENDING
-            elif task_config.status == TaskStatus.ANSWERS_REQUESTED:
-                task_config.status = TaskStatus.ANSWERS_PENDING
+            self.task_configs[failed_id].decrement_status()
 
     def fetch_batch_responses(self):
         """Fetches batch responses and saves them to disk."""
@@ -198,27 +178,20 @@ class Evaluator:
             task_config = self.task_configs[task_id]
             dataset_id = task_config.dataset_id
 
-            output_file = batch_info.local_output_file
-            if output_file:
-                response_dict = BatchRequestHandler.read_response_file(output_file, batch_info.batch_type)
+            batch_type = batch_info.batch_type
+            batch_status = batch_info.status
+            batch_output_file = batch_info.local_output_file
+            batch_error_file = batch_info.local_error_file
 
-                self.dataset_handler.merge_and_write(dataset_id, response_dict)
-                if batch_info.batch_type == BatchType.PERSONAS:
-                    task_config.status = TaskStatus.ANSWERS_PENDING
-                elif batch_info.batch_type == BatchType.ANSWERS:
-                    task_config.status = TaskStatus.FINISHED
+            if batch_output_file:
+                response_df = BatchRequestHandler.read_response_file(batch_output_file, batch_type)
+                self.dataset_handler.merge_and_write(dataset_id, response_df)
 
-            error_file = batch_info.local_error_file
-            if error_file:
-                error_messages = BatchRequestHandler.read_error_file(error_file)
-
-                batch_type = batch_info.batch_type
-                if batch_type == BatchType.PERSONAS:
-                    task_config.status = TaskStatus.PERSONAS_PENDING
-                elif batch_type == BatchType.ANSWERS:
-                    task_config.status = TaskStatus.ANSWERS_PENDING
-
+            if batch_error_file:
+                error_messages = BatchRequestHandler.read_error_file(batch_error_file)
                 for message in error_messages:
-                    log.error("Task %s %s failed", task_id, batch_info.batch_type)
+                    log.error("Task %s %s failed", task_id, batch_type)
                     log.error(message)
+
+            task_config.update_status(batch_status != "error")
         self._save()

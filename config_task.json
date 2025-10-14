@@ -20,7 +20,7 @@
     "mmlu-pro_law": {
         "dataset_id": "mmlu-pro",
         "field": "law",
-        "status": "answers_pending",
+        "status": "finished",
         "category_name": "law"
     },
     "mmlu-pro_engineering": {
@@ -32,7 +32,7 @@
     "mmlu-pro_other": {
         "dataset_id": "mmlu-pro",
         "field": "polymathy",
-        "status": "personas_pending",
+        "status": "answers_requested",
         "category_name": "other"
     },
     "mmlu-pro_economics": {
@@ -62,19 +62,19 @@
     "mmlu-pro_biology": {
         "dataset_id": "mmlu-pro",
         "field": "biology",
-        "status": "answers_requested",
+        "status": "finished",
         "category_name": "biology"
     },
     "mmlu-pro_computer_science": {
         "dataset_id": "mmlu-pro",
         "field": "computer science",
-        "status": "personas_pending",
+        "status": "finished",
         "category_name": "computer science"
     },
     "mmlu-pro_history": {
         "dataset_id": "mmlu-pro",
         "field": "history",
-        "status": "personas_pending",
+        "status": "finished",
         "category_name": "history"
     }
 }

@@ -3,12 +3,13 @@ from typing import Any, Dict, List
 from pathlib import Path
 
 import pandas as pd
-from openai import OpenAI
+from openai import OpenAI, APIConnectionError
 
 from .batch_request_handler import BatchRequestHandler
 from .persona_registry import PersonaConfig
-from .utils import TaskConfig, BatchInfo, BatchType, QuestionType
+from .utils import TaskConfig, BatchInfo, BatchType, QuestionType, BatchStatus
 from .utils import load_dataclass_dict, save_dataclass_dict
+from .utils import TEMP_PATH
 from .utils import logging
 
 log = logging.getLogger(__name__)
@@ -21,10 +22,8 @@ class LLMClient:
     def __init__(self):
         self.model = "gpt-5-nano"
         self.client = OpenAI()
-        self.batch_request_creator = BatchRequestHandler()
 
-        self.temp_path = Path("temp")
-        self.batches_info_file = self.temp_path / "batches_info_file.json"
+        self.batches_info_file = TEMP_PATH / "batches_info_file.json"
         self.batches_info_store: Dict[str, BatchInfo] = {}
         self._load()
 
@@ -37,17 +36,6 @@ class LLMClient:
 
     def _save(self):
         save_dataclass_dict(self.batches_info_file, self.batches_info_store, "batch_id")
-
-    def queue_is_empty(self) -> bool:
-        """Checks whether any batches are currently being processed.
-
-        Returns:
-            bool: Returns true if any batch is being processed at the moment. Else false.
-        """
-        for _, batch_info in self.batches_info_store.items():
-            if batch_info.status in ("in_progress", "sent"):
-                return False
-        return True
 
     def get_api_response(
         self,
@@ -96,8 +84,8 @@ class LLMClient:
             task_df (pd.DataFrame): Dataframe containing task samples.
             persona_templates (Dict[str, str]): Template to use for persona generation.
         """
-        batch_file_name = self.batch_request_creator.create_persona_request_file(
-            task_config, task_df, persona_templates)
+        batch_file_name = BatchRequestHandler.create_persona_request_file(
+            task_config, task_df, persona_templates, self.model)
 
         self.send_batch(
             task_config.task_id, batch_file_name, BatchType.PERSONAS)
@@ -117,8 +105,8 @@ class LLMClient:
             question_type (QuestionType): The type of questions of the task samples.
             persona_types (List[PersonaConfig]): The persona configurations to use for generating answers.
         """
-        batch_file_name = self.batch_request_creator.create_task_request_file(
-            task_config, task_df, question_type, persona_configs)
+        batch_file_name = BatchRequestHandler.create_task_request_file(
+            task_config, task_df, question_type, persona_configs, self.model)
 
         self.send_batch(
             task_config.task_id, batch_file_name, BatchType.ANSWERS)
@@ -160,51 +148,52 @@ class LLMClient:
 
     def check_batch_statuses(self) -> List[str]:
         """Fetches and prints statuses of batch requests.
-        
+
         Returns:
             List[str]: A list of batch identifiers of batches that did not finish correctly.
         """
-
         active_batches = {
-            k:v
+            k: v
             for k, v in self.batches_info_store.items()
-            if v.status not in ("retrieved", "error")
+            if not v.has_finished()
         }
         log.info("Checking batch statuses; %s active batches found.", len(active_batches))
 
         failed_task_ids = []
         for batch_id, batch_info in active_batches.items():
-            batch = self.client.batches.retrieve(batch_id)
-            if batch_info.status in ["retrieved", "error"]:
-                continue
+            try:
+                remote_batch = self.client.batches.retrieve(batch_id)
 
-            task_id = batch_info.task_id
-            log.info("Task %s %-8s status is: %s", task_id, batch_info.batch_type, batch.status)
-            if batch.status == "failed":
-                assert batch.errors is not None
-                assert batch.errors.data is not None
-                for error in batch.errors.data:
-                    log.error("Error %s: %s", error.code, error.message)
+                task_id = batch_info.task_id
+                batch_info.update_status(remote_batch.status)
 
-                batch_info.status = "error"
-                failed_task_ids.append(batch_info.task_id)
-            elif batch.status == "in_progress":
-                request_counts = batch.request_counts
-                if request_counts is not None:
+                log.info("Task %s %-8s batch status is: %s", task_id, batch_info.batch_type, batch_info.status)
+                if batch_info.is_failed():
+                    errors = getattr(remote_batch, "errors", None)
+                    if not errors or not getattr(errors, "data", None):
+                        log.error("Batch failed with no error details.")
+                        continue
+
+                    for error in errors.data:
+                        log.error("Error %s, %s", error.code, error.message)
+
+                    failed_task_ids.append(batch_info.task_id)
+                elif batch_info.is_in_progress():
+                    request_counts = getattr(remote_batch, "request_counts", None)
+                    if not request_counts:
+                        continue
+
                     log.info(
                         "Progress: %s out of %s finished; %s requests failed.",
-                        request_counts.completed,
-                        request_counts.total,
-                        request_counts.failed
-                    )
+                        request_counts.completed, request_counts.total,
+                        request_counts.failed)
 
-                    batch_info.status = "in_progress"
-            elif batch.status == "completed":
-                batch_info.status = "completed"
-                batch_info.output_file_id = batch.output_file_id
-                if batch.error_file_id:
-                    batch_info.error_file_id = batch.error_file_id
+                elif batch_info.is_completed():
+                    batch_info.output_file_id = remote_batch.output_file_id if remote_batch.output_file_id else None
+                    batch_info.error_file_id = remote_batch.error_file_id if remote_batch.error_file_id else None
 
+            except APIConnectionError:
+                log.error("Connection error.")
         self._save()
         return failed_task_ids
 
@@ -218,37 +207,30 @@ class LLMClient:
         with open(local_file_path, "wb") as f:
             f.write(batch_response_stream.read())
 
-    def fetch_batch_responses(self)  -> List[BatchInfo]:
+    def fetch_batch_responses(self) -> List[BatchInfo]:
         """Fetches responses for batch requests and saves them to files.
 
         Returns:
             List[BatchInfo]: A list with batch information of batches that finished.
         """
-        log.info("Fetching batch responses")
-        if len(self.batches_info_store) < 1:
-            log.debug("No batches found")
-            return []
+        self.check_batch_statuses()
+        completed_batches = [
+            batch_info
+            for batch_info in self.batches_info_store.values()
+            if batch_info.is_completed()
+        ]
+        log.info("Fetching batch responses, %s completed batches found.", len(completed_batches))
 
-        retrieved_batches = []
-        for batch_id, batch_info in list(self.batches_info_store.items()):
-            if not batch_info.status == "completed":
-                continue
+        for batch_info in completed_batches:
+            if batch_info.output_file_id:
+                local_output_file = batch_info.create_output_file()
+                self._save_batch_response(batch_info.output_file_id, local_output_file)
+                batch_info.set_status(BatchStatus.RETRIEVED)
 
-            task_id = batch_info.task_id
-            for remote_file_id_attr, file_type, local_file_attr in [
-                ("output_file_id",  "output",   "local_output_file"),
-                ("error_file_id",   "error",    "local_error_file")
-            ]:
-                remote_file_id = getattr(batch_info, remote_file_id_attr)
-                if not remote_file_id:
-                    continue
-
-                local_batch_file = self.temp_path / f"{task_id}_{batch_id}_{file_type}.jsonl"
-                self._save_batch_response(remote_file_id, local_batch_file)
-                setattr(batch_info, local_file_attr, str(local_batch_file))
-
-                batch_info.status = "error" if file_type == "error" else "retrieved"
-                retrieved_batches.append(batch_info)
+            if batch_info.error_file_id:
+                local_error_file = batch_info.create_error_file()
+                self._save_batch_response(batch_info.error_file_id, local_error_file)
+                batch_info.set_status(BatchStatus.ERROR)
 
         self._save()
-        return retrieved_batches
+        return completed_batches

@@ -44,9 +44,9 @@ class DatasetHandler:
         datasets will be ignored.
 
         Args:
-            include_datasets (Optional[Iterable[str]], optional): Dataset ids that should be loaded. If not specified, 
+            include_datasets (Optional[Iterable[str]], optional): Dataset ids that should be loaded. If not specified,
                 all datasets will be loaded. Defaults to None.
-            exclude_datasets (Optional[Iterable[str]], optional): Dataset ids that should be excluded from loading. 
+            exclude_datasets (Optional[Iterable[str]], optional): Dataset ids that should be excluded from loading.
                 If not specified, all will be loaded. Defaults to None.
         """
 
@@ -110,7 +110,6 @@ class DatasetHandler:
             assert isinstance(dataframe, pd.DataFrame), \
                 f"Error while loading {dataset_id}: Wrong dataset type {type(dataframe)}, should be pd.DataFrame."
 
-
             rename_columns = {dataset_config.question_column: QUESTION_COLUMN}
             if dataset_config.answer_column:
                 rename_columns[dataset_config.answer_column] = ANSWER_COLUMN
@@ -149,9 +148,9 @@ class DatasetHandler:
 
         Args:
             dataset_ids (Iterable[str]): Dataset keys.
-            include_datasets (Optional[Iterable[str]], optional): Dataset keys that should be kept in consideration. 
+            include_datasets (Optional[Iterable[str]], optional): Dataset keys that should be kept in consideration.
                 If not specified, all will be kept. Defaults to None.
-            exclude_datasets (Optional[Iterable[str]], optional): Dataset keys that should not be kept. If not 
+            exclude_datasets (Optional[Iterable[str]], optional): Dataset keys that should not be kept. If not
                 specified, no keys will be deleted. Defaults to None.
         """
         dataset_ids = list(dataset_ids)
@@ -184,7 +183,7 @@ class DatasetHandler:
 
         Args:
             dataset_id (str): String identifier of the dataset.
-            task_name (Optional[str]): Name of the task. If a dataset contains several tasks, this value is used to 
+            task_name (Optional[str]): Name of the task. If a dataset contains several tasks, this value is used to
                 pick correct samples.
 
         Returns:
@@ -202,7 +201,7 @@ class DatasetHandler:
         subset_df: pd.DataFrame | List[Dict]
     ):
         """Merges a subset dataframe to the initial one by the static_id column.
-        
+
         This function merges the subset into the parent dataframe. If any columns in the subset are not present in the
         parent, they will be created. The merged dataframe will be saved to disk.
 

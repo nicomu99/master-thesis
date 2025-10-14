@@ -10,7 +10,7 @@ T = TypeVar("T")
 
 def encode_dataclass(obj: object):
     """Converts enum objects to their values.
-    
+
     This is a helper class for serializing enum members of dataclasses. It simply converts each enum member field to
     its string value.
 
@@ -25,6 +25,8 @@ def encode_dataclass(obj: object):
     """
     if isinstance(obj, Enum):
         return obj.value
+    if isinstance(obj, Path):
+        return str(obj)
     raise TypeError(f"Type {type(obj)} not serializable")
 
 
@@ -89,7 +91,7 @@ def save_dataclass_dict(
     """
     save_dict = {
         k: {
-            field: value for field, value in asdict(v).items() # pyright: ignore[reportArgumentType]
+            field: value for field, value in asdict(v).items()  # pyright: ignore[reportArgumentType]
             if field != key_field
         }
         for k, v in data.items()

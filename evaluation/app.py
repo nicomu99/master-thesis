@@ -2,6 +2,7 @@ import subprocess
 import platform
 
 from .evaluator import Evaluator
+from .utils import TEMP_PATH
 from .utils import logging
 
 log = logging.getLogger(__name__)
@@ -106,5 +107,6 @@ class App:
 
 
 if __name__ == "__main__":
+    TEMP_PATH.mkdir(exist_ok=True, parents=True)
     app = App()
     app.main()
