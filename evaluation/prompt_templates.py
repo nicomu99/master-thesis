@@ -1,3 +1,10 @@
+BASE_PERSONA = "You are a/an"
+
+BASE_TEMPLATE = (
+    "For the field of {task_type}, create a persona string containing 4 - 5 words, written in second person "
+    "perspective. The persona string should start with \"{persona_string}\"."
+)
+
 STATIC_SHORT_TEMPLATE = (
     "For the field of {task_type}, create a persona string containing one sentence, written in second person "
     "perspective. The persona string should start with \"{persona_string}\"."

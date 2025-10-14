@@ -6,6 +6,7 @@ import pandas as pd
 from openai import OpenAI
 
 from .batch_request_handler import BatchRequestHandler
+from .persona_registry import PersonaConfig
 from .utils import TaskConfig, BatchInfo, BatchType, QuestionType
 from .utils import load_dataclass_dict, save_dataclass_dict
 from .utils import logging
@@ -106,7 +107,7 @@ class LLMClient:
         task_config: TaskConfig,
         task_df: pd.DataFrame,
         question_type: QuestionType,
-        persona_types: List[str]
+        persona_configs: List[PersonaConfig]
     ) -> None:
         """Sends a task question answering request to the LLM API.
 
@@ -114,10 +115,10 @@ class LLMClient:
             task_config (TaskConfig): Configuration parameters of the task.
             task_df (pd.DataFrame): Dataframe containing task samples.
             question_type (QuestionType): The type of questions of the task samples.
-            persona_types (List[str]): The persona types to use for generating answers.
+            persona_types (List[PersonaConfig]): The persona configurations to use for generating answers.
         """
         batch_file_name = self.batch_request_creator.create_task_request_file(
-            task_config, task_df, question_type, persona_types)
+            task_config, task_df, question_type, persona_configs)
 
         self.send_batch(
             task_config.task_id, batch_file_name, BatchType.ANSWERS)

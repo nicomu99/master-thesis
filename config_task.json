@@ -2,91 +2,78 @@
     "mmlu-pro_math": {
         "dataset_id": "mmlu-pro",
         "field": "math",
-        "static_persona": "You are a knowledgeable mathematician",
         "status": "finished",
         "category_name": "math"
     },
     "mmlu-pro_physics": {
         "dataset_id": "mmlu-pro",
         "field": "physics",
-        "static_persona": "You are a knowledgeable physicist",
         "status": "finished",
         "category_name": "physics"
     },
     "mmlu-pro_chemistry": {
         "dataset_id": "mmlu-pro",
         "field": "chemistry",
-        "static_persona": "You are a knowledgeable chemist",
         "status": "finished",
         "category_name": "chemistry"
     },
     "mmlu-pro_law": {
         "dataset_id": "mmlu-pro",
         "field": "law",
-        "static_persona": "You are a knowledgeable legal scholar",
         "status": "answers_pending",
         "category_name": "law"
     },
     "mmlu-pro_engineering": {
         "dataset_id": "mmlu-pro",
         "field": "engineering",
-        "static_persona": "You are a knowledgeable engineer",
         "status": "finished",
         "category_name": "engineering"
     },
     "mmlu-pro_other": {
         "dataset_id": "mmlu-pro",
         "field": "polymathy",
-        "static_persona": "You are a knowledgeable polymath",
         "status": "personas_pending",
         "category_name": "other"
     },
     "mmlu-pro_economics": {
         "dataset_id": "mmlu-pro",
         "field": "economics",
-        "static_persona": "You are a knowledgeable economist",
         "status": "finished",
         "category_name": "economics"
     },
     "mmlu-pro_health": {
         "dataset_id": "mmlu-pro",
         "field": "health studies",
-        "static_persona": "You are a knowledgeable medical expert",
-        "status": "answers_requested",
+        "status": "finished",
         "category_name": "health"
     },
     "mmlu-pro_psychology": {
         "dataset_id": "mmlu-pro",
         "field": "psychology",
-        "static_persona": "You are a knowledgeable psychologist",
-        "status": "personas_pending",
+        "status": "finished",
         "category_name": "psychology"
     },
     "mmlu-pro_business": {
         "dataset_id": "mmlu-pro",
         "field": "business studies",
-        "static_persona": "You are a knowledgeable business expert",
-        "status": "personas_pending",
+        "status": "finished",
         "category_name": "business"
     },
     "mmlu-pro_biology": {
         "dataset_id": "mmlu-pro",
         "field": "biology",
-        "static_persona": "You are a knowledgeable biologist",
-        "status": "personas_pending",
+        "status": "answers_requested",
         "category_name": "biology"
     },
     "mmlu-pro_computer_science": {
         "dataset_id": "mmlu-pro",
         "field": "computer science",
-        "static_persona": "You are a knowledgeable computer scientist",
         "status": "personas_pending",
         "category_name": "computer science"
     },
     "mmlu-pro_history": {
         "dataset_id": "mmlu-pro",
         "field": "history",
-        "static_persona": "You are a knowledgeable historian",
         "status": "personas_pending",
         "category_name": "history"
     }

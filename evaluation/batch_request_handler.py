@@ -10,6 +10,7 @@ import pandas as pd
 from .utils import TaskConfig, QuestionType, BatchType
 from .utils import QUESTION_COLUMN, ANSWER_COLUMN
 from .prompt_templates import OPEN_QUESTION_TEMPLATE, MC_QUESTION_TEMPLATE, SUMMARIZATION_TEMPLATE
+from .persona_registry import PersonaConfig
 
 
 class BatchRequestHandler:
@@ -100,7 +101,7 @@ class BatchRequestHandler:
         task_config: TaskConfig,
         dataframe: pd.DataFrame,
         question_type: QuestionType,
-        persona_types: List[str]
+        persona_configs: List[PersonaConfig]
     ) -> str:
         """Creates a request file for task question answering.
 
@@ -109,7 +110,7 @@ class BatchRequestHandler:
             dataframe (pd.DataFrame): Dataframe containing samples of the task.
             question_type (str): The question type of this task. Can be "mc_question", 
                 "open_question" or "summarization".
-            persona_types (List[str]): Persona types for which a request should be sent to the API.
+            persona_configs (List[PersonaConfig]): List of persona configurations.
 
         Returns:
             str: A string identifier of the created task request.
@@ -126,9 +127,14 @@ class BatchRequestHandler:
                     row_dict,
                     question_type
                 )
-                for persona_type in persona_types:
-                    custom_id = f"{row_dict["static_id"]}_{persona_type}"
-                    self._write_prompt_to_file(f, custom_id, prompt, row_dict[persona_type])
+                for config in persona_configs:
+                    persona_name = config.name
+                    answer_column = config.answer_column
+                    if answer_column in row_dict and row_dict[answer_column] is not None:
+                        continue
+
+                    custom_id = f"{row_dict["static_id"]}_{persona_name}"
+                    self._write_prompt_to_file(f, custom_id, prompt, row_dict[persona_name])
         return task_request_file
 
     def create_persona_request_file(
@@ -156,13 +162,13 @@ class BatchRequestHandler:
                 # noinspection PyCallingNonCallable
                 row_dict = row._asdict()  # type: ignore
 
-                for persona_type, prompt_template in persona_templates.items():
+                for persona_name, prompt_template in persona_templates.items():
                     prompt = prompt_template.format(
                         task_type=task_config.field,
                         persona_string=task_config.static_persona,
                         question=row_dict[QUESTION_COLUMN]
                     )
-                    custom_id = f"{row_dict["static_id"]}_{persona_type}"
+                    custom_id = f"{row_dict["static_id"]}_{persona_name}"
                     self._write_prompt_to_file(f, custom_id, prompt)
 
         return persona_request_file

@@ -6,6 +6,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from .dataset_handler import DatasetHandler
 from .llm_client import LLMClient
 from .persona_registry import PersonaRegistry
+from .prompt_templates import BASE_PERSONA
 from .batch_request_handler import BatchRequestHandler
 from .utils import columns_not_full, load_dataclass_dict, save_dataclass_dict
 from .utils import TaskConfig, BatchType, TaskStatus
@@ -78,20 +79,16 @@ class Evaluator:
         Args:
             task_config: A task configuration with information about the task.
         """
-        persona = task_config.static_persona
-
+        persona = BASE_PERSONA
         # Insert base persona first
-        personas = {"base_persona": persona}
-        for persona_type, prompt_template in self.persona_registry.get_static_templates().items():
-
-            client_kwargs: Dict[str, str] = {"task_type": task_config.field, "persona_string": persona}
+        personas = {}
+        for persona_name, prompt_template in self.persona_registry.get_static_templates().items():
+            client_kwargs: Dict[str, str] = {
+                "task_type": task_config.field, "persona_string": persona}
             persona = self.llm_client.get_api_response(
-                prompt_template,
-                persona_type,
-                **client_kwargs
-            )
+                prompt_template, persona_name, **client_kwargs)
 
-            personas[persona_type] = persona
+            personas[persona_name] = persona
         return personas
 
     def generate_personas(
@@ -120,12 +117,12 @@ class Evaluator:
             task_df = task_df.assign(**static_personas)
             self.dataset_handler.merge_and_write(dataset_id, task_df)
 
-        # if columns_not_full(task_df, self.persona_registry.get_dynamic_names()):
-        #     log.debug("Creating dynamic personas")
+        if columns_not_full(task_df, self.persona_registry.get_dynamic_names()):
+            log.debug("Creating dynamic personas")
 
-        #     self.llm_client.send_persona_batch(
-        #         task_config, task_df,
-        #         self.persona_registry.get_dynamic_templates())
+            self.llm_client.send_persona_batch(
+                task_config, task_df,
+                self.persona_registry.get_dynamic_templates())
 
         task_config.status = TaskStatus.PERSONAS_REQUESTED
         self._save()
@@ -150,6 +147,7 @@ class Evaluator:
 
         task_config = self.task_configs[task_id]
         persona_names = self.persona_registry.get_names()
+        persona_configs = self.persona_registry.persona_configs
         if not task_config.status == TaskStatus.ANSWERS_PENDING:
             log.debug("Skipping %s, batch already sent", task_id)
             return
@@ -166,7 +164,7 @@ class Evaluator:
             return
 
         self.llm_client.send_task_batch(
-            task_config, task_df, question_type, persona_names)
+            task_config, task_df, question_type, persona_configs)
 
         task_config.status = TaskStatus.ANSWERS_REQUESTED
         self._save()
