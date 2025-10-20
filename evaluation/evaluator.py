@@ -163,7 +163,7 @@ class Evaluator:
         """Prints the batch statuses."""
         active_batches = self.llm_client.check_batch_statuses()
 
-        failed_task_ids = [v.task_id for v in active_batches.values() if v.is_failed()]
+        failed_task_ids = [v.task_id for v in active_batches.values() if v.is_error()]
         for failed_id in failed_task_ids:
             self.task_configs[failed_id].decrement_status()
         return active_batches

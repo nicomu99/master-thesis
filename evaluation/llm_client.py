@@ -175,13 +175,20 @@ class LLMClient:
                     request_counts = getattr(remote_batch, "request_counts", None)
                     if not request_counts:
                         continue
-                    batch_info.remote_messages.add(
+                    batch_info.progress_message = (
                         f"Progress: {request_counts.completed} out of {request_counts.total} finished; "
                         f"{request_counts.failed} reqeusts failed.")
 
                 elif batch_info.is_completed():
                     batch_info.output_file_id = remote_batch.output_file_id if remote_batch.output_file_id else None
                     batch_info.error_file_id = remote_batch.error_file_id if remote_batch.error_file_id else None
+
+                    request_counts = getattr(remote_batch, "request_counts", None)
+                    if not request_counts:
+                        continue
+                    batch_info.progress_message = (
+                        f"Progress: {request_counts.completed} out of {request_counts.total} finished; "
+                        f"{request_counts.failed} reqeusts failed.")
 
             except APIConnectionError:
                 log.error("Connection error.")

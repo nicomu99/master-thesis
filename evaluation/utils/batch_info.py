@@ -34,6 +34,7 @@ class BatchInfo:
     batch_id: str
     task_id: str
     batch_type: BatchType
+    progress_message: Optional[str] = None
     remote_messages: Set[str] = field(default_factory=set)
     status: BatchStatus = BatchStatus.SENT
     output_file_id: Optional[str] = None
@@ -43,8 +44,10 @@ class BatchInfo:
 
     _STR_TRANSITIONS = {
         "validating": BatchStatus.IN_PROGRESS,
-        "failed": BatchStatus.FAILED,
         "in_progress": BatchStatus.IN_PROGRESS,
+        "finalizing": BatchStatus.IN_PROGRESS,
+        "expired": BatchStatus.ERROR,
+        "failed": BatchStatus.FAILED,
         "completed": BatchStatus.COMPLETED
     }
 
@@ -53,6 +56,9 @@ class BatchInfo:
 
     def is_failed(self):
         return self.status == BatchStatus.FAILED
+
+    def is_error(self):
+        return self.status in [BatchStatus.ERROR, BatchStatus.FAILED]
 
     def is_in_progress(self):
         return self.status == BatchStatus.IN_PROGRESS

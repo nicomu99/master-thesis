@@ -11,6 +11,12 @@
         "status": "finished",
         "category_name": "physics"
     },
+    "mmlu-pro_philosophy": {
+        "dataset_id": "mmlu-pro",
+        "field": "philosophy",
+        "status": "finished",
+        "category_name": "philosophy"
+    },
     "mmlu-pro_chemistry": {
         "dataset_id": "mmlu-pro",
         "field": "chemistry",
@@ -32,7 +38,7 @@
     "mmlu-pro_other": {
         "dataset_id": "mmlu-pro",
         "field": "polymathy",
-        "status": "answers_requested",
+        "status": "finished",
         "category_name": "other"
     },
     "mmlu-pro_economics": {
@@ -80,43 +86,43 @@
     "MATH_algebra": {
         "dataset_id": "MATH",
         "field": "algebra",
-        "status": "answers_pending",
+        "status": "finished",
         "category_name": "Algebra"
     },
     "MATH_intermediate_algebra": {
         "dataset_id": "MATH",
         "field": "intermediate algebra",
-        "status": "answers_pending",
+        "status": "finished",
         "category_name": "Intermediate Algebra"
     },
     "MATH_prealgebra": {
         "dataset_id": "MATH",
         "field": "prealgebra",
-        "status": "answers_pending",
+        "status": "finished",
         "category_name": "Prealgebra"
     },
     "MATH_number_theory": {
         "dataset_id": "MATH",
         "field": "number theory",
-        "status": "personas_pending",
+        "status": "finished",
         "category_name": "Number Theory"
     },
     "MATH_precalculus": {
         "dataset_id": "MATH",
         "field": "precalculus",
-        "status": "personas_pending",
+        "status": "finished",
         "category_name": "Precalculus"
     },
     "MATH_geometry": {
         "dataset_id": "MATH",
         "field": "geometry",
-        "status": "personas_pending",
+        "status": "finished",
         "category_name": "Geometry"
     },
     "MATH_counting_probability": {
         "dataset_id": "MATH",
         "field": "counting and probability",
-        "status": "personas_pending",
+        "status": "finished",
         "category_name": "Counting & Probability"
     }
 }

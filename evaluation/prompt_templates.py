@@ -153,6 +153,7 @@ SUMMARIZATION_TEMPLATE = (
 
 MATH_TEMPLATE = (
     "Please answer the following question: {question}\n\n"
-    "Make sure to style your output using latex, if required. State the solution at the end of your "
-    "answer on a new line."
+    "Make sure to style your output using latex. For example, all parantheses and brackets should be wrapped using "
+    "left and right, fractions should use frac, for square roots should use sqrt and so on. "
+    "State the solution at the end of your answer on a new line and only the solution."
 )
