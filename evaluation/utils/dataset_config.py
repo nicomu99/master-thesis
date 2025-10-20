@@ -28,3 +28,6 @@ class DatasetConfig:
     category_column: Optional[str] = None
     answer_column: Optional[str] = None
     load_name: Optional[str] = None
+
+    def is_translation(self):
+        return self.question_type == QuestionType.TRANSLATION

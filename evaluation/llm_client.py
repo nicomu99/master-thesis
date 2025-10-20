@@ -111,6 +111,18 @@ class LLMClient:
         self.send_batch(
             task_config.task_id, batch_file_name, BatchType.ANSWERS)
 
+    def send_judge_batch(
+        self,
+        task_config: TaskConfig,
+        task_df: pd.DataFrame,
+        persona_configs: List[PersonaConfig]
+    ):
+        batch_file_name = BatchRequestHandler.create_judge_request_file(
+            task_config, task_df, persona_configs, self.model)
+
+        self.send_batch(
+            task_config.task_id, batch_file_name, BatchType.JUDGE)
+
     def send_batch(
         self,
         task_id: str,

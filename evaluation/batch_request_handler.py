@@ -9,7 +9,14 @@ import pandas as pd
 
 from .utils import TaskConfig, QuestionType, BatchType
 from .utils import TEMP_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, ANSWER_COLUMN
-from .prompt_templates import OPEN_QUESTION_TEMPLATE, MC_QUESTION_TEMPLATE, SUMMARIZATION_TEMPLATE, MATH_TEMPLATE
+from .prompt_templates import (
+    OPEN_QUESTION_TEMPLATE,
+    MC_QUESTION_TEMPLATE,
+    SUMMARIZATION_TEMPLATE,
+    MATH_TEMPLATE,
+    TRANSLATION_TEMPLATE,
+    TRANSLATION_JUDGE_TEMPLATE
+)
 from .persona_registry import PersonaConfig
 
 
@@ -81,6 +88,8 @@ class BatchRequestHandler:
             template = SUMMARIZATION_TEMPLATE
         elif question_type == QuestionType.MATH:
             template = MATH_TEMPLATE
+        elif question_type == QuestionType.TRANSLATION:
+            template = TRANSLATION_TEMPLATE
 
         else:
             raise ValueError(
@@ -150,7 +159,6 @@ class BatchRequestHandler:
         """
 
         persona_request_file = f"{TEMP_PATH}/{task_config.task_id}_persona_request.jsonl"
-
         with open(persona_request_file, "w", encoding="utf-8") as f:
             for row in dataframe.itertuples(index=False):
                 # noinspection PyCallingNonCallable
@@ -163,8 +171,37 @@ class BatchRequestHandler:
                     )
                     custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{persona_name}"
                     BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model)
-
         return persona_request_file
+
+    @staticmethod
+    def create_judge_request_file(
+        task_config: TaskConfig,
+        dataframe: pd.DataFrame,
+        persona_configs: List[PersonaConfig],
+        model: str
+    ) -> str:
+        judge_request_file = f"{TEMP_PATH}/{task_config.task_id}_judge_request.jsonl"
+        with open(judge_request_file, "w", encoding="utf-8") as f:
+            for row in dataframe.itertuples(index=False):
+                # noinspection PyCallingNonCallable
+                row_dict = row._asdict()  # type: ignore
+
+                if ANSWER_COLUMN not in row_dict:
+                    raise ValueError(f"Missing answer column for task {task_config.task_id}")
+
+                prompt_template = TRANSLATION_JUDGE_TEMPLATE
+                for persona_config in persona_configs:
+                    persona_name = persona_config.name
+                    answer_column = persona_config.answer_column
+
+                    prompt = prompt_template.format(
+                        reference=row_dict[QUESTION_COLUMN],
+                        translation_1=row_dict[answer_column],
+                        translation_2=row_dict[ANSWER_COLUMN],
+                    )
+                    custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{persona_name}"
+                    BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model)
+        return judge_request_file
 
     @staticmethod
     def read_response_file(

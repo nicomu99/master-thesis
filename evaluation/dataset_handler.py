@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
-from datasets import disable_progress_bar, load_dataset, Dataset
+from datasets import load_dataset, Dataset
 
 from .utils import DatasetConfig
 from .utils import decode_dataclass
@@ -14,7 +14,6 @@ from .utils import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-disable_progress_bar()
 
 
 class DatasetHandler:
@@ -114,6 +113,12 @@ class DatasetHandler:
             if dataset_config.answer_column:
                 rename_columns[dataset_config.answer_column] = ANSWER_COLUMN
             dataframe.rename(columns=rename_columns, inplace=True)
+
+            if dataset_config.is_translation():
+                english_df = dataframe[dataframe["iso_639_3"] == "eng"][["id", QUESTION_COLUMN]].rename(
+                    columns={QUESTION_COLUMN: ANSWER_COLUMN})
+                dataframe = dataframe.merge(english_df, on="id", how="inner")
+                dataframe.to_parquet(dataset_file)
 
             dataframe.insert(0, STATIC_ID_COLUMN, [f"{dataset_id}_{i}" for i in range(len(dataframe))])
             dataframe.to_parquet(dataset_file)

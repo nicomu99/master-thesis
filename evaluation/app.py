@@ -2,6 +2,9 @@ from typing import List
 
 import subprocess
 import platform
+from dotenv import load_dotenv
+
+from datasets import disable_progress_bar, disable_progress_bars
 
 from .evaluator import Evaluator
 from .utils import BatchStatus
@@ -23,6 +26,7 @@ class App:
             "q": ("Quit program", self.quit_program),
             "p": ("Generate personas", self.generate_personas),
             "t": ("Send task requests", self.generate_answers),
+            "j": ("Send judge requests", self.generate_judge_answers),
             "s": ("Check batch statuses", self.check_batch_statuses),
             "f": ("Fetch batch responses", self.evaluator.fetch_batch_responses),
             "c": ("Check task statuses", self.check_task_statuses),
@@ -81,6 +85,24 @@ class App:
             print("Task unknown. Please try again.")
         else:
             self.evaluator.send_task_requests(missing_map[user_input])
+
+    def generate_judge_answers(self) -> None:
+        missing_map = {
+            f"{i + 1}": m for i, m in enumerate(self.evaluator.get_unfinished_tasks_judge_answers())
+        }
+
+        if len(missing_map) < 1:
+            print("No tasks with missing answers.")
+            return
+
+        for k, v in missing_map.items():
+            print(f"     ({k}) {v}")
+
+        user_input = input("Choose task: ")
+        if user_input not in missing_map:
+            print("Task unknown. Please try again.")
+        else:
+            self.evaluator.send_judge_requests(missing_map[user_input])
 
     def quit_program(self):
         """Quits the program."""
@@ -141,5 +163,9 @@ class App:
 
 if __name__ == "__main__":
     TEMP_PATH.mkdir(exist_ok=True, parents=True)
+    load_dotenv()
+    disable_progress_bar()
+    disable_progress_bars()
+
     app = App()
     app.main()

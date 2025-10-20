@@ -24,6 +24,7 @@ class TaskConfig:
     task_id: str
     dataset_id: str
     field: str
+    need_judge: bool = False
     status: TaskStatus = TaskStatus.PERSONAS_PENDING
     category_name: Optional[str] = None
 
@@ -31,12 +32,15 @@ class TaskConfig:
         TaskStatus.PERSONAS_PENDING: TaskStatus.PERSONAS_REQUESTED,
         TaskStatus.PERSONAS_REQUESTED: TaskStatus.ANSWERS_PENDING,
         TaskStatus.ANSWERS_PENDING: TaskStatus.ANSWERS_REQUESTED,
-        TaskStatus.ANSWERS_REQUESTED: TaskStatus.FINISHED
+        TaskStatus.ANSWERS_REQUESTED: TaskStatus.FINISHED,
+        TaskStatus.JUDGE_PENDING: TaskStatus.JUDGE_REQUESTED,
+        TaskStatus.JUDGE_REQUESTED: TaskStatus.FINISHED
     }
 
     _STATUS_DECREMENT = {
         TaskStatus.PERSONAS_REQUESTED: TaskStatus.PERSONAS_PENDING,
-        TaskStatus.ANSWERS_REQUESTED: TaskStatus.ANSWERS_PENDING
+        TaskStatus.ANSWERS_REQUESTED: TaskStatus.ANSWERS_PENDING,
+        TaskStatus.JUDGE_REQUESTED: TaskStatus.JUDGE_PENDING
     }
 
     def __post_init__(self):
@@ -49,9 +53,15 @@ class TaskConfig:
     def is_answers_pending(self):
         return self.status == TaskStatus.ANSWERS_PENDING
 
+    def is_judge_pending(self):
+        return self.status == TaskStatus.JUDGE_PENDING
+
     def increment_status(self):
         try:
-            self.status = self._STATUS_INCREMENT[self.status]
+            if self.status == TaskStatus.ANSWERS_REQUESTED and self.need_judge:
+                self.status = TaskStatus.JUDGE_PENDING
+            else:
+                self.status = self._STATUS_INCREMENT[self.status]
         except KeyError:
             log.warning(
                 "No status transition defined for task status %s. Will keep old status.",

@@ -25,6 +25,7 @@ class BatchType(StringEnum):
     """
     PERSONAS = "personas"
     ANSWERS = "answers"
+    JUDGE = "judge"
 
 
 class QuestionType(StringEnum):
@@ -39,6 +40,7 @@ class QuestionType(StringEnum):
     OPEN = "open"
     SUMMARIZATION = "summarization"
     MATH = "math"
+    TRANSLATION = "translation"
 
 
 class TaskStatus(StringEnum):
@@ -55,6 +57,8 @@ class TaskStatus(StringEnum):
     PERSONAS_REQUESTED = "personas_requested"
     ANSWERS_PENDING = "answers_pending"
     ANSWERS_REQUESTED = "answers_requested"
+    JUDGE_PENDING = "judge_pending"
+    JUDGE_REQUESTED = "judge_requested"
     FINISHED = "finished"
 
 

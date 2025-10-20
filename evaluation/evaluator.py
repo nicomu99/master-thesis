@@ -61,6 +61,9 @@ class Evaluator:
         """
         return [k for k, v in self.task_configs.items() if v.is_answers_pending()]
 
+    def get_unfinished_tasks_judge_answers(self) -> List[str]:
+        return [k for k, v in self.task_configs.items() if v.is_judge_pending()]
+
     def generate_static_personas(
             self,
             task_config: TaskConfig,
@@ -121,7 +124,7 @@ class Evaluator:
         self,
         task_id: str
     ):
-        log.info("Sending answer request %s", task_id)
+        log.info("Sending answer request for %s", task_id)
         task_config = self.task_configs[task_id]
 
         persona_names, persona_configs = self.persona_registry.get_names_and_configs()
@@ -145,6 +148,30 @@ class Evaluator:
 
         self.llm_client.send_task_batch(
             task_config, task_df, question_type, persona_configs)
+
+        task_config.increment_status()
+        self._save()
+
+    def send_judge_requests(
+        self,
+        task_id: str
+    ):
+        log.info("Sending judge request for %s", task_id)
+        task_config = self.task_configs[task_id]
+
+        persona_configs = self.persona_registry.get_configs()
+        dataset_id = task_config.dataset_id
+
+        task_df = self.dataset_handler.get_task_dataframe(dataset_id, task_config.category_name)
+
+        if not task_config.is_judge_pending():
+            log.warning(
+                "Skipping %s, make sure answers were generated and no batch is currently being processed.",
+                task_id)
+            return
+
+        self.llm_client.send_judge_batch(
+            task_config, task_df, persona_configs)
 
         task_config.increment_status()
         self._save()

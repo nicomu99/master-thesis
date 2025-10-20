@@ -14,5 +14,12 @@
         "question_column": "problem",
         "category_column": "subject",
         "answer_column": "answer"
+    },
+    "flores": {
+        "huggingface_id": "openlanguagedata/flores_plus",
+        "split": "dev",
+        "question_type": "translation",
+        "question_column": "text",
+        "category_column": "iso_639_3"
     }
 }

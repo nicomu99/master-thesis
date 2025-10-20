@@ -95,5 +95,8 @@ class PersonaRegistry:
         """
         return {p.name: p.template for p in self.persona_configs if p.category == PersonaCategory.DYNAMIC}
 
+    def get_configs(self) -> List[PersonaConfig]:
+        return self.persona_configs
+
     def get_names_and_configs(self) -> Tuple[List[str], List[PersonaConfig]]:
         return self.get_names(), self.persona_configs

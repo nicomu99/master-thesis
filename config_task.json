@@ -2,127 +2,183 @@
     "mmlu-pro_math": {
         "dataset_id": "mmlu-pro",
         "field": "math",
+        "need_judge": false,
         "status": "finished",
         "category_name": "math"
     },
     "mmlu-pro_physics": {
         "dataset_id": "mmlu-pro",
         "field": "physics",
+        "need_judge": false,
         "status": "finished",
         "category_name": "physics"
     },
     "mmlu-pro_philosophy": {
         "dataset_id": "mmlu-pro",
         "field": "philosophy",
+        "need_judge": false,
         "status": "finished",
         "category_name": "philosophy"
     },
     "mmlu-pro_chemistry": {
         "dataset_id": "mmlu-pro",
         "field": "chemistry",
+        "need_judge": false,
         "status": "finished",
         "category_name": "chemistry"
     },
     "mmlu-pro_law": {
         "dataset_id": "mmlu-pro",
         "field": "law",
+        "need_judge": false,
         "status": "finished",
         "category_name": "law"
     },
     "mmlu-pro_engineering": {
         "dataset_id": "mmlu-pro",
         "field": "engineering",
+        "need_judge": false,
         "status": "finished",
         "category_name": "engineering"
     },
     "mmlu-pro_other": {
         "dataset_id": "mmlu-pro",
         "field": "polymathy",
+        "need_judge": false,
         "status": "finished",
         "category_name": "other"
     },
     "mmlu-pro_economics": {
         "dataset_id": "mmlu-pro",
         "field": "economics",
+        "need_judge": false,
         "status": "finished",
         "category_name": "economics"
     },
     "mmlu-pro_health": {
         "dataset_id": "mmlu-pro",
         "field": "health studies",
+        "need_judge": false,
         "status": "finished",
         "category_name": "health"
     },
     "mmlu-pro_psychology": {
         "dataset_id": "mmlu-pro",
         "field": "psychology",
+        "need_judge": false,
         "status": "finished",
         "category_name": "psychology"
     },
     "mmlu-pro_business": {
         "dataset_id": "mmlu-pro",
         "field": "business studies",
+        "need_judge": false,
         "status": "finished",
         "category_name": "business"
     },
     "mmlu-pro_biology": {
         "dataset_id": "mmlu-pro",
         "field": "biology",
+        "need_judge": false,
         "status": "finished",
         "category_name": "biology"
     },
     "mmlu-pro_computer_science": {
         "dataset_id": "mmlu-pro",
         "field": "computer science",
+        "need_judge": false,
         "status": "finished",
         "category_name": "computer science"
     },
     "mmlu-pro_history": {
         "dataset_id": "mmlu-pro",
         "field": "history",
+        "need_judge": false,
         "status": "finished",
         "category_name": "history"
     },
     "MATH_algebra": {
         "dataset_id": "MATH",
         "field": "algebra",
+        "need_judge": false,
         "status": "finished",
         "category_name": "Algebra"
     },
     "MATH_intermediate_algebra": {
         "dataset_id": "MATH",
         "field": "intermediate algebra",
+        "need_judge": false,
         "status": "finished",
         "category_name": "Intermediate Algebra"
     },
     "MATH_prealgebra": {
         "dataset_id": "MATH",
         "field": "prealgebra",
+        "need_judge": false,
         "status": "finished",
         "category_name": "Prealgebra"
     },
     "MATH_number_theory": {
         "dataset_id": "MATH",
         "field": "number theory",
+        "need_judge": false,
         "status": "finished",
         "category_name": "Number Theory"
     },
     "MATH_precalculus": {
         "dataset_id": "MATH",
         "field": "precalculus",
+        "need_judge": false,
         "status": "finished",
         "category_name": "Precalculus"
     },
     "MATH_geometry": {
         "dataset_id": "MATH",
         "field": "geometry",
+        "need_judge": false,
         "status": "finished",
         "category_name": "Geometry"
     },
     "MATH_counting_probability": {
         "dataset_id": "MATH",
         "field": "counting and probability",
+        "need_judge": false,
         "status": "finished",
         "category_name": "Counting & Probability"
+    },
+    "flores_arab": {
+        "dataset_id": "flores",
+        "field": "arabic to english translation",
+        "need_judge": true,
+        "status": "judge_requested",
+        "category_name": "ace"
+    },
+    "flores_deu": {
+        "dataset_id": "flores",
+        "field": "german to english translation",
+        "need_judge": true,
+        "status": "judge_requested",
+        "category_name": "deu"
+    },
+    "flores_cmn": {
+        "dataset_id": "flores",
+        "field": "chinese to english translation",
+        "need_judge": true,
+        "status": "judge_requested",
+        "category_name": "cmn"
+    },
+    "flores_swh": {
+        "dataset_id": "flores",
+        "field": "swahili to english translation",
+        "need_judge": true,
+        "status": "judge_requested",
+        "category_name": "swh"
+    },
+    "flores_spa": {
+        "dataset_id": "flores",
+        "field": "spanish to english translation",
+        "need_judge": true,
+        "status": "judge_requested",
+        "category_name": "spa"
     }
 }

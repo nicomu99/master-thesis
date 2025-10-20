@@ -157,3 +157,15 @@ MATH_TEMPLATE = (
     "left and right, fractions should use frac, for square roots should use sqrt and so on. "
     "State the solution at the end of your answer on a new line and only the solution."
 )
+
+TRANSLATION_TEMPLATE = (
+    "Please translate the following text to english:\n"
+    "{question}"
+)
+
+TRANSLATION_JUDGE_TEMPLATE = (
+    "Please judge the following two translations of the following text: {reference}\n\n"
+    "Answer 1: {translation_1}\n\n"
+    "Answer 2: {translation_2}\n\n"
+    "Please provide the number identifier of the better translation at the end of your answer on a separate line."
+)
