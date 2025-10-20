@@ -150,3 +150,9 @@ MC_QUESTION_TEMPLATE = (
 SUMMARIZATION_TEMPLATE = (
     "Please summarize the following text: \n{question}"
 )
+
+MATH_TEMPLATE = (
+    "Please answer the following question: {question}\n\n"
+    "Make sure to style your output using latex, if required. State the solution at the end of your "
+    "answer on a new line."
+)

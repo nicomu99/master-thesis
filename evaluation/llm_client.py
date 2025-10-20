@@ -146,7 +146,7 @@ class LLMClient:
 
             self._save()
 
-    def check_batch_statuses(self) -> List[str]:
+    def check_batch_statuses(self) -> Dict[str, BatchInfo]:
         """Fetches and prints statuses of batch requests.
 
         Returns:
@@ -157,36 +157,27 @@ class LLMClient:
             for k, v in self.batches_info_store.items()
             if not v.has_finished()
         }
-        log.info("Checking batch statuses; %s active batches found.", len(active_batches))
 
-        failed_task_ids = []
         for batch_id, batch_info in active_batches.items():
             try:
                 remote_batch = self.client.batches.retrieve(batch_id)
-
-                task_id = batch_info.task_id
                 batch_info.update_status(remote_batch.status)
 
-                log.info("Task %s %-8s batch status is: %s", task_id, batch_info.batch_type, batch_info.status)
                 if batch_info.is_failed():
                     errors = getattr(remote_batch, "errors", None)
                     if not errors or not getattr(errors, "data", None):
-                        log.error("Batch failed with no error details.")
+                        batch_info.remote_messages.add("Batch failed with no error details.")
                         continue
-
                     for error in errors.data:
-                        log.error("Error %s, %s", error.code, error.message)
+                        batch_info.remote_messages.add(f"Error: {error.code}, {error.message}")
 
-                    failed_task_ids.append(batch_info.task_id)
                 elif batch_info.is_in_progress():
                     request_counts = getattr(remote_batch, "request_counts", None)
                     if not request_counts:
                         continue
-
-                    log.info(
-                        "Progress: %s out of %s finished; %s requests failed.",
-                        request_counts.completed, request_counts.total,
-                        request_counts.failed)
+                    batch_info.remote_messages.add(
+                        f"Progress: {request_counts.completed} out of {request_counts.total} finished; "
+                        f"{request_counts.failed} reqeusts failed.")
 
                 elif batch_info.is_completed():
                     batch_info.output_file_id = remote_batch.output_file_id if remote_batch.output_file_id else None
@@ -195,7 +186,7 @@ class LLMClient:
             except APIConnectionError:
                 log.error("Connection error.")
         self._save()
-        return failed_task_ids
+        return active_batches
 
     def _save_batch_response(
         self,

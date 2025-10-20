@@ -9,7 +9,7 @@ import pandas as pd
 
 from .utils import TaskConfig, QuestionType, BatchType
 from .utils import TEMP_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, ANSWER_COLUMN
-from .prompt_templates import OPEN_QUESTION_TEMPLATE, MC_QUESTION_TEMPLATE, SUMMARIZATION_TEMPLATE
+from .prompt_templates import OPEN_QUESTION_TEMPLATE, MC_QUESTION_TEMPLATE, SUMMARIZATION_TEMPLATE, MATH_TEMPLATE
 from .persona_registry import PersonaConfig
 
 
@@ -79,6 +79,8 @@ class BatchRequestHandler:
             template = OPEN_QUESTION_TEMPLATE
         elif question_type == QuestionType.SUMMARIZATION:
             template = SUMMARIZATION_TEMPLATE
+        elif question_type == QuestionType.MATH:
+            template = MATH_TEMPLATE
 
         else:
             raise ValueError(

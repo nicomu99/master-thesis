@@ -1,10 +1,18 @@
 {
-  "mmlu-pro": {
-    "huggingface_id": "TIGER-Lab/MMLU-Pro",
-    "split": "test",
-    "question_type": "mc",
-    "question_column": "question",
-    "category_column": "category",
-    "answer_column": "options"
-  }
+    "mmlu-pro": {
+        "huggingface_id": "TIGER-Lab/MMLU-Pro",
+        "split": "test",
+        "question_type": "mc",
+        "question_column": "question",
+        "category_column": "category",
+        "answer_column": "options"
+    },
+    "MATH": {
+        "huggingface_id": "nlile/hendrycks-MATH-benchmark",
+        "split": "test",
+        "question_type": "math",
+        "question_column": "problem",
+        "category_column": "subject",
+        "answer_column": "answer"
+    }
 }

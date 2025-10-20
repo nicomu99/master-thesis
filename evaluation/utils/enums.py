@@ -38,6 +38,7 @@ class QuestionType(StringEnum):
     MC = "mc"
     OPEN = "open"
     SUMMARIZATION = "summarization"
+    MATH = "math"
 
 
 class TaskStatus(StringEnum):

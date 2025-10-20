@@ -1,5 +1,5 @@
-from typing import Optional
-from dataclasses import dataclass
+from typing import Optional, Set
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from .enums import BatchType, BatchStatus
@@ -34,6 +34,7 @@ class BatchInfo:
     batch_id: str
     task_id: str
     batch_type: BatchType
+    remote_messages: Set[str] = field(default_factory=set)
     status: BatchStatus = BatchStatus.SENT
     output_file_id: Optional[str] = None
     local_output_file: Optional[Path] = None
@@ -41,6 +42,7 @@ class BatchInfo:
     local_error_file: Optional[Path] = None
 
     _STR_TRANSITIONS = {
+        "validating": BatchStatus.IN_PROGRESS,
         "failed": BatchStatus.FAILED,
         "in_progress": BatchStatus.IN_PROGRESS,
         "completed": BatchStatus.COMPLETED
@@ -57,6 +59,9 @@ class BatchInfo:
 
     def has_finished(self):
         return self.status in (BatchStatus.RETRIEVED, BatchStatus.ERROR)
+
+    def is_retrieved(self):
+        return self.status == BatchStatus.RETRIEVED
 
     def set_status(
         self,

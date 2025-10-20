@@ -1,7 +1,10 @@
+from typing import List
+
 import subprocess
 import platform
 
 from .evaluator import Evaluator
+from .utils import BatchStatus
 from .utils import TEMP_PATH
 from .utils import logging
 
@@ -14,17 +17,16 @@ class App:
 
     def __init__(self):
         self.run = True
-        self.evaluator = Evaluator(include_datasets=["mmlu-pro"])
+        self.evaluator = Evaluator()
 
         self.commands = {
             "q": ("Quit program", self.quit_program),
             "p": ("Generate personas", self.generate_personas),
             "t": ("Send task requests", self.generate_answers),
-            "s": ("Check batch statuses", self.evaluator.check_batch_statuses),
+            "s": ("Check batch statuses", self.check_batch_statuses),
             "f": ("Fetch batch responses", self.evaluator.fetch_batch_responses),
             "c": ("Check task statuses", self.check_task_statuses),
             "clear": ("Clears the CLI", self.clear_cli),
-            # "a": ("Rerun menu", self.ask_task_resend),
             "h": ("Show this help", self.show_help),
         }
 
@@ -32,7 +34,7 @@ class App:
         """Main loop that listens for user input."""
         self.show_help()
         while self.run:
-            user_input = input("Enter next command (type h for help): ").strip()
+            user_input = input("\nEnter next command (type h for help): ").strip()
 
             if user_input in self.commands:
                 _, func = self.commands[user_input]
@@ -96,8 +98,37 @@ class App:
         command = "cls" if platform.system() == "Windows" else "clear"
         subprocess.run(command, shell=True, check=False)
 
-    def ask_task_resend(self):
-        """Lets the user pick tasks to resend."""
+    @staticmethod
+    def _print_table(table_content: List[List[str]]):
+        for row in table_content:
+            print(f"{row[0]} {row[1]} {row[2]} {row[3]}")
+
+    def check_batch_statuses(self):
+        print("Checking batch statuses...\n")
+        batch_infos = self.evaluator.check_batch_statuses().copy()
+        table_content = [
+            [f"{"TaskID":<30}", f"{"BatchType":<15}", f"{"BatchStatus":<15}", "Message"],
+            [f"{"─" * 29:<30}", f"{"─" * 14:<15}", f"{"─" * 14:<15}", f"{"─" * 10}"]
+        ]
+
+        for batch_info in batch_infos.values():
+            task_id = batch_info.task_id
+            if len(task_id) > 25:
+                task_id = f"{task_id[:22]}..."
+
+            status = batch_info.status
+            if status in (BatchStatus.FAILED, BatchStatus.ERROR):
+                status = "\033[31m" + f"{status:<15}" + "\033[0m"
+            elif status in (BatchStatus.COMPLETED, BatchStatus.RETRIEVED):
+                status = "\033[32m" + f"{status:<15}" + "\033[0m"
+            else:
+                status = "\033[33m" + f"{status:<15}" + "\033[0m"
+
+            table_row = [f"{task_id:<30}", f"{batch_info.batch_type:<15}", status, ""]
+            if len(batch_info.remote_messages) > 0:
+                table_row[3] = " ".join(batch_info.remote_messages)
+            table_content.append(table_row)
+        self._print_table(table_content)
 
     def show_help(self):
         """Prints the help menu."""

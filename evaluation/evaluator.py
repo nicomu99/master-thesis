@@ -8,14 +8,12 @@ from .llm_client import LLMClient
 from .persona_registry import PersonaRegistry
 from .batch_request_handler import BatchRequestHandler
 from .utils import columns_not_full, load_dataclass_dict, save_dataclass_dict
-from .utils import TaskConfig
+from .utils import TaskConfig, BatchInfo
 
 from .utils import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-# TODO: Update batch info update (now in TaskConfig)
 
 
 class Evaluator:
@@ -39,15 +37,13 @@ class Evaluator:
         self.task_configs = load_dataclass_dict(
             self.config_path,
             TaskConfig,
-            "task_id"
-        )
+            "task_id")
 
     def _save(self):
         save_dataclass_dict(
             self.config_path,
             self.task_configs,
-            "task_id"
-        )
+            "task_id")
 
     def get_unfinished_tasks_personas(self) -> List[str]:
         """Returns a list with all tasks that have missing personas.
@@ -163,11 +159,14 @@ class Evaluator:
                 task_iterator.set_description(f"{desc} {task_config.task_id}")
                 yield task_id, task_config
 
-    def check_batch_statuses(self):
+    def check_batch_statuses(self) -> Dict[str, BatchInfo]:
         """Prints the batch statuses."""
-        failed_ids = self.llm_client.check_batch_statuses()
-        for failed_id in failed_ids:
+        active_batches = self.llm_client.check_batch_statuses()
+
+        failed_task_ids = [v.task_id for v in active_batches.values() if v.is_failed()]
+        for failed_id in failed_task_ids:
             self.task_configs[failed_id].decrement_status()
+        return active_batches
 
     def fetch_batch_responses(self):
         """Fetches batch responses and saves them to disk."""
@@ -179,7 +178,6 @@ class Evaluator:
             dataset_id = task_config.dataset_id
 
             batch_type = batch_info.batch_type
-            batch_status = batch_info.status
             batch_output_file = batch_info.local_output_file
             batch_error_file = batch_info.local_error_file
 
@@ -193,5 +191,5 @@ class Evaluator:
                     log.error("Task %s %s failed", task_id, batch_type)
                     log.error(message)
 
-            task_config.update_status(batch_status != "error")
+            task_config.update_status(batch_info.is_retrieved())
         self._save()

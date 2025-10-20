@@ -1,4 +1,4 @@
-from typing import Dict, Type, TypeVar, Any
+from typing import Dict, Type, TypeVar, Any, get_origin
 
 import json
 from enum import Enum
@@ -27,6 +27,8 @@ def encode_dataclass(obj: object):
         return obj.value
     if isinstance(obj, Path):
         return str(obj)
+    if isinstance(obj, set):
+        return list(obj)
     raise TypeError(f"Type {type(obj)} not serializable")
 
 
@@ -42,11 +44,16 @@ def decode_dataclass(data: dict, cls: Any) -> Any:
     """
     init_kwargs = {}
     for f in fields(cls):
+        if f.name not in data:
+            continue
+
         val = data.get(f.name)
         if isinstance(val, dict) and is_dataclass(f.type):
             init_kwargs[f.name] = decode_dataclass(val, f.type)
         elif isinstance(val, str) and isinstance(f.type, type) and issubclass(f.type, Enum):
             init_kwargs[f.name] = f.type(val)
+        elif isinstance(val, list) and get_origin(f.type) is set:
+            init_kwargs[f.name] = set(map(str, val))
         else:
             init_kwargs[f.name] = val
     return cls(**init_kwargs)
