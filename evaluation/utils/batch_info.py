@@ -137,3 +137,12 @@ class BatchInfo:
             log.warning(
                 "No status transition defined for status %s. Will keep old status.",
                 new_status)
+
+    @staticmethod
+    def get_key_field() -> str:
+        """Returns the key field of this data class.
+
+        Returns:
+            str: Key field identifier.
+        """
+        return "batch_id"

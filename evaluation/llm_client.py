@@ -31,11 +31,11 @@ class LLMClient:
         self.batches_info_store: Dict[str, BatchInfo] = load_dataclass_dict(
             self.batches_info_file,
             BatchInfo,
-            "batch_id"
+            BatchInfo.get_key_field()
         )
 
     def _save(self):
-        save_dataclass_dict(self.batches_info_file, self.batches_info_store, "batch_id")
+        save_dataclass_dict(self.batches_info_file, self.batches_info_store, BatchInfo.get_key_field())
 
     def get_api_response(
         self,
