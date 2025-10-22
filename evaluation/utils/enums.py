@@ -108,7 +108,6 @@ class BatchStatus(StringEnum):
     API interaction steps. The status is used to track progress, errors, and completion.
 
     Attributes:
-        SEND: The request file has been created but not yet sent to the API.
         SENT: The batch has been sent successfully and is awaiting processing.
         FAILED: The batch submission failed before or during API processing.
         IN_PROGRESS: The batch is currently being processed by the API.
@@ -116,7 +115,6 @@ class BatchStatus(StringEnum):
         RETRIEVED: The results have been successfully fetched.
         ERROR: An error occurred during or after retrieval (e.g., corrupted output).
     """
-    SEND = "send"
     SENT = "sent"
     FAILED = "failed"
     IN_PROGRESS = "in_progress"
