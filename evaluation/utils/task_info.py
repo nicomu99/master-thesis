@@ -9,24 +9,24 @@ log.setLevel(logging.DEBUG)
 
 @dataclass
 class TaskInfo:
+    """Data class containing task-specific metadata.
+
+    Attributes:
+        task_id (str): Task identifier.
+        dataset_id (str): Identifier of the associated dataset.
+        field (str): High-level field of study of this task.
+        need_judge (bool): Whether the task requires LLM-as-a-judge responses.
+        status (TaskStatus): The current status of the task. Defaults to PERSONAS_PENDING.
+        category_name (None | str): Category identifier of the task. If the dataset of this task contains
+            several areas of expertise, this value is used to identify rows of the same expertise.
+            Defaults to field.
+    """
     task_id: str
     dataset_id: str
     field: str
     need_judge: bool = False
     status: TaskStatus = TaskStatus.PERSONAS_PENDING
     category_name: Optional[str] = None
-    """Data class containing task-specific configuration parameters.
-
-    Attributes:
-        task_id (str): Identifier of the task of the format "<dataset_id>_<name>".
-            If name is empty, "_all" is appended to the identifier instead.
-        dataset_id (str): Identifier of the dataset where samples of the task are stored.
-        field (str): High-level field of study of this task.
-        status (TaskStatus): The current status of the task.
-        category_name (None | str): Category identifier of the task. If the dataset of this task contains
-            several areas of expertise, this value is used to identify rows of the same expertise.
-            If this field is not defined, the field will be used as a fallback.
-    """
 
     _STATUS_INCREMENT = {
         TaskStatus.PERSONAS_PENDING: TaskStatus.PERSONAS_REQUESTED,

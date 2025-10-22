@@ -24,16 +24,16 @@ class BatchRequestHandler:
         model: str,
         instruction: Optional[str] = None
     ):
-        """Function that writes a prompt reqeust in JSON format to a file.
+        """Function that writes a prompt request in JSON format to a file.
 
         Args:
             f (Any): File output buffer. The request will be written to this file.
             custom_id (str): An identifier, which can be used to map client outputs to the input samples.
             prompt (str): Request prompt.
-            instruction (str | None): A system prompt overwrite string. If this is empty, the default system prompt
+            model (str): Model identifier of the LLM API.
+            instruction (str | None): System prompt instruction. If this is None, the default system prompt
                 will be used. Defaults to None.
         """
-        # TODO: Docstring
         body = {"model": model, "input": prompt}
         if instruction:
             body["instructions"] = instruction

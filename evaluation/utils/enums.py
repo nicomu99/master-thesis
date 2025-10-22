@@ -37,18 +37,20 @@ class BatchType(StringEnum):
 
 
 class QuestionType(StringEnum):
-    MC = "mc"
-    OPEN = "open"
-    SUMMARIZATION = "summarization"
-    MATH = "math"
-    TRANSLATION = "translation"
     """The question type is a categorical field for datasets.
 
     Attributes:
         MC: Closed format questions with provided answer options.
         OPEN: Open format questions with no answer options.
         SUMMARIZATION: Summarization tasks.
+        MATH: Open format math reasoning questions.
+        TRANSLATION: Translation tasks.
     """
+    MC = "mc"
+    OPEN = "open"
+    SUMMARIZATION = "summarization"
+    MATH = "math"
+    TRANSLATION = "translation"
 
     @property
     def template(self) -> str:
@@ -68,13 +70,6 @@ class QuestionType(StringEnum):
 
 
 class TaskStatus(StringEnum):
-    PERSONAS_PENDING = "personas_pending"
-    PERSONAS_REQUESTED = "personas_requested"
-    ANSWERS_PENDING = "answers_pending"
-    ANSWERS_REQUESTED = "answers_requested"
-    JUDGE_PENDING = "judge_pending"
-    JUDGE_REQUESTED = "judge_requested"
-    FINISHED = "finished"
     """Task status information.
 
     Attributes:
@@ -82,8 +77,17 @@ class TaskStatus(StringEnum):
         PERSONAS_REQUESTED: A request has been sent to generate persona strings.
         ANSWERS_PENDING: Personas have been merged to the task dataframe and answers can be generated.
         ANSWERS_REQUESTED: A request has been sent for question answering.
+        JUDGE_PENDING: If the task requires a judge to decide, the status turns to judge pending.
+        JUDGE_REQUESTED: A request has been sent for judge answers.
         FINISHED: Answers have been merged to the task dataframe. The task has finished.
     """
+    PERSONAS_PENDING = "personas_pending"
+    PERSONAS_REQUESTED = "personas_requested"
+    ANSWERS_PENDING = "answers_pending"
+    ANSWERS_REQUESTED = "answers_requested"
+    JUDGE_PENDING = "judge_pending"
+    JUDGE_REQUESTED = "judge_requested"
+    FINISHED = "finished"
 
 
 class PersonaCategory(StringEnum):
@@ -98,6 +102,20 @@ class PersonaCategory(StringEnum):
 
 
 class BatchStatus(StringEnum):
+    """Enumeration of possible processing states for a batch.
+
+    Represents the lifecycle of a batch as it moves through local processing and
+    API interaction steps. The status is used to track progress, errors, and completion.
+
+    Attributes:
+        SEND: The request file has been created but not yet sent to the API.
+        SENT: The batch has been sent successfully and is awaiting processing.
+        FAILED: The batch submission failed before or during API processing.
+        IN_PROGRESS: The batch is currently being processed by the API.
+        COMPLETED: The batch has finished processing and is ready to be retrieved.
+        RETRIEVED: The results have been successfully fetched.
+        ERROR: An error occurred during or after retrieval (e.g., corrupted output).
+    """
     SEND = "send"
     SENT = "sent"
     FAILED = "failed"
@@ -105,12 +123,3 @@ class BatchStatus(StringEnum):
     COMPLETED = "completed"
     RETRIEVED = "retrieved"
     ERROR = "error"
-    """
-        Possibly outdated process status, indicating what step the batch is currently going through.
-        Can be "send", "sent", "failed", "in_progress", "completed", "error", or "retrieved".
-
-        If the status is "send", a request file has already been created, but the batch has not been sent to the
-        API. The statuses "failed", "in_progress" and "completed" correspond to the steps of the API.
-        If the batch can be retrieved, the status is "completed", this changes to "retrieved" or "error" after the
-        response has been fetched. Defaults to "sent"
-    """

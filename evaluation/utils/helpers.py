@@ -87,6 +87,20 @@ def load_dataclass_dict(
 
 
 def load_task_config(path: str | Path) -> Dict[str, TaskInfo]:
+    """Loads and decodes all task configurations from a JSON file.
+
+    The JSON file is expected to contain a nested mapping of dataset IDs to
+    task configurations. Each configuration entry is automatically converted
+    into a ``TaskInfo`` dataclass instance using ``decode_dataclass``
+
+    Args:
+        path (str | Path): Path to the JSON configuration file.
+
+    Returns:
+        Dict[str, TaskInfo]: A mapping from task IDs to their corresponding
+        ``TaskInfo`` instances, each annotated with its ``dataset_id`` and
+        ``task_id``.
+    """
     path = Path(path)
     with path.open("r", encoding="utf-8") as f:
         data = json.load(f)
