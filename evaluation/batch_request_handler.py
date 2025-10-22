@@ -9,14 +9,7 @@ import pandas as pd
 
 from .utils import TaskConfig, QuestionType, BatchType
 from .utils import TEMP_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, ANSWER_COLUMN
-from .prompt_templates import (
-    OPEN_QUESTION_TEMPLATE,
-    MC_QUESTION_TEMPLATE,
-    SUMMARIZATION_TEMPLATE,
-    MATH_TEMPLATE,
-    TRANSLATION_TEMPLATE,
-    TRANSLATION_JUDGE_TEMPLATE
-)
+from .utils import TRANSLATION_JUDGE_TEMPLATE
 from .persona_registry import PersonaConfig
 
 
@@ -73,29 +66,16 @@ class BatchRequestHandler:
         Raises:
             ValueError: Wrong question type used.
         """
+        template = question_type.template
 
         prompt_kwargs = {"question": task_data[QUESTION_COLUMN]}
         if question_type == QuestionType.MC:
-            template = MC_QUESTION_TEMPLATE
             letters = string.ascii_uppercase
             choices = "\n".join(
                 f"({letters[i]}) {answer}" for i, answer in enumerate(task_data[ANSWER_COLUMN])
             )
             prompt_kwargs["choices"] = choices
-        elif question_type == QuestionType.OPEN:
-            template = OPEN_QUESTION_TEMPLATE
-        elif question_type == QuestionType.SUMMARIZATION:
-            template = SUMMARIZATION_TEMPLATE
-        elif question_type == QuestionType.MATH:
-            template = MATH_TEMPLATE
-        elif question_type == QuestionType.TRANSLATION:
-            template = TRANSLATION_TEMPLATE
 
-        else:
-            raise ValueError(
-                f"Question type {question_type} not recognized. "
-                "Should be 'mc', 'open' or 'summarization'"
-            )
         return template.format(**prompt_kwargs)
 
     @staticmethod

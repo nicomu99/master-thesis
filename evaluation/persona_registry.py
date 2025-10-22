@@ -3,7 +3,7 @@ from typing import List, Dict, Tuple
 from dataclasses import dataclass, field
 
 from .utils import PersonaCategory
-from .prompt_templates import (
+from .utils import (
     BASE_PERSONA,
     BASE_TEMPLATE,
     STATIC_SHORT_TEMPLATE,

@@ -1,5 +1,13 @@
 from enum import Enum
 
+from .prompt_templates import (
+    OPEN_QUESTION_TEMPLATE,
+    MC_QUESTION_TEMPLATE,
+    SUMMARIZATION_TEMPLATE,
+    MATH_TEMPLATE,
+    TRANSLATION_TEMPLATE,
+)
+
 
 class StringEnum(Enum):
     """Little helper enum subclass for easier printing.
@@ -41,6 +49,17 @@ class QuestionType(StringEnum):
     SUMMARIZATION = "summarization"
     MATH = "math"
     TRANSLATION = "translation"
+
+    @property
+    def template(self) -> str:
+        templates = {
+            "mc": MC_QUESTION_TEMPLATE,
+            "open": OPEN_QUESTION_TEMPLATE,
+            "summarization": SUMMARIZATION_TEMPLATE,
+            "math": MATH_TEMPLATE,
+            "translation": TRANSLATION_TEMPLATE,
+        }
+        return templates[self.value]
 
 
 class TaskStatus(StringEnum):
