@@ -30,9 +30,11 @@ class PersonaConfig:
     category: PersonaCategory
     template: str
     answer_column: str = field(init=False)
+    judge_column: str = field(init=False)
 
     def __post_init__(self):
         self.answer_column = self.name.replace("persona", "answer")
+        self.judge_column = self.name.replace("persona", "judge")
 
 
 class PersonaRegistry:
@@ -52,7 +54,12 @@ class PersonaRegistry:
             PersonaConfig("dynamic_long_persona", PersonaCategory.DYNAMIC, DYNAMIC_LONG_TEMPLATE),
         ]
 
-    def get_base_persona_string(self):
+    def get_base_persona_string(self) -> str:
+        """Returns the base persona string.
+
+        Returns:
+            str: Base persona string.
+        """
         return self.base_persona_string
 
     def get_names(self) -> List[str]:
@@ -95,8 +102,34 @@ class PersonaRegistry:
         """
         return {p.name: p.template for p in self.persona_configs if p.category == PersonaCategory.DYNAMIC}
 
+    def get_dynamic_configs(self) -> List[PersonaConfig]:
+        """Returns the dynamic persona configs.
+
+        Returns:
+            List[PersonaConfig]: A list with persona configs.
+        """
+        return [p for p in self.persona_configs if p.category == PersonaCategory.DYNAMIC]
+
     def get_configs(self) -> List[PersonaConfig]:
+        """Returns all persona configs.
+
+        Returns:
+            List[PersonaConfig]: A list with persona configs.
+        """
         return self.persona_configs
 
+    def get_config_dict(self) -> Dict[str, PersonaConfig]:
+        """Returns a dictionary with persona configs as items and persona identifiers as keys.
+
+        Returns:
+            Dict[str, PersonaConfig]: Dictionary with persona configs.
+        """
+        return {p.name: p for p in self.persona_configs}
+
     def get_names_and_configs(self) -> Tuple[List[str], List[PersonaConfig]]:
+        """Returns a list with persona name idenfifiers and a list with persona configs.
+
+        Returns:
+            Tuple[List[str], List[PersonaConfig]]: List with persona names and list with persona configs.
+        """
         return self.get_names(), self.persona_configs

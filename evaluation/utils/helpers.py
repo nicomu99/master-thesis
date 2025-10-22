@@ -5,6 +5,8 @@ from enum import Enum
 from pathlib import Path
 from dataclasses import fields, is_dataclass, asdict
 
+from .task_info import TaskInfo
+
 T = TypeVar("T")
 
 
@@ -84,10 +86,32 @@ def load_dataclass_dict(
     return {k: decode_dataclass({key_field: k, **v}, cls) for k, v in raw_data.items()}
 
 
+def load_task_config(path: str | Path) -> Dict[str, TaskInfo]:
+    path = Path(path)
+    with path.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    task_infos: Dict[str, TaskInfo] = {}
+
+    for dataset_id, tasks in data.items():
+        for task_id, cfg in tasks.items():
+            # Fill in required fields before decoding
+            cfg = {
+                **cfg,
+                "task_id": task_id,
+                "dataset_id": dataset_id,
+            }
+            # Decode using the helper
+            task_info = decode_dataclass(cfg, TaskInfo)
+            task_infos[task_id] = task_info
+
+    return task_infos
+
+
 def save_dataclass_dict(
     file_path: str | Path,
     data: dict[str, T],
-    key_field: str,
+    key_field: str | None,
 ) -> None:
     """Save a dictionary of dataclasses to JSON.
 

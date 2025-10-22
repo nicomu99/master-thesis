@@ -7,7 +7,7 @@ from openai import OpenAI, APIConnectionError
 
 from .batch_request_handler import BatchRequestHandler
 from .persona_registry import PersonaConfig
-from .utils import TaskConfig, BatchInfo, BatchType, QuestionType, BatchStatus
+from .utils import TaskInfo, BatchInfo, BatchType, QuestionType, BatchStatus
 from .utils import load_dataclass_dict, save_dataclass_dict
 from .utils import TEMP_PATH
 from .utils import logging
@@ -73,55 +73,67 @@ class LLMClient:
 
     def send_persona_batch(
         self,
-        task_config: TaskConfig,
+        task_config: TaskInfo,
         task_df: pd.DataFrame,
-        persona_templates: Dict[str, str]
-    ) -> None:
+        persona_configs: List[PersonaConfig]
+    ) -> int:
         """Sends a persona batch request to the LLM API.
 
         Args:
             task_config (TaskConfig): Configuration parameters of the task.
             task_df (pd.DataFrame): Dataframe containing task samples.
-            persona_templates (Dict[str, str]): Template to use for persona generation.
+            persona_configs (List[PersonaConfig]): List of persona configurations.
+
+        Returns:
+            int: Number of sent requests.
         """
-        batch_file_name = BatchRequestHandler.create_persona_request_file(
-            task_config, task_df, persona_templates, self.model)
+        batch_file_name, request_count = BatchRequestHandler.create_persona_request_file(
+            task_config, task_df, persona_configs, self.model)
 
         self.send_batch(
             task_config.task_id, batch_file_name, BatchType.PERSONAS)
 
+        return request_count
+
     def send_task_batch(
         self,
-        task_config: TaskConfig,
+        task_config: TaskInfo,
         task_df: pd.DataFrame,
         question_type: QuestionType,
         persona_configs: List[PersonaConfig]
-    ) -> None:
+    ) -> int:
         """Sends a task question answering request to the LLM API.
 
         Args:
             task_config (TaskConfig): Configuration parameters of the task.
             task_df (pd.DataFrame): Dataframe containing task samples.
             question_type (QuestionType): The type of questions of the task samples.
-            persona_types (List[PersonaConfig]): The persona configurations to use for generating answers.
+            persona_configs (List[PersonaConfig]): The persona configurations to use for generating answers.
+
+        Returns:
+            int: Number of sent requests.
         """
-        batch_file_name = BatchRequestHandler.create_task_request_file(
+        batch_file_name, request_count = BatchRequestHandler.create_task_request_file(
             task_config, task_df, question_type, persona_configs, self.model)
 
         self.send_batch(
             task_config.task_id, batch_file_name, BatchType.ANSWERS)
 
+        return request_count
+
     def send_judge_batch(
         self,
-        task_config: TaskConfig,
+        task_config: TaskInfo,
         task_df: pd.DataFrame,
         persona_configs: List[PersonaConfig]
-    ):
-        batch_file_name = BatchRequestHandler.create_judge_request_file(
+    ) -> int:
+        batch_file_name, request_count = BatchRequestHandler.create_judge_request_file(
             task_config, task_df, persona_configs, self.model)
 
         self.send_batch(
             task_config.task_id, batch_file_name, BatchType.JUDGE)
+
+        return request_count
 
     def send_batch(
         self,
@@ -133,7 +145,7 @@ class LLMClient:
 
         Args:
             task_id (str): String identifier of the task the batch file belongs to.
-            batch_file_name (str): File name of the file containing the request objects.
+            batch_file (str): File name of the file containing the request objects.
             batch_type (str): Enumeration indicating whether the batch contains persona generation requests
                 or task answering prompts.
         """
@@ -159,10 +171,10 @@ class LLMClient:
             self._save()
 
     def check_batch_statuses(self) -> Dict[str, BatchInfo]:
-        """Fetches and prints statuses of batch requests.
+        """Fetches and returns statuses of batch requests.
 
         Returns:
-            List[str]: A list of batch identifiers of batches that did not finish correctly.
+            Dict[str, BatchInfo]: A dictionary of batch information.
         """
         active_batches = {
             k: v
@@ -189,7 +201,7 @@ class LLMClient:
                         continue
                     batch_info.progress_message = (
                         f"Progress: {request_counts.completed} out of {request_counts.total} finished; "
-                        f"{request_counts.failed} reqeusts failed.")
+                        f"{request_counts.failed} requests failed.")
 
                 elif batch_info.is_completed():
                     batch_info.output_file_id = remote_batch.output_file_id if remote_batch.output_file_id else None
@@ -200,7 +212,7 @@ class LLMClient:
                         continue
                     batch_info.progress_message = (
                         f"Progress: {request_counts.completed} out of {request_counts.total} finished; "
-                        f"{request_counts.failed} reqeusts failed.")
+                        f"{request_counts.failed} requests failed.")
 
             except APIConnectionError:
                 log.error("Connection error.")

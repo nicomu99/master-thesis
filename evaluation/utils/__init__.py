@@ -1,5 +1,5 @@
 from .batch_info import BatchInfo
-from .constants import TEMP_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, ANSWER_COLUMN
+from .constants import TEMP_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, GROUND_TRUTH_COLUMN
 from .dataframe_helpers import columns_not_full
 from .dataset_config import DatasetConfig
 from .enums import BatchType
@@ -9,7 +9,7 @@ from .enums import PersonaCategory
 from .enums import BatchStatus
 from .helpers import load_dataclass_dict
 from .helpers import save_dataclass_dict
-from .helpers import decode_dataclass
+from .helpers import decode_dataclass, load_task_config
 from .log_conf import logging
 from .prompt_templates import (
     BASE_PERSONA,
@@ -27,14 +27,14 @@ from .prompt_templates import (
     TRANSLATION_TEMPLATE,
     TRANSLATION_JUDGE_TEMPLATE
 )
-from .task_config import TaskConfig
+from .task_info import TaskInfo
 
 __all__ = [
     "BatchInfo",
     "TEMP_PATH",
     "STATIC_ID_COLUMN",
     "QUESTION_COLUMN",
-    "ANSWER_COLUMN",
+    "GROUND_TRUTH_COLUMN",
     "columns_not_full",
     "DatasetConfig",
     "BatchType",
@@ -45,6 +45,7 @@ __all__ = [
     "load_dataclass_dict",
     "save_dataclass_dict",
     "decode_dataclass",
+    "load_task_config",
     "logging",
     "BASE_PERSONA",
     "BASE_TEMPLATE",
@@ -60,5 +61,5 @@ __all__ = [
     "MATH_TEMPLATE",
     "TRANSLATION_TEMPLATE",
     "TRANSLATION_JUDGE_TEMPLATE",
-    "TaskConfig"
+    "TaskInfo"
 ]

@@ -50,7 +50,7 @@ class App:
         """Lets the user pick which task to generate personas for."""
         print("Due to API queue limits, only one request should be sent at the same time.")
         missing_map = {
-            f"{i + 1}": m for i, m in enumerate(self.evaluator.get_unfinished_tasks_personas())
+            f"{i + 1}": m for i, m in enumerate(self.evaluator.get_personas_pending_tasks())
         }
 
         if len(missing_map) < 1:
@@ -63,14 +63,18 @@ class App:
         user_input = input("Choose task: ")
         if user_input not in missing_map:
             print("Task unknown. Please try again.")
-        else:
-            self.evaluator.generate_personas(missing_map[user_input])
+            return
+
+        task_id = missing_map[user_input]
+        print(f"Generating personas for {task_id}")
+        request_count = self.evaluator.generate_personas(task_id)
+        print(f"{request_count} requests sent.")
 
     def generate_answers(self) -> None:
         """Lets the user pick for which task to generate answers."""
         print("Due to API queue limits, only one request should be sent at the same time.")
         missing_map = {
-            f"{i + 1}": m for i, m in enumerate(self.evaluator.get_unfinished_tasks_answers())
+            f"{i + 1}": m for i, m in enumerate(self.evaluator.get_answer_pending_tasks())
         }
 
         if len(missing_map) < 1:
@@ -83,12 +87,16 @@ class App:
         user_input = input("Choose task: ")
         if user_input not in missing_map:
             print("Task unknown. Please try again.")
-        else:
-            self.evaluator.send_task_requests(missing_map[user_input])
+            return
+
+        task_id = missing_map[user_input]
+        print(f"Sending request for {task_id}")
+        request_count = self.evaluator.send_task_requests(task_id)
+        print(f"{request_count} requests sent.")
 
     def generate_judge_answers(self) -> None:
         missing_map = {
-            f"{i + 1}": m for i, m in enumerate(self.evaluator.get_unfinished_tasks_judge_answers())
+            f"{i + 1}": m for i, m in enumerate(self.evaluator.get_judge_pending_tasks())
         }
 
         if len(missing_map) < 1:
@@ -101,8 +109,12 @@ class App:
         user_input = input("Choose task: ")
         if user_input not in missing_map:
             print("Task unknown. Please try again.")
-        else:
-            self.evaluator.send_judge_requests(missing_map[user_input])
+            return
+
+        task_id = missing_map[user_input]
+        print(f"Sending request for {task_id}")
+        request_count = self.evaluator.send_judge_requests(task_id)
+        print(f"{request_count} requests sent.")
 
     def quit_program(self):
         """Quits the program."""
@@ -111,7 +123,7 @@ class App:
     def check_task_statuses(self):
         """Prints task status information."""
         print("Printing task statuses:")
-        task_configs = self.evaluator.task_configs
+        task_configs = self.evaluator.task_infos
         for idx, (task_id, task_config) in enumerate(task_configs.items()):
             print(f"    {f'({idx + 1})':>4} Task {task_id:25} status is     {task_config.status}")
 

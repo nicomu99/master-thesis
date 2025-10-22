@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, Optional, List, Tuple
 
 import json
 import string
@@ -7,8 +7,8 @@ from collections import defaultdict
 
 import pandas as pd
 
-from .utils import TaskConfig, QuestionType, BatchType
-from .utils import TEMP_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, ANSWER_COLUMN
+from .utils import TaskInfo, QuestionType
+from .utils import TEMP_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, GROUND_TRUTH_COLUMN
 from .utils import TRANSLATION_JUDGE_TEMPLATE
 from .persona_registry import PersonaConfig
 
@@ -33,6 +33,7 @@ class BatchRequestHandler:
             instruction (str | None): A system prompt overwrite string. If this is empty, the default system prompt
                 will be used. Defaults to None.
         """
+        # TODO: Docstring
         body = {"model": model, "input": prompt}
         if instruction:
             body["instructions"] = instruction
@@ -62,9 +63,6 @@ class BatchRequestHandler:
 
         Returns:
             str: Returns the filled template string.
-
-        Raises:
-            ValueError: Wrong question type used.
         """
         template = question_type.template
 
@@ -72,7 +70,7 @@ class BatchRequestHandler:
         if question_type == QuestionType.MC:
             letters = string.ascii_uppercase
             choices = "\n".join(
-                f"({letters[i]}) {answer}" for i, answer in enumerate(task_data[ANSWER_COLUMN])
+                f"({letters[i]}) {answer}" for i, answer in enumerate(task_data[GROUND_TRUTH_COLUMN])
             )
             prompt_kwargs["choices"] = choices
 
@@ -80,26 +78,26 @@ class BatchRequestHandler:
 
     @staticmethod
     def create_task_request_file(
-        task_config: TaskConfig,
+        task_config: TaskInfo,
         dataframe: pd.DataFrame,
         question_type: QuestionType,
         persona_configs: List[PersonaConfig],
         model: str
-    ) -> str:
+    ) -> Tuple[str, int]:
         """Creates a request file for task question answering.
 
         Args:
             task_config (TaskConfig): Task configuration attributes.
             dataframe (pd.DataFrame): Dataframe containing samples of the task.
-            question_type (str): The question type of this task. Can be "mc_question",
-                "open_question" or "summarization".
+            question_type (str): The question type of this task.
             persona_configs (List[PersonaConfig]): List of persona configurations.
+            model (str): Model string identifier.
 
         Returns:
-            str: A string identifier of the created task request.
+            Tuple[str, int]: A string identifier of the created task request file and number of requests created.
         """
+        request_count = 0
         task_request_file = f"{TEMP_PATH}/{task_config.task_id}_request.jsonl"
-
         with open(task_request_file, "w", encoding="utf-8") as f:
             for row in dataframe.itertuples(index=False):
                 # noinspection PyCallingNonCallable
@@ -109,93 +107,113 @@ class BatchRequestHandler:
                     row_dict,
                     question_type
                 )
-                for config in persona_configs:
-                    persona_name = config.name
-                    answer_column = config.answer_column
-                    if answer_column in row_dict and row_dict[answer_column] is not None:
+                for persona_config in persona_configs:
+                    persona_name = persona_config.name
+                    answer_column_df = persona_config.answer_column
+
+                    if answer_column_df in row_dict and row_dict[answer_column_df] is not None:
                         continue
 
-                    custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{persona_name}"
+                    custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{answer_column_df}"
                     BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model, row_dict[persona_name])
-        return task_request_file
+                    request_count += 1
+        return task_request_file, request_count
 
     @staticmethod
     def create_persona_request_file(
-        task_config: TaskConfig,
+        task_config: TaskInfo,
         dataframe: pd.DataFrame,
-        persona_templates: Dict[str, str],
+        persona_configs: List[PersonaConfig],
         model: str
-    ) -> str:
+    ) -> Tuple[str, int]:
         """Creates a request file for persona generation.
 
         Args:
             task_config (TaskConfig): Task configuration attributes.
             dataframe (pd.DataFrame): Dataframe containing samples of the task.
-            persona_templates (Dict[str, str]): Persona types and templates for which a request should be sent to the
-                API.
+            persona_configs (List[PersonaConfig]): List of persona configurations.
+            model (str): Model string identifier.
 
         Returns:
-            str: A string identifier of the created request file.
+            Tuple[str, int]: A string identifier of the created task request file and number of requests created.
         """
-
+        request_count = 0
         persona_request_file = f"{TEMP_PATH}/{task_config.task_id}_persona_request.jsonl"
         with open(persona_request_file, "w", encoding="utf-8") as f:
             for row in dataframe.itertuples(index=False):
                 # noinspection PyCallingNonCallable
                 row_dict = row._asdict()  # type: ignore
 
-                for persona_name, prompt_template in persona_templates.items():
-                    prompt = prompt_template.format(
+                for persona_config in persona_configs:
+                    template = persona_config.template
+                    persona_name = persona_config.name
+
+                    if persona_name in row_dict and row_dict[persona_name] is not None:
+                        continue
+
+                    prompt = template.format(
                         task_type=task_config.field,
-                        question=row_dict[QUESTION_COLUMN]
-                    )
+                        question=row_dict[QUESTION_COLUMN])
+
                     custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{persona_name}"
                     BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model)
-        return persona_request_file
+                    request_count += 1
+        return persona_request_file, request_count
 
     @staticmethod
     def create_judge_request_file(
-        task_config: TaskConfig,
+        task_config: TaskInfo,
         dataframe: pd.DataFrame,
         persona_configs: List[PersonaConfig],
         model: str
-    ) -> str:
+    ) -> Tuple[str, int]:
+        """Creates a request file for judge completions.
+
+        Args:
+            task_config (TaskConfig): Task configuration.
+            dataframe (pd.DataFrame): Dataframe containing samples of the task.
+            persona_configs (List[PersonaConfig]): List of persona configurations.
+            model (str): Model string identifier.
+
+        Returns:
+            Tuple[str, int]: A string identifier of the created task request file and number of requests created.
+        """
+        request_count = 0
         judge_request_file = f"{TEMP_PATH}/{task_config.task_id}_judge_request.jsonl"
         with open(judge_request_file, "w", encoding="utf-8") as f:
             for row in dataframe.itertuples(index=False):
                 # noinspection PyCallingNonCallable
                 row_dict = row._asdict()  # type: ignore
 
-                if ANSWER_COLUMN not in row_dict:
+                if GROUND_TRUTH_COLUMN not in row_dict:
                     raise ValueError(f"Missing answer column for task {task_config.task_id}")
 
                 prompt_template = TRANSLATION_JUDGE_TEMPLATE
                 for persona_config in persona_configs:
-                    persona_name = persona_config.name
                     answer_column = persona_config.answer_column
+                    judge_column = persona_config.judge_column
+
+                    if judge_column in row_dict and row_dict[judge_column] is not None:
+                        continue
 
                     prompt = prompt_template.format(
                         reference=row_dict[QUESTION_COLUMN],
                         translation_1=row_dict[answer_column],
-                        translation_2=row_dict[ANSWER_COLUMN],
+                        translation_2=row_dict[GROUND_TRUTH_COLUMN],
                     )
-                    custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{persona_name}"
+                    custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{judge_column}"
                     BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model)
-        return judge_request_file
+                    request_count += 1
+        return judge_request_file, request_count
 
     @staticmethod
-    def read_response_file(
-        file_name: Path,
-        batch_type: BatchType = BatchType.PERSONAS
-    ) -> pd.DataFrame:
+    def read_response_file(file_name: Path) -> pd.DataFrame:
         """Helper function that reads the contents of a batch response json file.
 
         The contents are returned as a pandas dataframe.
 
         Args:
             file_name (Path): Path to the json file to read.
-            batch_type (BatchType, optional): The batch type is used to define the column names of the output
-                dataframe. Defaults to BatchType.PERSONAS.
 
         Returns:
             pd.DataFrame: Dataframe containing one row per sample and one column for each persona type.
@@ -206,7 +224,7 @@ class BatchRequestHandler:
             for line in f:
                 response_line = json.loads(line)
 
-                # The custom id is constructred from the manually defined static_id and the persona type
+                # The custom id is constructed from the manually defined static_id and the persona type
                 response_id = response_line["custom_id"].split("_")
                 sample_id = "_".join(response_id[:2])
                 column_id = "_".join(response_id[2:])
@@ -222,9 +240,6 @@ class BatchRequestHandler:
                     if c.get("type") == "output_text"
                 )
 
-                if batch_type == BatchType.ANSWERS:
-                    column_id = column_id.replace("persona", "answer")
-
                 response_data[sample_id][column_id] = completion
 
         structured_response = [
@@ -236,7 +251,7 @@ class BatchRequestHandler:
 
     @staticmethod
     def read_error_file(file_name: Path) -> List[str]:
-        """Reads the contents of a an error file and returns a list with each unique error message.
+        """Reads the contents of an error file and returns a list with each unique error message.
 
         Args:
             file_name (Path): File path to the error file.

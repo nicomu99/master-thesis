@@ -8,7 +8,7 @@ from datasets import load_dataset, Dataset
 
 from .utils import DatasetConfig
 from .utils import decode_dataclass
-from .utils import QUESTION_COLUMN, ANSWER_COLUMN, STATIC_ID_COLUMN
+from .utils import QUESTION_COLUMN, GROUND_TRUTH_COLUMN, STATIC_ID_COLUMN
 from .utils import logging
 
 
@@ -36,7 +36,7 @@ class DatasetHandler:
         include_datasets: Optional[Iterable[str]] = None,
         exclude_datasets: Optional[Iterable[str]] = None
     ):
-        """Loads the task configurations, dataset configurations and samples into memory.
+        """Loads the dataset configurations and samples.
 
         The function downloads any datasets not present in the local file system and stores them to disk. If
         include_datasets is given, only datasets in this list will be loaded. If exclude datasets is given, these
@@ -67,6 +67,32 @@ class DatasetHandler:
                     dataset_id,
                     dataset_config
                 )
+
+    def _select_dataset_ids(
+        self,
+        dataset_ids: Iterable[str],
+        include_datasets: Optional[Iterable[str]] = None,
+        exclude_datasets: Optional[Iterable[str]] = None,
+    ):
+        """Filters dataset_names.
+
+        Filters out any datasets not present in include_datasets, if the parameter is not `None`.
+        If include_datasets is not passed, all datasets remain in consideration. If any datasets
+        are present in exclude_datasets, they also will be deleted from consideration.
+
+        Args:
+            dataset_ids (Iterable[str]): Dataset keys.
+            include_datasets (Optional[Iterable[str]], optional): Dataset keys that should be kept in consideration.
+                If not specified, all will be kept. Defaults to None.
+            exclude_datasets (Optional[Iterable[str]], optional): Dataset keys that should not be kept. If not
+                specified, no keys will be deleted. Defaults to None.
+        """
+        dataset_ids = list(dataset_ids)
+        if include_datasets:
+            dataset_ids = [d for d in dataset_ids if d in include_datasets]
+        if exclude_datasets:
+            dataset_ids = [d for d in dataset_ids if d not in exclude_datasets]
+        self.dataset_ids = dataset_ids
 
     def _download_dataset(
             self,
@@ -111,14 +137,8 @@ class DatasetHandler:
 
             rename_columns = {dataset_config.question_column: QUESTION_COLUMN}
             if dataset_config.answer_column:
-                rename_columns[dataset_config.answer_column] = ANSWER_COLUMN
+                rename_columns[dataset_config.answer_column] = GROUND_TRUTH_COLUMN
             dataframe.rename(columns=rename_columns, inplace=True)
-
-            if dataset_config.is_translation():
-                english_df = dataframe[dataframe["iso_639_3"] == "eng"][["id", QUESTION_COLUMN]].rename(
-                    columns={QUESTION_COLUMN: ANSWER_COLUMN})
-                dataframe = dataframe.merge(english_df, on="id", how="inner")
-                dataframe.to_parquet(dataset_file)
 
             dataframe.insert(0, STATIC_ID_COLUMN, [f"{dataset_id}_{i}" for i in range(len(dataframe))])
             dataframe.to_parquet(dataset_file)
@@ -127,10 +147,7 @@ class DatasetHandler:
 
         return dataframe
 
-    def write_dataframe(
-        self,
-        dataset_id: str
-    ):
+    def write_dataframe(self, dataset_id: str):
         """Writes a dataframe to disk.
 
         Args:
@@ -139,36 +156,7 @@ class DatasetHandler:
         dataframe_file = Path(f"{self.dataset_path}/{dataset_id}.parquet")
         self.dataframes[dataset_id].to_parquet(dataframe_file)
 
-    def _select_dataset_ids(
-        self,
-        dataset_ids: Iterable[str],
-        include_datasets: Optional[Iterable[str]] = None,
-        exclude_datasets: Optional[Iterable[str]] = None,
-    ):
-        """Filters dataset_names.
-
-        Filters out any datasets not present in include_datasets, if the parameter is not `None`.
-        If include_datasets is not passed, all datasets remain in consideration. If any datasets
-        are present in exclude_datasets, they also will be deleted from consideration.
-
-        Args:
-            dataset_ids (Iterable[str]): Dataset keys.
-            include_datasets (Optional[Iterable[str]], optional): Dataset keys that should be kept in consideration.
-                If not specified, all will be kept. Defaults to None.
-            exclude_datasets (Optional[Iterable[str]], optional): Dataset keys that should not be kept. If not
-                specified, no keys will be deleted. Defaults to None.
-        """
-        dataset_ids = list(dataset_ids)
-        if include_datasets:
-            dataset_ids = [d for d in dataset_ids if d in include_datasets]
-        if exclude_datasets:
-            dataset_ids = [d for d in dataset_ids if d not in exclude_datasets]
-        self.dataset_ids = dataset_ids
-
-    def get_config(
-        self,
-        dataset_id: str
-    ) -> DatasetConfig:
+    def get_config(self, dataset_id: str) -> DatasetConfig:
         """Returns the dataset configuration of a dataset.
 
         Args:

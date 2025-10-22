@@ -15,7 +15,7 @@ def columns_not_full(
     Args:
         dataframe (pd.DataFrame): pandas DataFrame.
         column_names (List[str]): Column used to check for empty values.
-        row_mask (slice | pd.Series[bool] | None): A row mask.
+        row_mask (slice | pd.Series[bool] | None): A row mask. Defaults to None.
 
     Returns:
         bool: True if any of the specified columns contain missing values, False otherwise.

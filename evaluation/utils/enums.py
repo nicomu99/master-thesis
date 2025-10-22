@@ -16,7 +16,7 @@ class StringEnum(Enum):
 
     Example:
         class Color(StringEnum):
-            RED = "red
+            RED = "red"
 
         print(Color.RED) # prints "red"
     """
@@ -37,6 +37,11 @@ class BatchType(StringEnum):
 
 
 class QuestionType(StringEnum):
+    MC = "mc"
+    OPEN = "open"
+    SUMMARIZATION = "summarization"
+    MATH = "math"
+    TRANSLATION = "translation"
     """The question type is a categorical field for datasets.
 
     Attributes:
@@ -44,14 +49,14 @@ class QuestionType(StringEnum):
         OPEN: Open format questions with no answer options.
         SUMMARIZATION: Summarization tasks.
     """
-    MC = "mc"
-    OPEN = "open"
-    SUMMARIZATION = "summarization"
-    MATH = "math"
-    TRANSLATION = "translation"
 
     @property
     def template(self) -> str:
+        """Returns the question template.
+
+        Returns:
+            str: Question template.
+        """
         templates = {
             "mc": MC_QUESTION_TEMPLATE,
             "open": OPEN_QUESTION_TEMPLATE,
@@ -63,6 +68,13 @@ class QuestionType(StringEnum):
 
 
 class TaskStatus(StringEnum):
+    PERSONAS_PENDING = "personas_pending"
+    PERSONAS_REQUESTED = "personas_requested"
+    ANSWERS_PENDING = "answers_pending"
+    ANSWERS_REQUESTED = "answers_requested"
+    JUDGE_PENDING = "judge_pending"
+    JUDGE_REQUESTED = "judge_requested"
+    FINISHED = "finished"
     """Task status information.
 
     Attributes:
@@ -72,13 +84,6 @@ class TaskStatus(StringEnum):
         ANSWERS_REQUESTED: A request has been sent for question answering.
         FINISHED: Answers have been merged to the task dataframe. The task has finished.
     """
-    PERSONAS_PENDING = "personas_pending"
-    PERSONAS_REQUESTED = "personas_requested"
-    ANSWERS_PENDING = "answers_pending"
-    ANSWERS_REQUESTED = "answers_requested"
-    JUDGE_PENDING = "judge_pending"
-    JUDGE_REQUESTED = "judge_requested"
-    FINISHED = "finished"
 
 
 class PersonaCategory(StringEnum):
