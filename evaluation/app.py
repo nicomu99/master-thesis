@@ -95,6 +95,7 @@ class App:
         print(f"{request_count} requests sent.")
 
     def generate_judge_answers(self) -> None:
+        """Lets the user pick a task, for which LLM-as-a-judge requests should be sent."""
         missing_map = {
             f"{i + 1}": m for i, m in enumerate(self.evaluator.get_judge_pending_tasks())
         }
@@ -138,6 +139,7 @@ class App:
             print(f"{row[0]} {row[1]} {row[2]} {row[3]}")
 
     def check_batch_statuses(self):
+        """Fetches batch statuses from the API and prints them to the terminal."""
         print("Checking batch statuses...\n")
         batch_infos = self.evaluator.check_batch_statuses().copy()
         table_content = [
