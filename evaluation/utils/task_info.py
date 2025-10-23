@@ -71,6 +71,14 @@ class TaskInfo:
         """
         return self.status == TaskStatus.JUDGE_PENDING
 
+    def is_finished(self) -> bool:
+        """Returns true if the task status is TaskStatus.FINISHED.
+
+        Returns:
+            bool: True if the task status is TaskStatus.FINISHED, else false.
+        """
+        return self.status == TaskStatus.FINISHED
+
     def increment_status(self):
         """Increments the status of the task."""
         try:

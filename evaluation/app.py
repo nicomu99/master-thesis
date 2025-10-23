@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from datasets import disable_progress_bar, disable_progress_bars
 
 from .evaluator import Evaluator
-from .utils import BatchStatus
 from .utils import TEMP_PATH
 from .utils import logging
 
@@ -123,10 +122,29 @@ class App:
 
     def check_task_statuses(self):
         """Prints task status information."""
-        print("Printing task statuses:")
-        task_configs = self.evaluator.task_infos
-        for idx, (task_id, task_config) in enumerate(task_configs.items()):
-            print(f"    {f'({idx + 1})':>4} Task {task_id:25} status is     {task_config.status}")
+        print("Checking task statuses...")
+        task_infos = self.evaluator.task_infos.copy()
+
+        table_content = [
+            [f"{"TaskID":<30}", f"{"TaskStatus":<30}", f"{"NeedJudge":<15}"],
+            [f"{"─" * 29:<30}", f"{"─" * 29:<30}", f"{"─" * 14:<15}"]
+        ]
+
+        for task_id, task_info in task_infos.items():
+            if len(task_id) > 25:
+                task_id = f"{task_id[:22]}..."
+
+            status = task_info.status
+            if task_info.is_finished():
+                status = "\033[32m" + f"{status:<30}" + "\033[0m"
+            else:
+                status = "\033[33m" + f"{status:<30}" + "\033[0m"
+
+            need_judge = "True" if task_info.need_judge else "False"
+
+            table_row = [f"{task_id:<30}", status, f"{need_judge:<15}"]
+            table_content.append(table_row)
+        self._print_table(table_content)
 
     def clear_cli(self):
         """Clears the CLI."""
@@ -136,7 +154,8 @@ class App:
     @staticmethod
     def _print_table(table_content: List[List[str]]):
         for row in table_content:
-            print(f"{row[0]} {row[1]} {row[2]} {row[3]}")
+            row_output = " ".join(row)
+            print(row_output)
 
     def check_batch_statuses(self):
         """Fetches batch statuses from the API and prints them to the terminal."""
@@ -153,9 +172,9 @@ class App:
                 task_id = f"{task_id[:22]}..."
 
             status = batch_info.status
-            if status in (BatchStatus.FAILED, BatchStatus.ERROR):
+            if batch_info.is_error():
                 status = "\033[31m" + f"{status:<15}" + "\033[0m"
-            elif status in (BatchStatus.COMPLETED, BatchStatus.RETRIEVED):
+            elif batch_info.is_completed() or batch_info.is_retrieved():
                 status = "\033[32m" + f"{status:<15}" + "\033[0m"
             else:
                 status = "\033[33m" + f"{status:<15}" + "\033[0m"
