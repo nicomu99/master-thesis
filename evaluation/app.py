@@ -180,8 +180,6 @@ class App:
                 status = "\033[33m" + f"{status:<15}" + "\033[0m"
 
             table_row = [f"{task_id:<30}", f"{batch_info.batch_type:<15}", status, ""]
-            if len(batch_info.remote_messages) > 0:
-                table_row[3] = " ".join(batch_info.remote_messages)
             if batch_info.progress_message is not None:
                 table_row[3] += batch_info.progress_message
             table_content.append(table_row)

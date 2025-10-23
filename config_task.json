@@ -101,11 +101,6 @@
             "field": "spanish to english translation",
             "need_judge": true,
             "category_name": "spa"
-        },
-        "flores_new": {
-            "field": "spanish to english translation",
-            "need_judge": true,
-            "category_name": "spa"
         }
     }
 }

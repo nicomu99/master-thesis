@@ -220,26 +220,22 @@ class Evaluator:
 
     def fetch_batch_responses(self):
         """Fetches batch responses and saves them to disk."""
-        retrieved_batches = self.llm_client.fetch_batch_responses()
+        retrieved_batches = self.llm_client.download_batch_files()
 
         for batch_info in retrieved_batches:
-            task_id = batch_info.task_id
-            task_info = self.task_infos[task_id]
+            task_info = self.task_infos[batch_info.task_id]
             dataset_id = task_info.dataset_id
 
-            batch_type = batch_info.batch_type
-            batch_output_file = batch_info.local_output_file
-            batch_error_file = batch_info.local_error_file
-
-            if batch_output_file:
-                response_df = BatchRequestHandler.read_response_file(batch_output_file)
+            if batch_info.has_output():
+                output_file = batch_info.get_output_file()
+                response_df = BatchRequestHandler.read_response_file(output_file.local_file_path)
                 self.dataset_handler.merge_and_write(dataset_id, response_df)
 
-            if batch_error_file:
-                error_messages = BatchRequestHandler.read_error_file(batch_error_file)
+            if batch_info.has_error():
+                error_file = batch_info.get_error_file()
+                error_messages = BatchRequestHandler.read_error_file(error_file.local_file_path)
                 for message in error_messages:
-                    log.error("Task %s %s failed", task_id, batch_type)
-                    log.error(message)
+                    log.error("Task %s failed: %s", task_info.task_id, message)
 
             task_info.update_status(batch_info.is_retrieved())
         self._save()

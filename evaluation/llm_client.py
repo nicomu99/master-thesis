@@ -217,10 +217,12 @@ class LLMClient:
                 if batch_info.is_failed():
                     errors = getattr(remote_batch, "errors", None)
                     if not errors or not getattr(errors, "data", None):
-                        batch_info.remote_messages.add("Batch failed with no error details.")
+                        log.warning("Batch failed with no error details.")
                         continue
                     for error in errors.data:
-                        batch_info.remote_messages.add(f"Error: {error.code}, {error.message}")
+                        log.warning(
+                            "Batch for task %s failed: %s %s",
+                            batch_info.task_id, error.code, error.message)
 
                 elif batch_info.is_in_progress():
                     request_counts = getattr(remote_batch, "request_counts", None)
@@ -231,8 +233,10 @@ class LLMClient:
                         f"{request_counts.failed} requests failed.")
 
                 elif batch_info.is_completed():
-                    batch_info.output_file_id = remote_batch.output_file_id if remote_batch.output_file_id else None
-                    batch_info.error_file_id = remote_batch.error_file_id if remote_batch.error_file_id else None
+                    if remote_batch.output_file_id:
+                        batch_info.init_output_file(remote_batch.output_file_id)
+                    if remote_batch.error_file_id:
+                        batch_info.init_error_file(remote_batch.error_file_id)
 
                     request_counts = getattr(remote_batch, "request_counts", None)
                     if not request_counts:
@@ -246,7 +250,7 @@ class LLMClient:
         self._save()
         return active_batches
 
-    def _save_batch_response(
+    def _download_batch_file(
         self,
         remote_file_id: str,
         local_file_path: Path
@@ -256,7 +260,7 @@ class LLMClient:
         with local_file_path.open("wb") as f:
             f.write(batch_response_stream.read())
 
-    def fetch_batch_responses(self) -> List[BatchInfo]:
+    def download_batch_files(self) -> List[BatchInfo]:
         """Fetches responses for batch requests and saves them to files.
 
         Returns:
@@ -271,14 +275,14 @@ class LLMClient:
         log.info("Fetching batch responses, %s completed batches found.", len(completed_batches))
 
         for batch_info in completed_batches:
-            if batch_info.output_file_id:
-                local_output_file = batch_info.create_output_file()
-                self._save_batch_response(batch_info.output_file_id, local_output_file)
+            if batch_info.has_output():
+                output_file = batch_info.get_output_file()
+                self._download_batch_file(output_file.remote_file_id, output_file.local_file_path)
                 batch_info.set_status(BatchStatus.RETRIEVED)
 
-            if batch_info.error_file_id:
-                local_error_file = batch_info.create_error_file()
-                self._save_batch_response(batch_info.error_file_id, local_error_file)
+            if batch_info.has_error():
+                error_file = batch_info.get_error_file()
+                self._download_batch_file(error_file.remote_file_id, error_file.local_file_path)
                 batch_info.set_status(BatchStatus.ERROR)
 
         self._save()

@@ -114,7 +114,6 @@ class DatasetHandler:
             Returns a pandas DataFrame containing the samples of the specified dataset.
         """
         log.info("Loading %s", dataset_id)
-        print(dataset_config)
 
         dataset_file = Path(f"{self.dataset_path}/{dataset_id}.parquet")
         if not dataset_file.is_file():

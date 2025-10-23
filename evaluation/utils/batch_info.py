@@ -1,5 +1,5 @@
-from typing import Optional, Set
-from dataclasses import dataclass, field
+from typing import Optional
+from dataclasses import dataclass
 from pathlib import Path
 
 from .enums import BatchType, BatchStatus
@@ -11,6 +11,18 @@ log.setLevel(logging.DEBUG)
 
 
 @dataclass
+class BatchFile:
+    """Data class holding metadata linking remote file ids to local file paths.
+
+    Attributes:
+        remote_file_id (str): Remote output file identifier.
+        local_file_path (Path): Local file path, where the remote file will be stored.
+    """
+    remote_file_id: str
+    local_file_path: Path
+
+
+@dataclass
 class BatchInfo:
     """Data class holding metadata and state information for a data batch.
 
@@ -18,25 +30,20 @@ class BatchInfo:
         batch_id (str): Unique batch identifier.
         task_id (str): Identifier of the associated task.
         batch_type (BatchType): Type of batch.
-        progress_message (Optional[str]): Remote status message.
-        remote_messages (Set[str]): Remote error messages.
         status (BatchStatus): Possibly outdated process status of the batch.
-        output_file_id (Optional[str]): Remote output file identifier.
-        local_output_file (Optional[Path]): Local file path of the response.
-        error_file_id (Optional[str]): Remote error file identifier.
-        local_error_file (Path): Local file path of the error response.
+        progress_message (Optional[str]): Remote status message.
+        output_file (Optional[BatchFile]): Output metadata of the generated responses. Defaults to None.
+        output_file (Optional[BatchFile]): Metadata for possible errors during processing of the batch.
+            Defaults to None.
     """
 
     batch_id: str
     task_id: str
     batch_type: BatchType
-    progress_message: Optional[str] = None
-    remote_messages: Set[str] = field(default_factory=set)
     status: BatchStatus = BatchStatus.SENT
-    output_file_id: Optional[str] = None
-    local_output_file: Optional[Path] = None
-    error_file_id: Optional[str] = None
-    local_error_file: Optional[Path] = None
+    progress_message: Optional[str] = None
+    output_file: Optional[BatchFile] = None
+    error_file: Optional[BatchFile] = None
 
     _STR_TRANSITIONS = {
         "validating": BatchStatus.IN_PROGRESS,
@@ -103,23 +110,79 @@ class BatchInfo:
         """
         self.status = status
 
-    def create_output_file(self) -> Path:
-        """Create a new output file path object.
+    def init_output_file(self, remote_id: str):
+        """Initialize the output file metadata for the current batch.
+
+        This method creates a BatchFile object linking the remote file
+        identifier with the corresponding local file path where the output
+        will be stored.
+
+        Args:
+            remote_id (str): The unique identifier of the remote output file.
+        """
+        local_file_path = TEMP_PATH / f"{self.task_id}_{self.batch_id}_output.jsonl"
+        self.output_file = BatchFile(remote_id, local_file_path)
+
+    def get_output_file(self) -> BatchFile:
+        """Return the initialized output file metadata.
+
+        Retrieves the BatchFile instance. If the output file has not been
+        initialized yet, a RuntimeError is raised.
 
         Returns:
-            Path: Output file path.
-        """
-        self.local_output_file = TEMP_PATH / f"{self.task_id}_{self.batch_id}_output.jsonl"
-        return self.local_output_file
+            BatchFile: The metadata object describing the remote and local output file.
 
-    def create_error_file(self) -> Path:
-        """Create a new error file path object.
+        Raises:
+            RuntimeError: If the output file has not been initialized.
+        """
+        if not self.output_file:
+            raise RuntimeError("Output file not created yet.")
+        return self.output_file
+
+    def has_output(self) -> bool:
+        """Check whether an output file has been initialized.
 
         Returns:
-            Path: Error file path.
+            bool: True if the output file metadata exists, False otherwise.
         """
-        self.local_error_file = TEMP_PATH / f"{self.task_id}_{self.batch_id}_error.jsonl"
-        return self.local_error_file
+        return self.output_file is not None
+
+    def init_error_file(self, remote_id: str):
+        """Initialize the error file metadata for the current batch.
+
+        This method creates a :class:`BatchFile` object linking the remote file
+        identifier with the corresponding local file path where the output
+        will be stored.
+
+        Args:
+            remote_id (str): The unique identifier of the remote error file.
+        """
+        local_file_path = TEMP_PATH / f"{self.task_id}_{self.batch_id}_error.jsonl"
+        self.error_file = BatchFile(remote_id, local_file_path)
+
+    def get_error_file(self) -> BatchFile:
+        """Return the initialized error file metadata.
+
+        Retrieves the BatchFile instance. If the error file has not been
+        initialized yet, a RuntimeError is raised.
+
+        Returns:
+            BatchFile: The metadata object describing the remote and local output file.
+
+        Raises:
+            RuntimeError: If the output file has not been initialized.
+        """
+        if not self.error_file:
+            raise RuntimeError("Output file not created yet.")
+        return self.error_file
+
+    def has_error(self):
+        """Check whether an error file has been initialized.
+
+        Returns:
+            bool: True if the error file metadata exists, False otherwise.
+        """
+        return self.error_file is not None
 
     def update_status(self, new_status: str):
         """Update the current status using a string-based transition mapping.
