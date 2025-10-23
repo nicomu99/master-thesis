@@ -30,10 +30,11 @@ class BatchType(StringEnum):
     Attributes:
         PERSONAS: Batch containing persona-related data.
         ANSWERS: Batch containing model-generated answers.
+        JUDGMENT: Batch containing LLM-as-a-judge requests.
     """
     PERSONAS = "personas"
     ANSWERS = "answers"
-    JUDGE = "judge"
+    JUDGMENT = "judgment"
 
 
 class QuestionType(StringEnum):
@@ -77,16 +78,16 @@ class TaskStatus(StringEnum):
         PERSONAS_REQUESTED: A request has been sent to generate persona strings.
         ANSWERS_PENDING: Personas have been merged to the task dataframe and answers can be generated.
         ANSWERS_REQUESTED: A request has been sent for question answering.
-        JUDGE_PENDING: If the task requires a judge to decide, the status turns to judge pending.
-        JUDGE_REQUESTED: A request has been sent for judge answers.
+        JUDGMENT_PENDING: If the task requires LLM-as-a-judge, the status turns to judgment pending.
+        JUDGMENT_REQUESTED: A request has been sent for judgment evaluation.
         FINISHED: Answers have been merged to the task dataframe. The task has finished.
     """
     PERSONAS_PENDING = "personas_pending"
     PERSONAS_REQUESTED = "personas_requested"
     ANSWERS_PENDING = "answers_pending"
     ANSWERS_REQUESTED = "answers_requested"
-    JUDGE_PENDING = "judge_pending"
-    JUDGE_REQUESTED = "judge_requested"
+    JUDGMENT_PENDING = "judgment_pending"
+    JUDGMENT_REQUESTED = "judgment_requested"
     FINISHED = "finished"
 
 

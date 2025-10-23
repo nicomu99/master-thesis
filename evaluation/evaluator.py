@@ -69,13 +69,13 @@ class Evaluator:
         """
         return [k for k, v in self.task_infos.items() if v.is_answers_pending()]
 
-    def get_judge_pending_tasks(self) -> List[str]:
-        """Returns a list with all tasks that have missing judge answers.
+    def get_judgment_pending_tasks(self) -> List[str]:
+        """Returns a list with all tasks that have missing judgment evaluation.
 
         Returns:
-            List[str]: A list of string identifiers of tasks that have missing judge answers.
+            List[str]: A list of string identifiers of tasks that have missing judgment evaluation.
         """
-        return [k for k, v in self.task_infos.items() if v.is_judge_pending()]
+        return [k for k, v in self.task_infos.items() if v.is_judgment_pending()]
 
     def generate_static_personas(
             self,
@@ -136,11 +136,11 @@ class Evaluator:
         self._save()
         return request_count
 
-    def send_task_requests(
+    def send_answer_requests(
         self,
         task_id: str
     ) -> int:
-        """Sends task completion requests to the LLM API.
+        """Sends answer completion requests to the LLM API.
 
         Args:
             task_id (str): String identifier of the task.
@@ -167,18 +167,18 @@ class Evaluator:
                 task_id)
             return 0
 
-        request_count = self.llm_client.send_task_batch(
+        request_count = self.llm_client.send_answer_batch(
             task_info, task_df, question_type, persona_configs)
 
         task_info.increment_status()
         self._save()
         return request_count
 
-    def send_judge_requests(
+    def send_judgment_requests(
         self,
         task_id: str
     ) -> int:
-        """Sends judge completion requests to the LLM API.
+        """Sends judgment evaluation requests to the LLM API.
 
         Args:
             task_id (str): String identifier of the task.
@@ -192,13 +192,13 @@ class Evaluator:
 
         task_df = self.dataset_handler.get_task_dataframe(dataset_id, task_info.category_name)
 
-        if not task_info.is_judge_pending():
+        if not task_info.is_judgment_pending():
             log.warning(
                 "Skipping %s, make sure answers were generated and no batch is currently being processed.",
                 task_id)
             return 0
 
-        request_count = self.llm_client.send_judge_batch(
+        request_count = self.llm_client.send_judgment_batch(
             task_info, task_df, persona_configs)
 
         task_info.increment_status()
@@ -212,10 +212,9 @@ class Evaluator:
             Dict[str, BatchInfo]: Dictionary with batch information of active batches.
         """
         active_batches = self.llm_client.check_batch_statuses()
-
-        failed_task_ids = [v.task_id for v in active_batches.values() if v.is_error()]
-        for failed_id in failed_task_ids:
-            self.task_infos[failed_id].decrement_status()
+        for bid, batch_info in active_batches.items():
+            if batch_info.is_error():
+                self.task_infos[bid].decrement_status()
         return active_batches
 
     def fetch_batch_responses(self):

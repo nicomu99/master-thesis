@@ -59,16 +59,11 @@ class LLMClient:
         prompt = template.format(**kwargs)
         if prompt_cache_key:
             response = self.client.responses.create(
-                model=self.model,
-                input=prompt,
-                prompt_cache_key=prompt_cache_key
-            )
+                model=self.model, input=prompt,
+                prompt_cache_key=prompt_cache_key)
         else:
             response = self.client.responses.create(
-                model=self.model,
-                input=prompt,
-            )
-
+                model=self.model, input=prompt)
         return response.output_text
 
     def send_persona_batch(
@@ -89,18 +84,18 @@ class LLMClient:
         """
         request_count = 0
         try:
-            batch_file_name, request_count = BatchRequestHandler.create_persona_request_file(
+            file_name, request_count = BatchRequestHandler.create_persona_batch_request_file(
                 task_info, task_df, persona_configs, self.model)
 
             self.send_batch(
-                task_info.task_id, batch_file_name, BatchType.PERSONAS)
+                task_info.task_id, file_name, BatchType.PERSONAS)
         except OSError as e:
             log.error(
                 "Unexpected error for task %s: %s",
                 task_info.task_id, e, exc_info=True)
         return request_count
 
-    def send_task_batch(
+    def send_answer_batch(
         self,
         task_info: TaskInfo,
         task_df: pd.DataFrame,
@@ -120,18 +115,18 @@ class LLMClient:
         """
         request_count = 0
         try:
-            batch_file_name, request_count = BatchRequestHandler.create_task_request_file(
+            file_name, request_count = BatchRequestHandler.create_answer_batch_request_file(
                 task_info, task_df, question_type, persona_configs, self.model)
 
             self.send_batch(
-                task_info.task_id, batch_file_name, BatchType.ANSWERS)
+                task_info.task_id, file_name, BatchType.ANSWERS)
         except OSError as e:
             log.error(
                 "Unexpected error for task %s: %s",
                 task_info.task_id, e, exc_info=True)
         return request_count
 
-    def send_judge_batch(
+    def send_judgment_batch(
         self,
         task_info: TaskInfo,
         task_df: pd.DataFrame,
@@ -149,16 +144,15 @@ class LLMClient:
         """
         request_count = 0
         try:
-            batch_file_name, request_count = BatchRequestHandler.create_judge_request_file(
+            file_name, request_count = BatchRequestHandler.create_judgment_batch_request_file(
                 task_info, task_df, persona_configs, self.model)
 
             self.send_batch(
-                task_info.task_id, batch_file_name, BatchType.JUDGE)
+                task_info.task_id, file_name, BatchType.JUDGMENT)
         except ValueError as e:
             log.error(
-                "Failed to create and send judge batch for task %s: %s",
-                task_info.task_id, e, exc_info=True
-            )
+                "Failed to create and send judgment batch for task %s: %s",
+                task_info.task_id, e, exc_info=True)
         except OSError as e:
             log.error(
                 "Unexpected error for task %s: %s",
@@ -204,10 +198,8 @@ class LLMClient:
             Dict[str, BatchInfo]: A dictionary of batch information.
         """
         active_batches = {
-            k: v
-            for k, v in self.batches_info_store.items()
-            if not v.has_finished()
-        }
+            k: v for k, v in self.batches_info_store.items()
+            if not v.has_finished()}
 
         for batch_id, batch_info in active_batches.items():
             try:
@@ -223,7 +215,7 @@ class LLMClient:
                         log.warning(
                             "Batch for task %s failed: %s %s",
                             batch_info.task_id, error.code, error.message)
-
+                # TODO: Extract common logic
                 elif batch_info.is_in_progress():
                     request_counts = getattr(remote_batch, "request_counts", None)
                     if not request_counts:
@@ -245,8 +237,8 @@ class LLMClient:
                         f"Progress: {request_counts.completed} out of {request_counts.total} finished; "
                         f"{request_counts.failed} requests failed.")
 
-            except APIConnectionError:
-                log.error("Connection error.")
+            except APIConnectionError as e:
+                log.error("Error: %s", e, exc_info=True)
         self._save()
         return active_batches
 
@@ -268,10 +260,8 @@ class LLMClient:
         """
         self.check_batch_statuses()
         completed_batches = [
-            batch_info
-            for batch_info in self.batches_info_store.values()
-            if batch_info.is_completed()
-        ]
+            batch_info for batch_info in self.batches_info_store.values()
+            if batch_info.is_completed()]
         log.info("Fetching batch responses, %s completed batches found.", len(completed_batches))
 
         for batch_info in completed_batches:

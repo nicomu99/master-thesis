@@ -76,7 +76,7 @@ class BatchRequestHandler:
         return template.format(**prompt_kwargs)
 
     @staticmethod
-    def create_persona_request_file(
+    def create_persona_batch_request_file(
         task_config: TaskInfo,
         dataframe: pd.DataFrame,
         persona_configs: List[PersonaConfig],
@@ -97,8 +97,8 @@ class BatchRequestHandler:
             OSError: If the request file cannot be written to disk.
         """
         request_count = 0
-        persona_request_file = TEMP_PATH / f"{task_config.task_id}_persona_request.jsonl"
-        with persona_request_file.open("w", encoding="utf-8") as f:
+        request_file = TEMP_PATH / f"{task_config.task_id}_persona_request.jsonl"
+        with request_file.open("w", encoding="utf-8") as f:
             for row_dict in dataframe.to_dict(orient="records"):
                 for persona_config in persona_configs:
                     template = persona_config.template
@@ -114,10 +114,10 @@ class BatchRequestHandler:
                     custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{persona_name}"
                     BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model)
                     request_count += 1
-        return persona_request_file, request_count
+        return request_file, request_count
 
     @staticmethod
-    def create_task_request_file(
+    def create_answer_batch_request_file(
         task_config: TaskInfo,
         dataframe: pd.DataFrame,
         question_type: QuestionType,
@@ -140,8 +140,8 @@ class BatchRequestHandler:
             OSError: If the request file cannot be written to disk.
         """
         request_count = 0
-        task_request_file = TEMP_PATH / f"{task_config.task_id}_request.jsonl"
-        with task_request_file.open("w", encoding="utf-8") as f:
+        request_file = TEMP_PATH / f"{task_config.task_id}_request.jsonl"
+        with request_file.open("w", encoding="utf-8") as f:
             for row_dict in dataframe.to_dict(orient="records"):
                 row_dict = cast(Dict[str, Any], row_dict)
                 prompt = BatchRequestHandler._create_question_prompt(
@@ -157,16 +157,16 @@ class BatchRequestHandler:
                     custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{answer_column_df}"
                     BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model, row_dict[persona_name])
                     request_count += 1
-        return task_request_file, request_count
+        return request_file, request_count
 
     @staticmethod
-    def create_judge_request_file(
+    def create_judgment_batch_request_file(
         task_config: TaskInfo,
         dataframe: pd.DataFrame,
         persona_configs: List[PersonaConfig],
         model: str
     ) -> Tuple[Path, int]:
-        """Creates a request file for judge completions.
+        """Creates a request file for judgment evaluation.
 
         Args:
             task_config (TaskConfig): Task configuration.
@@ -185,16 +185,16 @@ class BatchRequestHandler:
             raise ValueError(f"Missing answer column for task {task_config.task_id}")
 
         request_count = 0
-        judge_request_file = TEMP_PATH / f"{task_config.task_id}_judge_request.jsonl"
-        with judge_request_file.open("w", encoding="utf-8") as f:
+        request_file = TEMP_PATH / f"{task_config.task_id}_judgment_request.jsonl"
+        with request_file.open("w", encoding="utf-8") as f:
             for row_dict in dataframe.to_dict(orient="records"):
 
                 prompt_template = TRANSLATION_JUDGE_TEMPLATE
                 for persona_config in persona_configs:
                     answer_column = persona_config.answer_column
-                    judge_column = persona_config.judge_column
+                    judgment_column = persona_config.judgment_column
 
-                    if judge_column in row_dict and row_dict[judge_column] is not None:
+                    if judgment_column in row_dict and row_dict[judgment_column] is not None:
                         continue
 
                     prompt = prompt_template.format(
@@ -202,10 +202,10 @@ class BatchRequestHandler:
                         translation_1=row_dict[answer_column],
                         translation_2=row_dict[GROUND_TRUTH_COLUMN],
                     )
-                    custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{judge_column}"
+                    custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{judgment_column}"
                     BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model)
                     request_count += 1
-        return judge_request_file, request_count
+        return request_file, request_count
 
     @staticmethod
     def read_response_file(file_name: Path) -> pd.DataFrame:

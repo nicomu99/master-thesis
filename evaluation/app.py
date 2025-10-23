@@ -25,7 +25,7 @@ class App:
             "q": ("Quit program", self.quit_program),
             "p": ("Generate personas", self.generate_personas),
             "t": ("Send task requests", self.generate_answers),
-            "j": ("Send judge requests", self.generate_judge_answers),
+            "j": ("Send judgment requests", self.generate_judgment_evaluation),
             "s": ("Check batch statuses", self.check_batch_statuses),
             "f": ("Fetch batch responses", self.evaluator.fetch_batch_responses),
             "c": ("Check task statuses", self.check_task_statuses),
@@ -90,13 +90,13 @@ class App:
 
         task_id = missing_map[user_input]
         print(f"Sending request for {task_id}")
-        request_count = self.evaluator.send_task_requests(task_id)
+        request_count = self.evaluator.send_answer_requests(task_id)
         print(f"{request_count} requests sent.")
 
-    def generate_judge_answers(self) -> None:
+    def generate_judgment_evaluation(self) -> None:
         """Lets the user pick a task, for which LLM-as-a-judge requests should be sent."""
         missing_map = {
-            f"{i + 1}": m for i, m in enumerate(self.evaluator.get_judge_pending_tasks())
+            f"{i + 1}": m for i, m in enumerate(self.evaluator.get_judgment_pending_tasks())
         }
 
         if len(missing_map) < 1:
@@ -113,7 +113,7 @@ class App:
 
         task_id = missing_map[user_input]
         print(f"Sending request for {task_id}")
-        request_count = self.evaluator.send_judge_requests(task_id)
+        request_count = self.evaluator.send_judgment_requests(task_id)
         print(f"{request_count} requests sent.")
 
     def quit_program(self):
@@ -140,9 +140,9 @@ class App:
             else:
                 status = "\033[33m" + f"{status:<30}" + "\033[0m"
 
-            need_judge = "True" if task_info.need_judge else "False"
+            need_judgment = "True" if task_info.need_judgment else "False"
 
-            table_row = [f"{task_id:<30}", status, f"{need_judge:<15}"]
+            table_row = [f"{task_id:<30}", status, f"{need_judgment:<15}"]
             table_content.append(table_row)
         self._print_table(table_content)
 

@@ -15,7 +15,7 @@ class TaskInfo:
         task_id (str): Task identifier.
         dataset_id (str): Identifier of the associated dataset.
         field (str): High-level field of study of this task.
-        need_judge (bool): Whether the task requires LLM-as-a-judge responses.
+        need_judgment (bool): Whether the task requires LLM-as-a-judge evaluation.
         status (TaskStatus): The current status of the task. Defaults to PERSONAS_PENDING.
         category_name (None | str): Category identifier of the task. If the dataset of this task contains
             several areas of expertise, this value is used to identify rows of the same expertise.
@@ -24,7 +24,7 @@ class TaskInfo:
     task_id: str
     dataset_id: str
     field: str
-    need_judge: bool = False
+    need_judgment: bool = False
     status: TaskStatus = TaskStatus.PERSONAS_PENDING
     category_name: Optional[str] = None
 
@@ -33,14 +33,14 @@ class TaskInfo:
         TaskStatus.PERSONAS_REQUESTED: TaskStatus.ANSWERS_PENDING,
         TaskStatus.ANSWERS_PENDING: TaskStatus.ANSWERS_REQUESTED,
         TaskStatus.ANSWERS_REQUESTED: TaskStatus.FINISHED,
-        TaskStatus.JUDGE_PENDING: TaskStatus.JUDGE_REQUESTED,
-        TaskStatus.JUDGE_REQUESTED: TaskStatus.FINISHED
+        TaskStatus.JUDGMENT_PENDING: TaskStatus.JUDGMENT_REQUESTED,
+        TaskStatus.JUDGMENT_REQUESTED: TaskStatus.FINISHED
     }
 
     _STATUS_DECREMENT = {
         TaskStatus.PERSONAS_REQUESTED: TaskStatus.PERSONAS_PENDING,
         TaskStatus.ANSWERS_REQUESTED: TaskStatus.ANSWERS_PENDING,
-        TaskStatus.JUDGE_REQUESTED: TaskStatus.JUDGE_PENDING
+        TaskStatus.JUDGMENT_REQUESTED: TaskStatus.JUDGMENT_PENDING
     }
 
     def __post_init__(self):
@@ -63,13 +63,13 @@ class TaskInfo:
         """
         return self.status == TaskStatus.ANSWERS_PENDING
 
-    def is_judge_pending(self) -> bool:
+    def is_judgment_pending(self) -> bool:
         """Returns true if the task status is TaskStatus.JUDGE_PENDING.
 
         Returns:
             bool: True if the task status is TaskStatus.JUDGE_PENDING, else false.
         """
-        return self.status == TaskStatus.JUDGE_PENDING
+        return self.status == TaskStatus.JUDGMENT_PENDING
 
     def is_finished(self) -> bool:
         """Returns true if the task status is TaskStatus.FINISHED.
@@ -82,8 +82,8 @@ class TaskInfo:
     def increment_status(self):
         """Increments the status of the task."""
         try:
-            if self.status == TaskStatus.ANSWERS_REQUESTED and self.need_judge:
-                self.status = TaskStatus.JUDGE_PENDING
+            if self.status == TaskStatus.ANSWERS_REQUESTED and self.need_judgment:
+                self.status = TaskStatus.JUDGMENT_PENDING
             else:
                 self.status = self._STATUS_INCREMENT[self.status]
         except KeyError:
