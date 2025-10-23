@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Iterable
+from typing import List, Dict, Optional, Iterable, Union
 
 import json
 from pathlib import Path
@@ -192,7 +192,7 @@ class DatasetHandler:
     def merge_and_write(
         self,
         dataset_id: str,
-        subset_df: pd.DataFrame | List[Dict]
+        subset_df: Union[pd.DataFrame, List[Dict]]
     ):
         """Merges a subset dataframe to the initial one by the static_id column.
 
