@@ -146,7 +146,8 @@ class App:
             table_content.append(table_row)
         self._print_table(table_content)
 
-    def clear_cli(self):
+    @staticmethod
+    def clear_cli():
         """Clears the CLI."""
         command = "cls" if platform.system() == "Windows" else "clear"
         subprocess.run(command, shell=True, check=False)

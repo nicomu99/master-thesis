@@ -1,5 +1,7 @@
 BASE_PERSONA = "You are a/an"
 
+HELPFUL_PERSONA = "You are a helpful assistant."
+
 BASE_TEMPLATE = (
     "For the field of {task_type}, create a persona string containing 4 - 5 words, written in second person "
     "perspective. The persona string should start with \"{persona_string}\"."

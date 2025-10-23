@@ -111,6 +111,10 @@ class TaskInfo:
         else:
             self.decrement_status()
 
+    def skip_personas(self):
+        """Skips the persona requested phase."""
+        self.status = TaskStatus.ANSWERS_PENDING
+
     @staticmethod
     def get_key_field() -> str:
         """Returns the key field of this data class.

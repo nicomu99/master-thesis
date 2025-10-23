@@ -13,6 +13,7 @@ from .helpers import decode_dataclass, load_task_config
 from .log_conf import logging
 from .prompt_templates import (
     BASE_PERSONA,
+    HELPFUL_PERSONA,
     BASE_TEMPLATE,
     STATIC_SHORT_TEMPLATE,
     STATIC_MEDIUM_TEMPLATE,
@@ -48,6 +49,7 @@ __all__ = [
     "load_task_config",
     "logging",
     "BASE_PERSONA",
+    "HELPFUL_PERSONA",
     "BASE_TEMPLATE",
     "STATIC_SHORT_TEMPLATE",
     "STATIC_MEDIUM_TEMPLATE",

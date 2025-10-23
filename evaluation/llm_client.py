@@ -88,8 +88,8 @@ class LLMClient:
             file_name, request_count = BatchRequestHandler.create_persona_batch_request_file(
                 task_info, task_df, persona_configs, self.model)
 
-            self.send_batch(
-                task_info.task_id, file_name, BatchType.PERSONAS)
+            if request_count > 0:
+                self.send_batch(task_info.task_id, file_name, BatchType.PERSONAS)
         except OSError as e:
             log.error(
                 "Unexpected error for task %s: %s",
@@ -119,8 +119,8 @@ class LLMClient:
             file_name, request_count = BatchRequestHandler.create_answer_batch_request_file(
                 task_info, task_df, question_type, persona_configs, self.model)
 
-            self.send_batch(
-                task_info.task_id, file_name, BatchType.ANSWERS)
+            if request_count > 0:
+                self.send_batch(task_info.task_id, file_name, BatchType.ANSWERS)
         except OSError as e:
             log.error(
                 "Unexpected error for task %s: %s",
@@ -148,8 +148,8 @@ class LLMClient:
             file_name, request_count = BatchRequestHandler.create_judgment_batch_request_file(
                 task_info, task_df, persona_configs, self.model)
 
-            self.send_batch(
-                task_info.task_id, file_name, BatchType.JUDGMENT)
+            if request_count > 0:
+                self.send_batch(task_info.task_id, file_name, BatchType.JUDGMENT)
         except ValueError as e:
             log.error(
                 "Failed to create and send judgment batch for task %s: %s",

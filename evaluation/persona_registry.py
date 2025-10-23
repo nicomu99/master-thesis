@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 from .utils import PersonaCategory
 from .utils import (
+    HELPFUL_PERSONA,
     BASE_PERSONA,
     BASE_TEMPLATE,
     STATIC_SHORT_TEMPLATE,
@@ -38,6 +39,30 @@ class PersonaConfig:
         self.answer_column = self.name.replace("persona", "answer")
         self.judgment_column = self.name.replace("persona", "judgment")
 
+    def is_empty(self) -> bool:
+        """Returns true if the category is PersonaCategory.EMPTY.
+
+        Returns:
+            bool: True if the category is PersonaCategory.EMPTY, else false.
+        """
+        return self.category == PersonaCategory.EMPTY
+
+    def is_static(self) -> bool:
+        """Returns true if the category is PersonaCategory.STATIC.
+
+        Returns:
+            bool: True if the category is PersonaCategory.STATIC, else false.
+        """
+        return self.category == PersonaCategory.STATIC
+
+    def is_dynamic(self) -> bool:
+        """Returns true if the category is PersonaCategory.DYNAMIC.
+
+        Returns:
+            bool: True if the category is PersonaCategory.DYNAMIC, else false.
+        """
+        return self.category == PersonaCategory.DYNAMIC
+
 
 class PersonaRegistry:
     """A registry containing persona configurations.
@@ -47,8 +72,11 @@ class PersonaRegistry:
     """
     def __init__(self):
         self.base_persona_string = BASE_PERSONA
+        self.helpful_persona_string = HELPFUL_PERSONA
 
         self.persona_configs = [
+            PersonaConfig("no_persona", PersonaCategory.EMPTY, " "),
+            PersonaConfig("helpful_persona", PersonaCategory.EMPTY, HELPFUL_PERSONA),
             PersonaConfig("base_persona", PersonaCategory.STATIC, BASE_TEMPLATE),
             PersonaConfig("static_short_persona", PersonaCategory.STATIC, STATIC_SHORT_TEMPLATE),
             PersonaConfig("static_long_persona", PersonaCategory.STATIC, STATIC_LONG_TEMPLATE),
@@ -72,13 +100,21 @@ class PersonaRegistry:
         """
         return [p.name for p in self.persona_configs]
 
+    def get_empty_names(self) -> List[str]:
+        """Returns names of empty persona types.
+
+        Returns:
+            List[str]: A list containing persona names
+        """
+        return [p.name for p in self.persona_configs if p.is_empty()]
+
     def get_static_names(self) -> List[str]:
         """Returns static and base persona names.
 
         Returns:
             List[str]: A list containing all static persona names.
         """
-        return [p.name for p in self.persona_configs if p.category == PersonaCategory.STATIC]
+        return [p.name for p in self.persona_configs if p.is_static()]
 
     def get_dynamic_names(self) -> List[str]:
         """Returns dynamic persona names.
@@ -86,7 +122,15 @@ class PersonaRegistry:
         Returns:
             List[str]: List containing all dynamic persona names.
         """
-        return [p.name for p in self.persona_configs if p.category == PersonaCategory.DYNAMIC]
+        return [p.name for p in self.persona_configs if p.is_dynamic()]
+
+    def get_empty_templates(self) -> Dict[str, str]:
+        """Returns the empty persona templates.
+
+        Returns:
+            Dict[str, str]: A dictionary with persona names as items and templates as values.
+        """
+        return {p.name: p.template for p in self.persona_configs if p.is_empty()}
 
     def get_static_templates(self) -> Dict[str, str]:
         """Returns the static persona templates.
@@ -94,7 +138,7 @@ class PersonaRegistry:
         Returns:
             Dict[str, str]: A dictionary with persona names as items and templates as values.
         """
-        return {p.name: p.template for p in self.persona_configs if p.category == PersonaCategory.STATIC}
+        return {p.name: p.template for p in self.persona_configs if p.is_static()}
 
     def get_dynamic_templates(self) -> Dict[str, str]:
         """Returns the dynamic persona templates.
@@ -102,7 +146,7 @@ class PersonaRegistry:
         Returns:
             Dict[str, str]: A dictionary with persona names as items and templates as values.
         """
-        return {p.name: p.template for p in self.persona_configs if p.category == PersonaCategory.DYNAMIC}
+        return {p.name: p.template for p in self.persona_configs if p.is_dynamic()}
 
     def get_dynamic_configs(self) -> List[PersonaConfig]:
         """Returns the dynamic persona configs.
@@ -110,7 +154,7 @@ class PersonaRegistry:
         Returns:
             List[PersonaConfig]: A list with persona configs.
         """
-        return [p for p in self.persona_configs if p.category == PersonaCategory.DYNAMIC]
+        return [p for p in self.persona_configs if p.is_dynamic()]
 
     def get_configs(self) -> List[PersonaConfig]:
         """Returns all persona configs.
