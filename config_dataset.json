@@ -1,23 +1,29 @@
 {
     "mmlu-pro": {
-        "huggingface_id": "TIGER-Lab/MMLU-Pro",
-        "split": "test",
+        "hf_config": {
+            "huggingface_id": "TIGER-Lab/MMLU-Pro",
+            "split": "test"
+        },
         "question_type": "mc",
         "question_column": "question",
         "category_column": "category",
         "answer_column": "options"
     },
     "MATH": {
-        "huggingface_id": "nlile/hendrycks-MATH-benchmark",
-        "split": "test",
+        "hf_config": {
+            "huggingface_id": "nlile/hendrycks-MATH-benchmark",
+            "split": "test"
+        },
         "question_type": "math",
         "question_column": "problem",
         "category_column": "subject",
         "answer_column": "answer"
     },
     "flores": {
-        "huggingface_id": "openlanguagedata/flores_plus",
-        "split": "dev",
+        "hf_config": {
+            "huggingface_id": "openlanguagedata/flores_plus",
+            "split": "dev"
+        },
         "question_type": "translation",
         "question_column": "text",
         "category_column": "iso_639_3"

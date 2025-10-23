@@ -114,15 +114,17 @@ class DatasetHandler:
             Returns a pandas DataFrame containing the samples of the specified dataset.
         """
         log.info("Loading %s", dataset_id)
+        print(dataset_config)
 
         dataset_file = Path(f"{self.dataset_path}/{dataset_id}.parquet")
         if not dataset_file.is_file():
             log.info("Dataset %s could not be found locally, commencing with download", dataset_file)
 
             # Download dataset
-            load_name = dataset_config.load_name
-            hf_id = dataset_config.huggingface_id
-            dataset_split = dataset_config.split
+            hf_config = dataset_config.hf_config
+            hf_id = hf_config.huggingface_id
+            load_name = hf_config.load_name
+            dataset_split = hf_config.split
             if load_name:
                 dataset = load_dataset(hf_id, split=dataset_split, name=load_name)
             else:
