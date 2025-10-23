@@ -2,6 +2,8 @@ from typing import Optional
 from dataclasses import dataclass
 from pathlib import Path
 
+from openai.types import Batch
+
 from .enums import BatchType, BatchStatus
 from .constants import TEMP_PATH
 from .log_conf import logging
@@ -200,6 +202,20 @@ class BatchInfo:
             log.warning(
                 "No status transition defined for status %s. Will keep old status.",
                 new_status)
+
+    def update_progress_message(self, remote_batch: Batch):
+        """Updates the progress message, if the remote batch holds one.
+
+        Args:
+            remote_batch (Batch): Remote batch object.
+        """
+        request_counts = getattr(remote_batch, "request_counts", None)
+        if not request_counts:
+            return
+
+        self.progress_message = (
+            f"Progress: {request_counts.completed} out of {request_counts.total} finished; "
+            f"{request_counts.failed} requests failed.")
 
     @staticmethod
     def get_key_field() -> str:

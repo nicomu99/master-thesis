@@ -215,27 +215,14 @@ class LLMClient:
                         log.warning(
                             "Batch for task %s failed: %s %s",
                             batch_info.task_id, error.code, error.message)
-                # TODO: Extract common logic
                 elif batch_info.is_in_progress():
-                    request_counts = getattr(remote_batch, "request_counts", None)
-                    if not request_counts:
-                        continue
-                    batch_info.progress_message = (
-                        f"Progress: {request_counts.completed} out of {request_counts.total} finished; "
-                        f"{request_counts.failed} requests failed.")
-
+                    batch_info.update_progress_message(remote_batch)
                 elif batch_info.is_completed():
+                    batch_info.update_progress_message(remote_batch)
                     if remote_batch.output_file_id:
                         batch_info.init_output_file(remote_batch.output_file_id)
                     if remote_batch.error_file_id:
                         batch_info.init_error_file(remote_batch.error_file_id)
-
-                    request_counts = getattr(remote_batch, "request_counts", None)
-                    if not request_counts:
-                        continue
-                    batch_info.progress_message = (
-                        f"Progress: {request_counts.completed} out of {request_counts.total} finished; "
-                        f"{request_counts.failed} requests failed.")
 
             except APIConnectionError as e:
                 log.error("Error: %s", e, exc_info=True)
