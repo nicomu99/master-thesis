@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 from pathlib import Path
 
 import pandas as pd
+from openai.types import Batch
 from openai import OpenAI, APIConnectionError
 
 from .batch_request_handler import BatchRequestHandler
@@ -191,6 +192,20 @@ class LLMClient:
 
             self._save()
 
+    @staticmethod
+    def _log_error(
+        remote_batch: Batch,
+        local_batch: BatchInfo
+    ):
+        errors = getattr(remote_batch, "errors", None)
+        if not errors or not getattr(errors, "data", None):
+            log.warning("Batch failed with no error details.")
+            return
+        for error in errors.data:
+            log.warning(
+                "Batch for task %s failed: %s %s",
+                local_batch.task_id, error.code, error.message)
+
     def check_batch_statuses(self) -> Dict[str, BatchInfo]:
         """Fetches and returns statuses of batch requests.
 
@@ -207,14 +222,7 @@ class LLMClient:
                 batch_info.update_status(remote_batch.status)
 
                 if batch_info.is_failed():
-                    errors = getattr(remote_batch, "errors", None)
-                    if not errors or not getattr(errors, "data", None):
-                        log.warning("Batch failed with no error details.")
-                        continue
-                    for error in errors.data:
-                        log.warning(
-                            "Batch for task %s failed: %s %s",
-                            batch_info.task_id, error.code, error.message)
+                    self._log_error(remote_batch, batch_info)
                 elif batch_info.is_in_progress():
                     batch_info.update_progress_message(remote_batch)
                 elif batch_info.is_completed():
