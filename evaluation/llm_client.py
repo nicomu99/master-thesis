@@ -87,12 +87,17 @@ class LLMClient:
         Returns:
             int: Number of sent requests.
         """
-        batch_file_name, request_count = BatchRequestHandler.create_persona_request_file(
-            task_info, task_df, persona_configs, self.model)
+        request_count = 0
+        try:
+            batch_file_name, request_count = BatchRequestHandler.create_persona_request_file(
+                task_info, task_df, persona_configs, self.model)
 
-        self.send_batch(
-            task_info.task_id, batch_file_name, BatchType.PERSONAS)
-
+            self.send_batch(
+                task_info.task_id, batch_file_name, BatchType.PERSONAS)
+        except OSError as e:
+            log.error(
+                "Unexpected error for task %s: %s",
+                task_info.task_id, e, exc_info=True)
         return request_count
 
     def send_task_batch(
@@ -113,12 +118,17 @@ class LLMClient:
         Returns:
             int: Number of sent requests.
         """
-        batch_file_name, request_count = BatchRequestHandler.create_task_request_file(
-            task_info, task_df, question_type, persona_configs, self.model)
+        request_count = 0
+        try:
+            batch_file_name, request_count = BatchRequestHandler.create_task_request_file(
+                task_info, task_df, question_type, persona_configs, self.model)
 
-        self.send_batch(
-            task_info.task_id, batch_file_name, BatchType.ANSWERS)
-
+            self.send_batch(
+                task_info.task_id, batch_file_name, BatchType.ANSWERS)
+        except OSError as e:
+            log.error(
+                "Unexpected error for task %s: %s",
+                task_info.task_id, e, exc_info=True)
         return request_count
 
     def send_judge_batch(
@@ -137,43 +147,50 @@ class LLMClient:
         Returns:
             int: Number of sent requests.
         """
-        batch_file_name, request_count = BatchRequestHandler.create_judge_request_file(
-            task_info, task_df, persona_configs, self.model)
+        request_count = 0
+        try:
+            batch_file_name, request_count = BatchRequestHandler.create_judge_request_file(
+                task_info, task_df, persona_configs, self.model)
 
-        self.send_batch(
-            task_info.task_id, batch_file_name, BatchType.JUDGE)
-
+            self.send_batch(
+                task_info.task_id, batch_file_name, BatchType.JUDGE)
+        except ValueError as e:
+            log.error(
+                "Failed to create and send judge batch for task %s: %s",
+                task_info.task_id, e, exc_info=True
+            )
+        except OSError as e:
+            log.error(
+                "Unexpected error for task %s: %s",
+                task_info.task_id, e, exc_info=True)
         return request_count
 
     def send_batch(
         self,
         task_id: str,
-        batch_file: str,
+        batch_file: Path,
         batch_type: BatchType
     ):
         """Sends batch files to the llm api.
 
         Args:
             task_id (str): String identifier of the task the batch file belongs to.
-            batch_file (str): File name of the file containing the request objects.
+            batch_file (Path): File name of the file containing the request objects.
             batch_type (str): Enumeration indicating whether the batch contains persona generation requests
                 or task answering prompts.
         """
 
         log.info("Sending batch for task %s", task_id)
 
-        with open(batch_file, "rb") as f:
+        with batch_file.open("rb") as f:
             batch_input_file = self.client.files.create(
-                file=f,
-                purpose="batch"
-            )
+                file=f, purpose="batch")
 
             batch_input_file_id = batch_input_file.id
             batch_job = self.client.batches.create(
                 input_file_id=batch_input_file_id,
                 endpoint="/v1/responses",
-                completion_window="24h",
-            )
+                completion_window="24h")
 
             batch_info = BatchInfo(batch_job.id, task_id, batch_type)
             self.batches_info_store[batch_job.id] = batch_info
@@ -236,7 +253,7 @@ class LLMClient:
     ):
         batch_response_stream = self.client.files.content(remote_file_id)
 
-        with open(local_file_path, "wb") as f:
+        with local_file_path.open("wb") as f:
             f.write(batch_response_stream.read())
 
     def fetch_batch_responses(self) -> List[BatchInfo]:

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, List, Tuple
+from typing import Any, Dict, Optional, List, Tuple, TextIO, cast
 
 import json
 import string
@@ -18,7 +18,7 @@ class BatchRequestHandler:
 
     @staticmethod
     def _write_prompt_to_file(
-        f: Any,
+        f: TextIO,
         custom_id: str,
         prompt: str,
         model: str,
@@ -27,7 +27,7 @@ class BatchRequestHandler:
         """Function that writes a prompt request in JSON format to a file.
 
         Args:
-            f (Any): File output buffer. The request will be written to this file.
+            f (TextIO): File output buffer. The request will be written to this file.
             custom_id (str): An identifier, which can be used to map client outputs to the input samples.
             prompt (str): Request prompt.
             model (str): Model identifier of the LLM API.
@@ -42,14 +42,13 @@ class BatchRequestHandler:
             "custom_id": custom_id,
             "method": "POST",
             "url": "/v1/responses",
-            "body": body
-        }
+            "body": body}
 
         f.write(json.dumps(api_request_dict) + "\n")
 
     @staticmethod
     def _create_question_prompt(
-        task_data: Dict[str, str],
+        task_data: Dict[str, Any],
         question_type: QuestionType,
     ) -> str:
         """Returns a question prompt template with filled out placeholders.
@@ -77,55 +76,12 @@ class BatchRequestHandler:
         return template.format(**prompt_kwargs)
 
     @staticmethod
-    def create_task_request_file(
-        task_config: TaskInfo,
-        dataframe: pd.DataFrame,
-        question_type: QuestionType,
-        persona_configs: List[PersonaConfig],
-        model: str
-    ) -> Tuple[str, int]:
-        """Creates a request file for task question answering.
-
-        Args:
-            task_config (TaskConfig): Task configuration attributes.
-            dataframe (pd.DataFrame): Dataframe containing samples of the task.
-            question_type (str): The question type of this task.
-            persona_configs (List[PersonaConfig]): List of persona configurations.
-            model (str): Model string identifier.
-
-        Returns:
-            Tuple[str, int]: A string identifier of the created task request file and number of requests created.
-        """
-        request_count = 0
-        task_request_file = f"{TEMP_PATH}/{task_config.task_id}_request.jsonl"
-        with open(task_request_file, "w", encoding="utf-8") as f:
-            for row in dataframe.itertuples(index=False):
-                # noinspection PyCallingNonCallable
-                row_dict = row._asdict()  # type: ignore
-
-                prompt = BatchRequestHandler._create_question_prompt(
-                    row_dict,
-                    question_type
-                )
-                for persona_config in persona_configs:
-                    persona_name = persona_config.name
-                    answer_column_df = persona_config.answer_column
-
-                    if answer_column_df in row_dict and row_dict[answer_column_df] is not None:
-                        continue
-
-                    custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{answer_column_df}"
-                    BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model, row_dict[persona_name])
-                    request_count += 1
-        return task_request_file, request_count
-
-    @staticmethod
     def create_persona_request_file(
         task_config: TaskInfo,
         dataframe: pd.DataFrame,
         persona_configs: List[PersonaConfig],
         model: str
-    ) -> Tuple[str, int]:
+    ) -> Tuple[Path, int]:
         """Creates a request file for persona generation.
 
         Args:
@@ -135,15 +91,15 @@ class BatchRequestHandler:
             model (str): Model string identifier.
 
         Returns:
-            Tuple[str, int]: A string identifier of the created task request file and number of requests created.
+            Tuple[Path, int]: A string identifier of the created task request file and number of requests created.
+
+        Raises:
+            OSError: If the request file cannot be written to disk.
         """
         request_count = 0
-        persona_request_file = f"{TEMP_PATH}/{task_config.task_id}_persona_request.jsonl"
-        with open(persona_request_file, "w", encoding="utf-8") as f:
-            for row in dataframe.itertuples(index=False):
-                # noinspection PyCallingNonCallable
-                row_dict = row._asdict()  # type: ignore
-
+        persona_request_file = TEMP_PATH / f"{task_config.task_id}_persona_request.jsonl"
+        with persona_request_file.open("w", encoding="utf-8") as f:
+            for row_dict in dataframe.to_dict(orient="records"):
                 for persona_config in persona_configs:
                     template = persona_config.template
                     persona_name = persona_config.name
@@ -161,12 +117,55 @@ class BatchRequestHandler:
         return persona_request_file, request_count
 
     @staticmethod
+    def create_task_request_file(
+        task_config: TaskInfo,
+        dataframe: pd.DataFrame,
+        question_type: QuestionType,
+        persona_configs: List[PersonaConfig],
+        model: str
+    ) -> Tuple[Path, int]:
+        """Creates a request file for task question answering.
+
+        Args:
+            task_config (TaskConfig): Task configuration attributes.
+            dataframe (pd.DataFrame): Dataframe containing samples of the task.
+            question_type (str): The question type of this task.
+            persona_configs (List[PersonaConfig]): List of persona configurations.
+            model (str): Model string identifier.
+
+        Returns:
+            Tuple[Path, int]: A string identifier of the created task request file and number of requests created.
+
+        Raises:
+            OSError: If the request file cannot be written to disk.
+        """
+        request_count = 0
+        task_request_file = TEMP_PATH / f"{task_config.task_id}_request.jsonl"
+        with task_request_file.open("w", encoding="utf-8") as f:
+            for row_dict in dataframe.to_dict(orient="records"):
+                row_dict = cast(Dict[str, Any], row_dict)
+                prompt = BatchRequestHandler._create_question_prompt(
+                    row_dict, question_type)
+
+                for persona_config in persona_configs:
+                    persona_name = persona_config.name
+                    answer_column_df = persona_config.answer_column
+
+                    if answer_column_df in row_dict and row_dict[answer_column_df] is not None:
+                        continue
+
+                    custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{answer_column_df}"
+                    BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model, row_dict[persona_name])
+                    request_count += 1
+        return task_request_file, request_count
+
+    @staticmethod
     def create_judge_request_file(
         task_config: TaskInfo,
         dataframe: pd.DataFrame,
         persona_configs: List[PersonaConfig],
         model: str
-    ) -> Tuple[str, int]:
+    ) -> Tuple[Path, int]:
         """Creates a request file for judge completions.
 
         Args:
@@ -176,17 +175,19 @@ class BatchRequestHandler:
             model (str): Model string identifier.
 
         Returns:
-            Tuple[str, int]: A string identifier of the created task request file and number of requests created.
-        """
-        request_count = 0
-        judge_request_file = f"{TEMP_PATH}/{task_config.task_id}_judge_request.jsonl"
-        with open(judge_request_file, "w", encoding="utf-8") as f:
-            for row in dataframe.itertuples(index=False):
-                # noinspection PyCallingNonCallable
-                row_dict = row._asdict()  # type: ignore
+            Tuple[Path, int]: A string identifier of the created task request file and number of requests created.
 
-                if GROUND_TRUTH_COLUMN not in row_dict:
-                    raise ValueError(f"Missing answer column for task {task_config.task_id}")
+        Raises:
+            ValueError: If the dataframe is missing required columns or contains invalid data.
+            OSError: If the request file cannot be written to disk.
+        """
+        if GROUND_TRUTH_COLUMN not in dataframe.columns:
+            raise ValueError(f"Missing answer column for task {task_config.task_id}")
+
+        request_count = 0
+        judge_request_file = TEMP_PATH / f"{task_config.task_id}_judge_request.jsonl"
+        with judge_request_file.open("w", encoding="utf-8") as f:
+            for row_dict in dataframe.to_dict(orient="records"):
 
                 prompt_template = TRANSLATION_JUDGE_TEMPLATE
                 for persona_config in persona_configs:
@@ -220,7 +221,7 @@ class BatchRequestHandler:
         """
         response_data = defaultdict(lambda: defaultdict(str))
 
-        with open(file_name, "rb") as f:
+        with file_name.open("r", encoding="utf-8") as f:
             for line in f:
                 response_line = json.loads(line)
 
@@ -261,7 +262,7 @@ class BatchRequestHandler:
         """
 
         error_messages = set()
-        with open(file_name, "rb") as f:
+        with file_name.open("r", encoding="utf-8") as f:
             for line in f:
                 response_line = json.loads(line)
                 response = response_line["response"]["body"]["error"]["message"]
