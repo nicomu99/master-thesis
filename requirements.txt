@@ -4,3 +4,4 @@ openai
 pydantic
 matplotlib
 PyQt6
+dotenv

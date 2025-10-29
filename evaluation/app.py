@@ -55,7 +55,7 @@ class App:
             print("No tasks to process.")
             return []
 
-        for k, v in user_input_map:
+        for k, v in user_input_map.items():
             print(f"     ({k}) {v}")
 
         print("Several tasks can be chosen by writing the numbers separated with a whitespace.")
@@ -66,7 +66,7 @@ class App:
             if task not in user_input_map:
                 print(f"Task selector {task} unknown. Skipping.")
                 continue
-            valid_tasks.append(task)
+            valid_tasks.append(user_input_map[task])
 
         return valid_tasks
 
