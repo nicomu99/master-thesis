@@ -46,29 +46,41 @@ class App:
             else:
                 print("Command unknown. Type \"h\" for help.")
 
-    def generate_personas(self) -> None:
-        """Lets the user pick which task to generate personas for."""
-        print("Due to API queue limits, only one request should be sent at the same time.")
-        missing_map = {
-            f"{i + 1}": m for i, m in enumerate(self.evaluator.get_personas_pending_tasks())
-        }
+    @staticmethod
+    def _print_and_evaluate_input(task_ids: List[str]) -> List[str]:
+        user_input_map = {
+            f"{idx + 1}": tid for idx, tid in enumerate(task_ids)}
 
-        if len(missing_map) < 1:
-            print("No tasks with missing personas. Skipping.")
-            return
+        if len(user_input_map) < 1:
+            print("No tasks to process.")
+            return []
 
-        for k, v in missing_map.items():
+        for k, v in user_input_map:
             print(f"     ({k}) {v}")
 
+        print("Several tasks can be chosen by writing the numbers separated with a whitespace.")
         user_input = input("Choose task: ")
-        if user_input not in missing_map:
-            print("Task unknown. Please try again.")
-            return
 
-        task_id = missing_map[user_input]
-        print(f"Generating personas for {task_id}")
-        request_count = self.evaluator.generate_personas(task_id)
-        print(f"{request_count} requests sent.")
+        valid_tasks = []
+        for task in user_input.split(" "):
+            if task not in user_input_map:
+                print(f"Task selector {task} unknown. Skipping.")
+                continue
+            valid_tasks.append(task)
+
+        return valid_tasks
+
+    def generate_personas(self) -> None:
+        """Lets the user pick which task to generate personas for."""
+        task_ids = self.evaluator.get_personas_pending_tasks()
+        chosen_task_ids = self._print_and_evaluate_input(task_ids)
+
+        total_request_count = 0
+        for tid in chosen_task_ids:
+            print(f"Generating personas for {tid}")
+            request_count = self.evaluator.generate_personas(tid)
+            total_request_count += request_count
+        print(f"{total_request_count} requests sent.")
 
     def generate_static_personas(self) -> None:
         """Generate static personas for all tasks."""
@@ -77,54 +89,27 @@ class App:
 
     def generate_answers(self) -> None:
         """Lets the user pick for which task to generate answers."""
-        missing_map = {
-            f"{i + 1}": m for i, m in enumerate(self.evaluator.get_answer_pending_tasks())
-        }
-
-        if len(missing_map) < 1:
-            print("No tasks with missing answers.")
-            return
-
-        for k, v in missing_map.items():
-            print(f"     ({k}) {v}")
-
-        print("Several tasks can be chosen by writing the numbers separated with a whitespace.")
-        user_input = input("Choose task: ")
+        task_ids = self.evaluator.get_answer_pending_tasks()
+        chosen_task_ids = self._print_and_evaluate_input(task_ids)
 
         total_request_count = 0
-        for task in user_input.split(" "):
-            if task not in missing_map:
-                print(f"Task selector {task} unknown. Skipping.")
-                continue
-
-            task_id = missing_map[task]
-            print(f"Sending request for {task_id}")
-            request_count = self.evaluator.send_answer_requests(task_id)
+        for tid in chosen_task_ids:
+            print(f"Sending request for {tid}")
+            request_count = self.evaluator.send_answer_requests(tid)
             total_request_count += request_count
         print(f"{total_request_count} requests sent.")
 
     def generate_judgment_evaluation(self) -> None:
         """Lets the user pick a task, for which LLM-as-a-judge requests should be sent."""
-        missing_map = {
-            f"{i + 1}": m for i, m in enumerate(self.evaluator.get_judgment_pending_tasks())
-        }
+        task_ids = self.evaluator.get_judgment_pending_tasks()
+        chosen_task_ids = self._print_and_evaluate_input(task_ids)
 
-        if len(missing_map) < 1:
-            print("No tasks with missing answers.")
-            return
-
-        for k, v in missing_map.items():
-            print(f"     ({k}) {v}")
-
-        user_input = input("Choose task: ")
-        if user_input not in missing_map:
-            print("Task unknown. Please try again.")
-            return
-
-        task_id = missing_map[user_input]
-        print(f"Sending request for {task_id}")
-        request_count = self.evaluator.send_judgment_requests(task_id)
-        print(f"{request_count} requests sent.")
+        total_request_count = 0
+        for tid in chosen_task_ids:
+            print(f"Sending request for {tid}")
+            request_count = self.evaluator.send_judgment_requests(tid)
+            total_request_count += request_count
+        print(f"{total_request_count} requests sent.")
 
     def quit_program(self):
         """Quits the program."""
