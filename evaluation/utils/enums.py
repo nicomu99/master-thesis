@@ -113,6 +113,7 @@ class BatchStatus(StringEnum):
     Attributes:
         SENT: The batch has been sent successfully and is awaiting processing.
         FAILED: The batch submission failed before or during API processing.
+        VALIDATING: The batch is being validated by the API.
         IN_PROGRESS: The batch is currently being processed by the API.
         COMPLETED: The batch has finished processing and is ready to be retrieved.
         RETRIEVED: The results have been successfully fetched.
@@ -120,6 +121,7 @@ class BatchStatus(StringEnum):
     """
     SENT = "sent"
     FAILED = "failed"
+    VALIDATING = "validating"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     RETRIEVED = "retrieved"

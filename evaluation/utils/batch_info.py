@@ -48,7 +48,7 @@ class BatchInfo:
     error_file: Optional[BatchFile] = None
 
     _STR_TRANSITIONS = {
-        "validating": BatchStatus.IN_PROGRESS,
+        "validating": BatchStatus.VALIDATING,
         "in_progress": BatchStatus.IN_PROGRESS,
         "finalizing": BatchStatus.IN_PROGRESS,
         "expired": BatchStatus.ERROR,
@@ -79,6 +79,14 @@ class BatchInfo:
             bool: True if the status equals BatchStatus.ERROR or BatchStatus.FAILED, otherwise False.
         """
         return self.status in (BatchStatus.ERROR, BatchStatus.FAILED)
+
+    def is_validating(self) -> bool:
+        """Check whether the batch status is validating.
+
+        Returns:
+            bool: True if the status equals BatchStatus.VALIDATING, otherwise False.
+        """
+        return self.status == BatchStatus.VALIDATING
 
     def is_in_progress(self) -> bool:
         """Check whether the batch status is in progress.
