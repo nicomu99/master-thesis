@@ -1,5 +1,8 @@
 from typing import Dict, Optional, Iterable, List
 
+from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
+
 from .dataset_handler import DatasetHandler
 from .llm_client import LLMClient
 from .persona_registry import PersonaRegistry
@@ -100,6 +103,29 @@ class Evaluator:
 
             personas[persona_name] = persona
         return personas
+
+    def generate_all_static_personas(self) -> None:
+        """Creates static personas on task level for all tasks."""
+        for _, task_info in self.task_iterator(desc="Processing"):
+            dataset_id = task_info.dataset_id
+            category_name = task_info.category_name
+            task_df = self.dataset_handler.get_task_dataframe(dataset_id, category_name)
+
+            if columns_not_full(task_df, self.persona_registry.get_empty_names()):
+                empty_personas = self.persona_registry.get_empty_templates()
+                task_df = task_df.assign(**empty_personas)
+                self.dataset_handler.merge_and_write(dataset_id, task_df)
+
+            if columns_not_full(task_df, self.persona_registry.get_static_names()):
+                print("Creating static personas...")
+
+                static_personas = self.generate_static_personas(task_info)
+                task_df = task_df.assign(**static_personas)
+                self.dataset_handler.merge_and_write(dataset_id, task_df)
+
+            if not columns_not_full(task_df, self.persona_registry.get_names()):
+                task_info.skip_personas()
+        self._save()
 
     def generate_personas(
         self,
@@ -246,3 +272,13 @@ class Evaluator:
 
             task_info.update_status(batch_info.is_retrieved())
         self._save()
+
+    def task_iterator(
+        self,
+        desc: str,
+    ):
+        task_iterator = tqdm(self.task_infos.items(), desc=desc)
+        with logging_redirect_tqdm(loggers=[log]):
+            for task_id, task_info in task_iterator:
+                task_iterator.set_description(f"{desc} {task_id}")
+                yield task_id, task_info

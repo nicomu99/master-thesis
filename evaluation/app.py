@@ -24,6 +24,7 @@ class App:
         self.commands = {
             "q": ("Quit program", self.quit_program),
             "p": ("Generate personas", self.generate_personas),
+            "ps": ("Generate static personas for all tasks", self.generate_static_personas),
             "t": ("Send task requests", self.generate_answers),
             "j": ("Send judgment requests", self.generate_judgment_evaluation),
             "s": ("Check batch statuses", self.check_batch_statuses),
@@ -69,9 +70,13 @@ class App:
         request_count = self.evaluator.generate_personas(task_id)
         print(f"{request_count} requests sent.")
 
+    def generate_static_personas(self) -> None:
+        """Generate static personas for all tasks."""
+        print("Generating static personas for all tasks")
+        self.evaluator.generate_all_static_personas()
+
     def generate_answers(self) -> None:
         """Lets the user pick for which task to generate answers."""
-        print("Due to API queue limits, only one request should be sent at the same time.")
         missing_map = {
             f"{i + 1}": m for i, m in enumerate(self.evaluator.get_answer_pending_tasks())
         }
@@ -83,15 +88,20 @@ class App:
         for k, v in missing_map.items():
             print(f"     ({k}) {v}")
 
+        print("Several tasks can be chosen by writing the numbers separated with a whitespace.")
         user_input = input("Choose task: ")
-        if user_input not in missing_map:
-            print("Task unknown. Please try again.")
-            return
 
-        task_id = missing_map[user_input]
-        print(f"Sending request for {task_id}")
-        request_count = self.evaluator.send_answer_requests(task_id)
-        print(f"{request_count} requests sent.")
+        total_request_count = 0
+        for task in user_input.split(" "):
+            if task not in missing_map:
+                print(f"Task selector {task} unknown. Skipping.")
+                continue
+
+            task_id = missing_map[task]
+            print(f"Sending request for {task_id}")
+            request_count = self.evaluator.send_answer_requests(task_id)
+            total_request_count += request_count
+        print(f"{total_request_count} requests sent.")
 
     def generate_judgment_evaluation(self) -> None:
         """Lets the user pick a task, for which LLM-as-a-judge requests should be sent."""
