@@ -53,6 +53,7 @@ class BatchInfo:
         "finalizing": BatchStatus.IN_PROGRESS,
         "expired": BatchStatus.ERROR,
         "failed": BatchStatus.FAILED,
+        "cancelled": BatchStatus.RETRIEVED,
         "completed": BatchStatus.COMPLETED
     }
 

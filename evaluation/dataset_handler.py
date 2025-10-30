@@ -146,6 +146,18 @@ class DatasetHandler:
         else:
             dataframe = pd.read_parquet(dataset_file)
 
+        # Pick a deterministic set of entries.
+        category_col = dataset_config.category_column
+        if category_col and category_col in dataframe.columns:
+            log.info("Selecting a subset of 200 samples per category for %s", category_col)
+            dataframe = (
+                dataframe.groupby(category_col, group_keys=False)
+                         .head(200)
+                         .reset_index(drop=True))
+        else:
+            log.info("No category column found; selecting up to 500 samples in total")
+            dataframe = dataframe.sample(n=min(len(dataframe), 500), random_state=42).reset_index(drop=True)
+        log.info("Dataframe length: %s", len(dataframe))
         return dataframe
 
     def write_dataframe(self, dataset_id: str):
@@ -155,7 +167,22 @@ class DatasetHandler:
             dataset_id (str): String identifier of the data frame.
         """
         dataframe_file = Path(f"{self.dataset_path}/{dataset_id}.parquet")
-        self.dataframes[dataset_id].to_parquet(dataframe_file)
+        update_df = self.dataframes[dataset_id]
+
+        if dataframe_file.is_file():
+            existing_df = pd.read_parquet(dataframe_file)
+            for col in update_df.columns:
+                if col not in existing_df.columns:
+                    existing_df[col] = None
+
+            existing_df = existing_df.set_index(STATIC_ID_COLUMN)
+            update_df = update_df.set_index(STATIC_ID_COLUMN)
+
+            existing_df.update(update_df)
+            merged_df = existing_df.reset_index()
+        else:
+            merged_df = update_df.copy()
+        merged_df.to_parquet(dataframe_file)
 
     def get_config(self, dataset_id: str) -> DatasetConfig:
         """Returns the dataset configuration of a dataset.
