@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Iterable
 
 from pathlib import Path
 
@@ -14,7 +14,7 @@ from .utils import TEMP_PATH
 from .utils import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 
 class LLMClient:
@@ -175,7 +175,7 @@ class LLMClient:
                 or task answering prompts.
         """
 
-        log.info("Sending batch for task %s", task_id)
+        log.debug("Sending batch for task %s", task_id)
 
         with batch_file.open("rb") as f:
             batch_input_file = self.client.files.create(
@@ -215,6 +215,7 @@ class LLMClient:
         active_batches = {
             k: v for k, v in self.batches_info_store.items()
             if not v.has_finished()}
+        log.info("Checking batch statuses, %s active batches found.", len(active_batches))
 
         for batch_id, batch_info in active_batches.items():
             try:
@@ -242,12 +243,18 @@ class LLMClient:
         remote_file_id: str,
         local_file_path: Path
     ):
+        if local_file_path.exists() and local_file_path.stat().st_size > 0:
+            log.debug("File already fetched.")
+            return
         batch_response_stream = self.client.files.content(remote_file_id)
 
         with local_file_path.open("wb") as f:
             f.write(batch_response_stream.read())
 
-    def download_batch_files(self) -> List[BatchInfo]:
+    def download_batch_files(
+        self,
+        task_ids: Iterable[str]
+    ) -> List[BatchInfo]:
         """Fetches responses for batch requests and saves them to files.
 
         Returns:
@@ -259,7 +266,14 @@ class LLMClient:
             if batch_info.is_completed()]
         log.info("Fetching batch responses, %s completed batches found.", len(completed_batches))
 
+        retrieved_batches = []
         for batch_info in completed_batches:
+            tid = batch_info.task_id
+            if batch_info.task_id not in task_ids:
+                log.warning("Skipping batch for inactive task %s", tid)
+                continue
+
+            log.debug("Fetching files for task %s", tid)
             if batch_info.has_output():
                 output_file = batch_info.get_output_file()
                 self._download_batch_file(output_file.remote_file_id, output_file.local_file_path)
@@ -269,6 +283,7 @@ class LLMClient:
                 error_file = batch_info.get_error_file()
                 self._download_batch_file(error_file.remote_file_id, error_file.local_file_path)
                 batch_info.set_status(BatchStatus.ERROR)
+            retrieved_batches.append(batch_info)
 
         self._save()
-        return completed_batches
+        return retrieved_batches

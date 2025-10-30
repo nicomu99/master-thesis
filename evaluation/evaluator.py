@@ -1,5 +1,6 @@
 from typing import Dict, Optional, Iterable, List
 
+import pandas as pd
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
@@ -7,7 +8,7 @@ from .dataset_handler import DatasetHandler
 from .llm_client import LLMClient
 from .persona_registry import PersonaRegistry
 from .batch_request_handler import BatchRequestHandler
-from .utils import columns_not_full, load_dataclass_dict, save_dataclass_dict, load_task_config
+from .utils import columns_full, load_dataclass_dict, save_dataclass_dict, load_task_config
 from .utils import TaskInfo, BatchInfo, TEMP_PATH
 
 from .utils import logging
@@ -80,52 +81,70 @@ class Evaluator:
         """
         return [k for k, v in self.task_infos.items() if v.is_judgment_pending()]
 
-    def generate_static_personas(
-            self,
-            task_info: TaskInfo,
-    ) -> Dict[str, str]:
-        """Creates static personas on task level.
-
-        The function lets an LLM client generate personas that are shared by all samples of the same task in three
-        different, increasing length formats. The shortest length is defined manually. The other two formats are
-        generated iteratively, using the previous persona as a prefix.
-
-        Args:
-            task_info (TaskInfo): A task configuration with information about the task.
-        """
+    def _static_persona_helper(
+        self,
+        task_info: TaskInfo,
+        task_df: pd.DataFrame,
+        persona_templates: Dict[str, str]
+    ):
         persona = self.persona_registry.get_base_persona_string()
+
         personas = {}
-        for persona_name, prompt_template in self.persona_registry.get_static_templates().items():
+        for persona_name, prompt_template in persona_templates.items():
             client_kwargs = {
                 "task_type": task_info.field, "persona_string": persona}
             persona = self.llm_client.get_api_response(
                 prompt_template, persona_name, **client_kwargs)
 
             personas[persona_name] = persona
-        return personas
+        task_df = task_df.assign(**personas)
+        return task_df
 
-    def generate_all_static_personas(self) -> None:
-        """Creates static personas on task level for all tasks."""
-        for _, task_info in self.task_iterator(desc="Processing"):
-            dataset_id = task_info.dataset_id
-            category_name = task_info.category_name
-            task_df = self.dataset_handler.get_task_dataframe(dataset_id, category_name)
+    def _generate_static_personas(
+        self,
+        task_info: TaskInfo,
+        task_df: pd.DataFrame
+    ) -> pd.DataFrame:
+        persona_names = self.persona_registry.get_static_names()
+        if columns_full(task_df, persona_names):
+            return task_df
+        print("Generating static personas...")
+        persona_templates = self.persona_registry.get_static_templates()
+        return self._static_persona_helper(task_info, task_df, persona_templates)
 
-            if columns_not_full(task_df, self.persona_registry.get_empty_names()):
-                empty_personas = self.persona_registry.get_empty_templates()
-                task_df = task_df.assign(**empty_personas)
-                self.dataset_handler.merge_and_write(dataset_id, task_df)
+    def _generate_teacher_personas(
+        self,
+        task_info: TaskInfo,
+        task_df: pd.DataFrame,
+    ) -> pd.DataFrame:
+        persona_names = self.persona_registry.get_teacher_static_names()
+        if columns_full(task_df, persona_names):
+            return task_df
+        print("Generating teacher personas...")
+        persona_templates = self.persona_registry.get_teacher_static_templates()
+        return self._static_persona_helper(task_info, task_df, persona_templates)
 
-            if columns_not_full(task_df, self.persona_registry.get_static_names()):
-                print("Creating static personas...")
+    def _generate_empty_personas(
+        self,
+        task_df: pd.DataFrame
+    ) -> pd.DataFrame:
+        if columns_full(task_df, self.persona_registry.get_empty_names()):
+            return task_df
+        empty_personas = self.persona_registry.get_empty_templates()
+        task_df = task_df.assign(**empty_personas)
+        return task_df
 
-                static_personas = self.generate_static_personas(task_info)
-                task_df = task_df.assign(**static_personas)
-                self.dataset_handler.merge_and_write(dataset_id, task_df)
-
-            if not columns_not_full(task_df, self.persona_registry.get_names()):
-                task_info.skip_personas()
-        self._save()
+    def _generate_dynamic_personas(
+        self,
+        task_info: TaskInfo,
+        task_df: pd.DataFrame
+    ) -> int:
+        if columns_full(task_df, self.persona_registry.get_dynamic_names()):
+            return 0
+        print("Generating dynamic personas...")
+        request_count = self.llm_client.send_persona_batch(
+            task_info, task_df, self.persona_registry.get_dynamic_configs())
+        return request_count
 
     def generate_personas(
         self,
@@ -140,35 +159,30 @@ class Evaluator:
             int: Number of requests sent to the LLM API.
         """
         task_info = self.task_infos[task_id]
-        dataset_id = task_info.dataset_id
-        category_name = task_info.category_name
-        task_df = self.dataset_handler.get_task_dataframe(dataset_id, category_name)
+        task_df = self.dataset_handler.get_task_df_from_info(task_info)
 
-        if columns_not_full(task_df, self.persona_registry.get_empty_names()):
-            empty_personas = self.persona_registry.get_empty_templates()
-            task_df = task_df.assign(**empty_personas)
-            self.dataset_handler.merge_and_write(dataset_id, task_df)
+        task_df = self._generate_empty_personas(task_df)
+        task_df = self._generate_static_personas(task_info, task_df)
+        task_df = self._generate_teacher_personas(task_info, task_df)
+        self.dataset_handler.merge_and_write(task_info.dataset_id, task_df)
 
-        if columns_not_full(task_df, self.persona_registry.get_static_names()):
-            print("Creating static personas...")
-
-            static_personas = self.generate_static_personas(task_info)
-            task_df = task_df.assign(**static_personas)
-            self.dataset_handler.merge_and_write(dataset_id, task_df)
-
-        request_count = 0
-        if columns_not_full(task_df, self.persona_registry.get_dynamic_names()):
-            print("Creating dynamic personas...")
-
-            request_count = self.llm_client.send_persona_batch(
-                task_info, task_df, self.persona_registry.get_dynamic_configs())
-
+        request_count = self._generate_dynamic_personas(task_info, task_df)
         if request_count == 0:
             task_info.skip_personas()
         else:
             task_info.increment_status()
         self._save()
         return request_count
+
+    def generate_all_static_personas(self) -> None:
+        """Creates static personas on task level for all tasks."""
+        for tid, task_info in self._task_iterator(desc="Processing"):
+            task_df = self.dataset_handler.get_task_df_from_info(task_info)
+            task_df = self._generate_empty_personas(task_df)
+            task_df = self._generate_static_personas(task_info, task_df)
+            task_df = self._generate_teacher_personas(task_info, task_df)
+            self.dataset_handler.merge_and_write(tid, task_df)
+        self._save()
 
     def send_answer_requests(
         self,
@@ -183,26 +197,12 @@ class Evaluator:
             int: Number of requests sent to the LLM API.
         """
         task_info = self.task_infos[task_id]
-        dataset_id = task_info.dataset_id
-        dataset_config = self.dataset_handler.get_config(dataset_id)
-        question_type = dataset_config.question_type
-        persona_names, persona_configs = self.persona_registry.get_names_and_configs()
-        task_df = self.dataset_handler.get_task_dataframe(dataset_id, task_info.category_name)
-
-        if not task_info.is_answers_pending():
-            log.warning(
-                "Skipping %s, make sure personas were generated and no batch is currently being processed.",
-                task_id)
-            return 0
-
-        if columns_not_full(task_df, persona_names):
-            log.warning(
-                "Personas for task %s not created yet. Please run persona creation first.",
-                task_id)
-            return 0
+        dataset_config = self.dataset_handler.get_config(task_info.dataset_id)
+        persona_configs = self.persona_registry.get_configs()
+        task_df = self.dataset_handler.get_task_df_from_info(task_info)
 
         request_count = self.llm_client.send_answer_batch(
-            task_info, task_df, question_type, persona_configs)
+            task_info, task_df, dataset_config.question_type, persona_configs)
 
         task_info.increment_status()
         self._save()
@@ -221,16 +221,8 @@ class Evaluator:
             int: Number of requests sent to the LLM API.
         """
         task_info = self.task_infos[task_id]
-        dataset_id = task_info.dataset_id
+        task_df = self.dataset_handler.get_task_df_from_info(task_info)
         persona_configs = self.persona_registry.get_configs()
-
-        task_df = self.dataset_handler.get_task_dataframe(dataset_id, task_info.category_name)
-
-        if not task_info.is_judgment_pending():
-            log.warning(
-                "Skipping %s, make sure answers were generated and no batch is currently being processed.",
-                task_id)
-            return 0
 
         request_count = self.llm_client.send_judgment_batch(
             task_info, task_df, persona_configs)
@@ -247,16 +239,21 @@ class Evaluator:
         """
         active_batches = self.llm_client.check_batch_statuses()
         for bid, batch_info in active_batches.items():
-            if batch_info.is_error():
+            if batch_info.is_error() and bid in self.task_infos:
                 self.task_infos[bid].decrement_status()
         return active_batches
 
     def fetch_batch_responses(self):
         """Fetches batch responses and saves them to disk."""
-        retrieved_batches = self.llm_client.download_batch_files()
+        retrieved_batches = self.llm_client.download_batch_files(self.task_infos.keys())
 
         for batch_info in retrieved_batches:
-            task_info = self.task_infos[batch_info.task_id]
+            tid = batch_info.task_id
+            if tid not in self.task_infos:
+                log.warning("Batch for inactive task %s found. Skipping.", tid)
+                continue
+
+            task_info = self.task_infos[tid]
             dataset_id = task_info.dataset_id
 
             if batch_info.has_output():
@@ -268,12 +265,12 @@ class Evaluator:
                 error_file = batch_info.get_error_file()
                 error_messages = BatchRequestHandler.read_error_file(error_file.local_file_path)
                 for message in error_messages:
-                    log.error("Task %s failed: %s", task_info.task_id, message)
+                    log.error("Task %s failed: %s", tid, message)
 
             task_info.update_status(batch_info.is_retrieved())
         self._save()
 
-    def task_iterator(
+    def _task_iterator(
         self,
         desc: str,
     ):

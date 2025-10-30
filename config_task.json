@@ -42,11 +42,6 @@
         }
     },
     "flores": {
-        "flores_arab": {
-            "field": "arabic to english translation",
-            "need_judgment": true,
-            "category_name": "ace"
-        },
         "flores_deu": {
             "field": "german to english translation",
             "need_judgment": true,
@@ -61,11 +56,6 @@
             "field": "swahili to english translation",
             "need_judgment": true,
             "category_name": "swh"
-        },
-        "flores_spa": {
-            "field": "spanish to english translation",
-            "need_judgment": true,
-            "category_name": "spa"
         }
     }
 }

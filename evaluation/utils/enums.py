@@ -97,10 +97,12 @@ class PersonaCategory(StringEnum):
     Attributes:
         EMPTY: Refers to the no persona baselines.
         STATIC: Refers to static personas, that do not change between samples of a task.
+        STATIC_TEACHER: Refers to the static teacher persona.
         DYNAMIC: Refers to personas that are specific to task samples, i.e. each sample has its own persona.
     """
     EMPTY = "empty"
     STATIC = "static"
+    STATIC_TEACHER = "static_teacher"
     DYNAMIC = "dynamic"
 
 

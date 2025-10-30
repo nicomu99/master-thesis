@@ -1,6 +1,6 @@
 from .batch_info import BatchInfo
 from .constants import TEMP_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, GROUND_TRUTH_COLUMN
-from .dataframe_helpers import columns_not_full
+from .dataframe_helpers import columns_full
 from .dataset_config import DatasetConfig
 from .enums import BatchType
 from .enums import QuestionType
@@ -14,13 +14,16 @@ from .log_conf import logging
 from .prompt_templates import (
     BASE_PERSONA,
     HELPFUL_PERSONA,
+    TEACHER_PERSONA,
     BASE_TEMPLATE,
     STATIC_SHORT_TEMPLATE,
     STATIC_MEDIUM_TEMPLATE,
     STATIC_LONG_TEMPLATE,
+    STATIC_TEACHER_TEMPLATE,
     DYNAMIC_SHORT_TEMPLATE,
     DYNAMIC_MEDIUM_TEMPLATE,
     DYNAMIC_LONG_TEMPLATE,
+    DYNAMIC_TEACHER_TEMPLATE,
     OPEN_QUESTION_TEMPLATE,
     MC_QUESTION_TEMPLATE,
     SUMMARIZATION_TEMPLATE,
@@ -36,7 +39,7 @@ __all__ = [
     "STATIC_ID_COLUMN",
     "QUESTION_COLUMN",
     "GROUND_TRUTH_COLUMN",
-    "columns_not_full",
+    "columns_full",
     "DatasetConfig",
     "BatchType",
     "QuestionType",
@@ -50,13 +53,16 @@ __all__ = [
     "logging",
     "BASE_PERSONA",
     "HELPFUL_PERSONA",
+    "TEACHER_PERSONA",
     "BASE_TEMPLATE",
     "STATIC_SHORT_TEMPLATE",
     "STATIC_MEDIUM_TEMPLATE",
     "STATIC_LONG_TEMPLATE",
+    "STATIC_TEACHER_TEMPLATE",
     "DYNAMIC_SHORT_TEMPLATE",
     "DYNAMIC_MEDIUM_TEMPLATE",
     "DYNAMIC_LONG_TEMPLATE",
+    "DYNAMIC_TEACHER_TEMPLATE",
     "OPEN_QUESTION_TEMPLATE",
     "MC_QUESTION_TEMPLATE",
     "SUMMARIZATION_TEMPLATE",

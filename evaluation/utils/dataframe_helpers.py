@@ -1,27 +1,23 @@
-from typing import Optional, List
+from typing import List
 
 import pandas as pd
 
 
-def columns_not_full(
+def columns_full(
     dataframe: pd.DataFrame,
     column_names: List[str],
-    row_mask: Optional[slice | pd.Series] = None
 ) -> bool:
-    """Check whether any of the given columns contain empty values.
-
-    The check can be further refined using a row_mask.
+    """Check whether all values in the given columns are non-null.
 
     Args:
-        dataframe (pd.DataFrame): pandas DataFrame.
-        column_names (List[str]): Column used to check for empty values.
-        row_mask (slice | pd.Series[bool] | None): A row mask. Defaults to None.
+        dataframe (pd.DataFrame): The pandas DataFrame to check.
+        column_names (list[str]): Columns to check for non-null values.
 
     Returns:
-        bool: True if any of the specified columns contain missing values, False otherwise.
+        bool: True if all specified columns have no missing values, False otherwise.
     """
     if not set(column_names).issubset(dataframe.columns):
-        return True
+        return False
 
-    df = dataframe.loc[row_mask, column_names] if row_mask is not None else dataframe[column_names]
-    return bool(df.isnull().any().any())
+    df = dataframe[column_names]
+    return bool(df.notnull().all().all())

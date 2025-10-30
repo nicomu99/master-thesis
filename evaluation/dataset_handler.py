@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 from datasets import load_dataset, Dataset
 
-from .utils import DatasetConfig
+from .utils import DatasetConfig, TaskInfo
 from .utils import decode_dataclass
 from .utils import QUESTION_COLUMN, GROUND_TRUTH_COLUMN, STATIC_ID_COLUMN
 from .utils import logging
@@ -188,6 +188,22 @@ class DatasetHandler:
         if category_column:
             return dataframe[dataframe[category_column] == task_name]
         return dataframe
+
+    def get_task_df_from_info(
+        self,
+        task_info: TaskInfo
+    ) -> pd.DataFrame:
+        """Returns a dataframe with task samples.
+
+        Args:
+            task_info (TaskInfo): Task specific metadata.
+
+        Returns:
+            pd.DataFrame: Dataframe with task samples.
+        """
+        dataset_id = task_info.dataset_id
+        task_name = task_info.category_name
+        return self.get_task_dataframe(dataset_id, task_name)
 
     def merge_and_write(
         self,

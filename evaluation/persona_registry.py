@@ -1,18 +1,21 @@
-from typing import List, Dict, Tuple
+from typing import List, Dict
 
 from dataclasses import dataclass, field
 
 from .utils import PersonaCategory
 from .utils import (
-    HELPFUL_PERSONA,
     BASE_PERSONA,
+    HELPFUL_PERSONA,
+    TEACHER_PERSONA,
     BASE_TEMPLATE,
     STATIC_SHORT_TEMPLATE,
     # STATIC_MEDIUM_TEMPLATE,
     STATIC_LONG_TEMPLATE,
+    STATIC_TEACHER_TEMPLATE,
     DYNAMIC_SHORT_TEMPLATE,
     # DYNAMIC_MEDIUM_TEMPLATE,
-    DYNAMIC_LONG_TEMPLATE
+    DYNAMIC_LONG_TEMPLATE,
+    DYNAMIC_TEACHER_TEMPLATE
 )
 
 
@@ -63,6 +66,14 @@ class PersonaConfig:
         """
         return self.category == PersonaCategory.DYNAMIC
 
+    def is_static_teacher(self) -> bool:
+        """Returns true if the category is PersonaCategory.STATIC_TEACHER.
+
+        Returns:
+            bool: True if the category is PersonaCategory.STATIC_TEACHER, else false.
+        """
+        return self.category == PersonaCategory.STATIC_TEACHER
+
 
 class PersonaRegistry:
     """A registry containing persona configurations.
@@ -77,11 +88,14 @@ class PersonaRegistry:
         self.persona_configs = [
             PersonaConfig("no_persona", PersonaCategory.EMPTY, " "),
             PersonaConfig("helpful_persona", PersonaCategory.EMPTY, HELPFUL_PERSONA),
+            PersonaConfig("teacher_persona", PersonaCategory.EMPTY, TEACHER_PERSONA),
             PersonaConfig("base_persona", PersonaCategory.STATIC, BASE_TEMPLATE),
             PersonaConfig("static_short_persona", PersonaCategory.STATIC, STATIC_SHORT_TEMPLATE),
             PersonaConfig("static_long_persona", PersonaCategory.STATIC, STATIC_LONG_TEMPLATE),
+            PersonaConfig("static_teacher_persona", PersonaCategory.STATIC_TEACHER, STATIC_TEACHER_TEMPLATE),
             PersonaConfig("dynamic_short_persona", PersonaCategory.DYNAMIC, DYNAMIC_SHORT_TEMPLATE),
             PersonaConfig("dynamic_long_persona", PersonaCategory.DYNAMIC, DYNAMIC_LONG_TEMPLATE),
+            PersonaConfig("dynamic_teacher_persona", PersonaCategory.DYNAMIC, DYNAMIC_TEACHER_TEMPLATE)
         ]
 
     def get_base_persona_string(self) -> str:
@@ -124,6 +138,22 @@ class PersonaRegistry:
         """
         return [p.name for p in self.persona_configs if p.is_dynamic()]
 
+    def get_teacher_static_names(self) -> List[str]:
+        """Returns static teacher persona names.
+
+        Returns:
+            List[str]: A list containing all static teacher persona configs.
+        """
+        return [p.name for p in self.persona_configs if p.is_static_teacher()]
+
+    def get_teacher_statics(self) -> List[PersonaConfig]:
+        """Returns static teacher persona names.
+
+        Returns:
+            List[PersonaConfig]: A list containing all static teacher persona configs.
+        """
+        return [p for p in self.persona_configs if p.is_static_teacher()]
+
     def get_empty_templates(self) -> Dict[str, str]:
         """Returns the empty persona templates.
 
@@ -148,6 +178,14 @@ class PersonaRegistry:
         """
         return {p.name: p.template for p in self.persona_configs if p.is_dynamic()}
 
+    def get_teacher_static_templates(self) -> Dict[str, str]:
+        """Returns the static teacher persona templates.
+
+        Returns:
+            Dict[str, str]: A dictionary with persona names as items and templates as values.
+        """
+        return {p.name: p.template for p in self.persona_configs if p.is_static_teacher()}
+
     def get_dynamic_configs(self) -> List[PersonaConfig]:
         """Returns the dynamic persona configs.
 
@@ -171,11 +209,3 @@ class PersonaRegistry:
             Dict[str, PersonaConfig]: Dictionary with persona configs.
         """
         return {p.name: p for p in self.persona_configs}
-
-    def get_names_and_configs(self) -> Tuple[List[str], List[PersonaConfig]]:
-        """Returns a list with persona name idenfifiers and a list with persona configs.
-
-        Returns:
-            Tuple[List[str], List[PersonaConfig]]: List with persona names and list with persona configs.
-        """
-        return self.get_names(), self.persona_configs
