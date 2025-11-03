@@ -55,12 +55,12 @@ class OpenAIClient(LLMClient):
             batch_input_file = self.client.files.create(
                 file=f, purpose="batch")
 
-            batch_job = self.client.batches.create(
-                input_file_id=batch_input_file.id,
-                endpoint="/v1/responses",
-                completion_window="24h")
+        batch_job = self.client.batches.create(
+            input_file_id=batch_input_file.id,
+            endpoint="/v1/responses",
+            completion_window="24h")
 
-            return batch_job.id
+        return batch_job.id
 
     def get_batch_progress(self, batch_id: str) -> Tuple[str, int, int, str | None, str | None]:
         remote_batch = self.client.batches.retrieve(batch_id)

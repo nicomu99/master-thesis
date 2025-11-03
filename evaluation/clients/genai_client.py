@@ -36,35 +36,35 @@ class GenAIClient(LLMClient):
         return response.text
 
     def write_prompt(self, file: TextIO, custom_id: str, prompt: str, instruction: Optional[str] = None) -> None:
-        body = {"model": self.model, "input": prompt}
+        request = {}
+        request["contents"] = [{"parts": [{"text": prompt}]}]
         if instruction:
-            body["instructions"] = instruction
+            request["system_instruction"] = instruction
 
         api_request_dict = {
             "key": custom_id,
-            "request": {
-                "contents": [
-                    {"parts:": [{"text": prompt}]}
-                ]
-            }
+            "request": request
         }
 
         file.write(json.dumps(api_request_dict) + "\n")
 
     def send_batch(self, batch_file: Path) -> str:
-        with batch_file.open("rb") as f:
-            batch_input_file = self.client.files.upload(
-                file=f,
-                config=types.UploadFileConfig(display_name="my-batch-requests", mime_type="jsonl"))
-            if batch_input_file.name is None:
-                raise ConnectionError(f"Unexpected error occured during upload of {str(batch_file)}")
+        batch_input_file = self.client.files.upload(
+            file=str(batch_file),
+            config=types.UploadFileConfig(
+                mime_type="application/json",
+                display_name=batch_file.name
+            )
+        )
+        if batch_input_file.name is None:
+            raise ConnectionError(f"Unexpected error occured during upload of {str(batch_file)}")
 
-            batch_job = self.client.batches.create(
-                model=self.model,
-                src=batch_input_file.name)
-            if batch_job.name is None:
-                raise ConnectionError(f"Unexpected error occured during upload of {str(batch_file)}")
-            return batch_job.name
+        batch_job = self.client.batches.create(
+            model=self.model,
+            src=batch_input_file.name)
+        if batch_job.name is None:
+            raise ConnectionError(f"Unexpected error occured during upload of {str(batch_file)}")
+        return batch_job.name
 
     @staticmethod
     def _status_transition(remote_status: str) -> str:
