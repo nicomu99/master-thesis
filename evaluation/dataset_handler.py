@@ -195,6 +195,17 @@ class DatasetHandler:
         """
         return self.dataset_configs[dataset_id]
 
+    def get_data(
+        self,
+        dataset_id: str,
+        task_names: List[str]
+    ) -> pd.DataFrame:
+        dataset_config = self.dataset_configs[dataset_id]
+        dataframe = self.dataframes[dataset_id]
+        if len(task_names) == 0:
+            return dataframe
+        return dataframe[dataframe[dataset_config.category_column].isin(task_names)]
+
     def get_task_dataframe(
         self,
         dataset_id: str,

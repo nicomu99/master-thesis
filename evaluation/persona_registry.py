@@ -209,3 +209,11 @@ class PersonaRegistry:
             Dict[str, PersonaConfig]: Dictionary with persona configs.
         """
         return {p.name: p for p in self.persona_configs}
+
+    def get_answer_columns(self) -> List[str]:
+        """Returns all answer columns.
+
+        Returns:
+            List[str]: List with answer columns.
+        """
+        return [p.answer_column for p in self.persona_configs]

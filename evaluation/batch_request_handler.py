@@ -224,7 +224,7 @@ class BatchRequestHandler:
             pd.DataFrame: Dataframe containing one row per sample and one column for each persona type.
         """
         log.info("Reading response file %s", file_name)
-        response_data = defaultdict(lambda: defaultdict(str))
+        response_data = defaultdict(lambda: defaultdict(None))
 
         with file_name.open("r", encoding="utf-8") as f:
             for line in f:
@@ -235,6 +235,8 @@ class BatchRequestHandler:
                 sample_id = "_".join(response_id[:2])
                 column_id = "_".join(response_id[2:])
 
+                if completion == "":
+                    completion = None
                 response_data[sample_id][column_id] = completion
 
         structured_response = [

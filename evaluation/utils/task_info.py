@@ -104,20 +104,28 @@ class TaskInfo:
                 "No status transition defined for task status %s. Will keep old status.",
                 self.status)
 
-    def update_status(self, increment_status: bool):
-        """Increments the status if increment status is true, else decrements it.
+    def update_status(
+        self,
+        skip: bool = False,
+        increment: bool = True,
+    ):
+        """Updates the status information.
 
         Args:
-            increment_status (bool): Boolean used to decide whether to increment or decrement the status.
+            skip (bool, optional): If true, the next phase is skipped. Defaults to False.
+            increment (bool, optional): If true, the status is incremented. Defaults to True.
         """
-        if increment_status:
+        if increment:
             self.increment_status()
+            if skip:
+                self.increment_status()
         else:
             self.decrement_status()
 
-    def skip_personas(self):
-        """Skips the persona requested phase."""
-        self.status = TaskStatus.ANSWERS_PENDING
+    def skip_status(self):
+        """Skips the requested phase."""
+        self.increment_status()
+        self.increment_status()
 
     @staticmethod
     def get_key_field() -> str:

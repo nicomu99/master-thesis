@@ -40,7 +40,7 @@ class LLMClient(ABC):
         """
 
     @abstractmethod
-    def read_response_line(self, line: str) -> Tuple[str, str | None]:
+    def read_response_line(self, line: str) -> Tuple[str, str]:
         """Reads the contents of a JSONL file.
 
         Args:

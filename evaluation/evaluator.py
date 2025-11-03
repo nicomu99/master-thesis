@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Iterable, List
+from typing import Dict, Optional, Iterable, List, Tuple
 
 import pandas as pd
 from tqdm import tqdm
@@ -168,10 +168,7 @@ class Evaluator:
         if not result:
             return 0
 
-        if result == 0:
-            task_info.skip_personas()
-        else:
-            task_info.increment_status()
+        task_info.update_status(skip=result == 0)
         self._save()
         return result
 
@@ -207,7 +204,7 @@ class Evaluator:
         if result is False:
             return 0
 
-        task_info.increment_status()
+        task_info.update_status(skip=result == 0)
         self._save()
         return result
 
@@ -232,7 +229,7 @@ class Evaluator:
         if result is False:
             return 0
 
-        task_info.increment_status()
+        task_info.update_status(skip=result == 0)
         self._save()
         return result
 
@@ -266,7 +263,7 @@ class Evaluator:
                 self.dataset_handler.merge_and_write(dataset_id, response)
 
             if response is not False:
-                task_info.update_status(batch_info.is_retrieved())
+                task_info.update_status(increment=batch_info.is_retrieved())
         self._save()
 
     def _task_iterator(
@@ -278,3 +275,12 @@ class Evaluator:
             for task_id, task_info in task_iterator:
                 task_iterator.set_description(f"{desc} {task_id}")
                 yield task_id, task_info
+
+    def get_data(
+        self,
+        dataset_id: str
+    ) -> Tuple[List[str], pd.DataFrame]:
+        dataset_tasks = [tinfo for tinfo in self.task_infos.values() if tinfo.dataset_id == dataset_id]
+        task_ids = [t.task_id for t in dataset_tasks]
+        task_names = [t.category_name for t in dataset_tasks if t.category_name is not None]
+        return task_ids, self.dataset_handler.get_data(dataset_id, task_names)

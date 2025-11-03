@@ -62,7 +62,7 @@ class OpenAIClient(LLMClient):
 
         return batch_job.id
 
-    def read_response_line(self, line: str) -> Tuple[str, str | None]:
+    def read_response_line(self, line: str) -> Tuple[str, str]:
         response_line = json.loads(line)
 
         response = response_line["response"]

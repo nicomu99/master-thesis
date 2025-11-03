@@ -48,10 +48,10 @@ class GenAIClient(LLMClient):
 
         file.write(json.dumps(api_request_dict) + "\n")
 
-    def read_response_line(self, line: str) -> Tuple[str, str | None]:
+    def read_response_line(self, line: str) -> Tuple[str, str]:
         response_line = json.loads(line)
         response = response_line["response"]["candidates"][0]["content"]
-        completion = None
+        completion = ""
         if "parts" in response:
             completion = "".join(o["text"] for o in response["parts"])
         return response_line["key"], completion
