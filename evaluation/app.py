@@ -158,8 +158,8 @@ class App:
         print("Checking batch statuses...\n")
         batch_infos = self.evaluator.check_batch_statuses().copy()
         table_content = [
-            [f"{"TaskID":<30}", f"{"BatchType":<15}", f"{"BatchStatus":<15}", "Message"],
-            [f"{"─" * 29:<30}", f"{"─" * 14:<15}", f"{"─" * 14:<15}", f"{"─" * 10}"]
+            [f"{"TaskID":<30}", f"{"BatchType":<15}", f"{"BatchStatus":<15}", f"{"RemoteAPI":<10}", "Message"],
+            [f"{"─" * 29:<30}", f"{"─" * 14:<15}", f"{"─" * 14:<15}", f"{"─" * 10:<10}", f"{"─" * 10}"]
         ]
 
         for batch_info in batch_infos.values():
@@ -175,7 +175,7 @@ class App:
             else:
                 status = "\033[33m" + f"{status:<15}" + "\033[0m"
 
-            table_row = [f"{task_id:<30}", f"{batch_info.batch_type:<15}", status, ""]
+            table_row = [f"{task_id:<30}", f"{batch_info.batch_type:<15}", status, f"{batch_info.client:<15}", ""]
             if batch_info.progress_message is not None:
                 table_row[3] += batch_info.progress_message
             table_content.append(table_row)

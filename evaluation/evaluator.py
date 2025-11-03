@@ -5,7 +5,7 @@ from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 from .dataset_handler import DatasetHandler
-from .llm_client import LLMClient
+from .communication_handler import CommunicationHandler
 from .persona_registry import PersonaRegistry
 from .batch_request_handler import BatchRequestHandler
 from .utils import columns_full, load_dataclass_dict, save_dataclass_dict, load_task_config
@@ -27,7 +27,7 @@ class Evaluator:
     ):
         self.dataset_handler = DatasetHandler(include_datasets, exclude_datasets)
 
-        self.llm_client = LLMClient()
+        self.communication_handler = CommunicationHandler()
         self.persona_registry = PersonaRegistry()
 
         self.config_path = "config_task.json"
@@ -85,16 +85,18 @@ class Evaluator:
         self,
         task_info: TaskInfo,
         task_df: pd.DataFrame,
-        persona_templates: Dict[str, str]
+        persona_templates: Dict[str, str],
     ):
+        if columns_full(task_df, list(persona_templates)):
+            return task_df
         persona = self.persona_registry.get_base_persona_string()
 
         personas = {}
         for persona_name, prompt_template in persona_templates.items():
             client_kwargs = {
                 "task_type": task_info.field, "persona_string": persona}
-            persona = self.llm_client.get_api_response(
-                prompt_template, persona_name, **client_kwargs)
+            persona = self.communication_handler.get_api_response(
+                prompt_template, "openai", **client_kwargs)
 
             personas[persona_name] = persona
         task_df = task_df.assign(**personas)
@@ -105,10 +107,6 @@ class Evaluator:
         task_info: TaskInfo,
         task_df: pd.DataFrame
     ) -> pd.DataFrame:
-        persona_names = self.persona_registry.get_static_names()
-        if columns_full(task_df, persona_names):
-            return task_df
-        print("Generating static personas...")
         persona_templates = self.persona_registry.get_static_templates()
         return self._static_persona_helper(task_info, task_df, persona_templates)
 
@@ -117,10 +115,6 @@ class Evaluator:
         task_info: TaskInfo,
         task_df: pd.DataFrame,
     ) -> pd.DataFrame:
-        persona_names = self.persona_registry.get_teacher_static_names()
-        if columns_full(task_df, persona_names):
-            return task_df
-        print("Generating teacher personas...")
         persona_templates = self.persona_registry.get_teacher_static_templates()
         return self._static_persona_helper(task_info, task_df, persona_templates)
 
@@ -142,7 +136,7 @@ class Evaluator:
         if columns_full(task_df, self.persona_registry.get_dynamic_names()):
             return 0
         print("Generating dynamic personas...")
-        request_count = self.llm_client.send_persona_batch(
+        request_count = self.communication_handler.send_persona_batch(
             task_info, task_df, self.persona_registry.get_dynamic_configs())
         return request_count
 
@@ -201,7 +195,7 @@ class Evaluator:
         persona_configs = self.persona_registry.get_configs()
         task_df = self.dataset_handler.get_task_df_from_info(task_info)
 
-        request_count = self.llm_client.send_answer_batch(
+        request_count = self.communication_handler.send_answer_batch(
             task_info, task_df, dataset_config.question_type, persona_configs)
 
         task_info.increment_status()
@@ -224,8 +218,8 @@ class Evaluator:
         task_df = self.dataset_handler.get_task_df_from_info(task_info)
         persona_configs = self.persona_registry.get_configs()
 
-        request_count = self.llm_client.send_judgment_batch(
-            task_info, task_df, persona_configs)
+        request_count = self.communication_handler.send_judgment_batch(
+            task_info, task_df, persona_configs, "genai")
 
         task_info.increment_status()
         self._save()
@@ -237,7 +231,7 @@ class Evaluator:
         Returns:
             Dict[str, BatchInfo]: Dictionary with batch information of active batches.
         """
-        active_batches = self.llm_client.check_batch_statuses()
+        active_batches = self.communication_handler.check_batch_statuses()
         for bid, batch_info in active_batches.items():
             if batch_info.is_error() and bid in self.task_infos:
                 self.task_infos[bid].decrement_status()
@@ -245,7 +239,7 @@ class Evaluator:
 
     def fetch_batch_responses(self):
         """Fetches batch responses and saves them to disk."""
-        retrieved_batches = self.llm_client.download_batch_files(self.task_infos.keys())
+        retrieved_batches = self.communication_handler.download_batch_files(self.task_infos.keys())
 
         for batch_info in retrieved_batches:
             tid = batch_info.task_id

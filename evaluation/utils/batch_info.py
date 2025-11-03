@@ -1,27 +1,13 @@
-from typing import Optional
+from typing import Optional, Tuple
 from dataclasses import dataclass
-from pathlib import Path
 
-from openai.types import Batch
-
+from .batch_file import BatchFile
 from .enums import BatchType, BatchStatus
 from .constants import TEMP_PATH
 from .log_conf import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-
-@dataclass
-class BatchFile:
-    """Data class holding metadata linking remote file ids to local file paths.
-
-    Attributes:
-        remote_file_id (str): Remote output file identifier.
-        local_file_path (Path): Local file path, where the remote file will be stored.
-    """
-    remote_file_id: str
-    local_file_path: Path
 
 
 @dataclass
@@ -43,6 +29,8 @@ class BatchInfo:
     task_id: str
     batch_type: BatchType
     status: BatchStatus = BatchStatus.SENT
+    request_count: int = 0
+    client: str = "openai"
     progress_message: Optional[str] = None
     output_file: Optional[BatchFile] = None
     error_file: Optional[BatchFile] = None
@@ -212,19 +200,45 @@ class BatchInfo:
                 "No status transition defined for status %s. Will keep old status.",
                 new_status)
 
-    def update_progress_message(self, remote_batch: Batch):
-        """Updates the progress message, if the remote batch holds one.
+    def update_batch(
+        self,
+        batch_update_data: Tuple[str, int, int, str | None, str | None]
+    ):
+        """Updates the batch info
+
+        Args:
+            batch_update_data (Tuple[str, int, int, str  |  None, str  |  None]): Tuple consisting of new status,
+                number of completed and failed requests, output file id and error file id.
+        """
+        new_status, completed, failed, output_file_id, error_file_id = batch_update_data
+        self.update_status(new_status)
+        self.update_progress_message(completed, failed)
+
+        if output_file_id:
+            self.init_output_file(output_file_id)
+        if error_file_id:
+            self.init_error_file(error_file_id)
+
+    def finish_batch(self):
+        """Set the batch to the final status.
+
+        If there were errors during processing, the final status is BatchStatus.ERROR, else BatchStatus.RETRIEVED.
+        """
+        if self.has_error():
+            self.status = BatchStatus.ERROR
+        else:
+            self.status = BatchStatus.RETRIEVED
+
+    def update_progress_message(self, completed: int, failed: int):
+        """Updates the progress message.
 
         Args:
             remote_batch (Batch): Remote batch object.
         """
-        request_counts = getattr(remote_batch, "request_counts", None)
-        if not request_counts:
-            return
-
-        self.progress_message = (
-            f"Progress: {request_counts.completed} out of {request_counts.total} finished; "
-            f"{request_counts.failed} requests failed.")
+        if completed > 0 or failed > 0:
+            self.progress_message = (
+                f"Progress: {completed} out of {self.request_count} finished; "
+                f"{failed} requests failed.")
 
     @staticmethod
     def get_key_field() -> str:

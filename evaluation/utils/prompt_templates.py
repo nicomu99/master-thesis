@@ -217,7 +217,8 @@ TRANSLATION_TEMPLATE = (
 
 TRANSLATION_JUDGE_TEMPLATE = (
     "Please judge the following two translations of the following text: {reference}\n\n"
-    "Answer 1: {translation_1}\n\n"
-    "Answer 2: {translation_2}\n\n"
-    "Please provide the number identifier of the better translation at the end of your answer on a separate line."
+    "Translation 1: {translation_1}\n\n"
+    "AnswTranslationer 2: {translation_2}\n\n"
+    "Start your answer with \"The better translation is: \", followed by the number identifier of the better "
+    "translation and your reasoning. If both translations are equally good, you can disregard this format."
 )

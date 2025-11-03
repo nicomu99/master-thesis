@@ -1,3 +1,4 @@
+from .batch_file import BatchFile
 from .batch_info import BatchInfo
 from .constants import TEMP_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, GROUND_TRUTH_COLUMN
 from .dataframe_helpers import columns_full
@@ -34,6 +35,7 @@ from .prompt_templates import (
 from .task_info import TaskInfo
 
 __all__ = [
+    "BatchFile",
     "BatchInfo",
     "TEMP_PATH",
     "STATIC_ID_COLUMN",

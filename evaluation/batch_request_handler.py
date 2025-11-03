@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, List, Tuple, TextIO, cast
+from typing import Any, Dict, List, Tuple, cast, Callable
 
 import json
 import string
@@ -7,44 +7,19 @@ from collections import defaultdict
 
 import pandas as pd
 
-from .utils import TaskInfo, QuestionType
-from .utils import TEMP_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, GROUND_TRUTH_COLUMN
-from .utils import TRANSLATION_JUDGE_TEMPLATE
+from .clients import LLMClient
 from .persona_registry import PersonaConfig
+
+from .utils import TaskInfo, QuestionType, BatchFile
+from .utils import TEMP_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, GROUND_TRUTH_COLUMN, TRANSLATION_JUDGE_TEMPLATE
+from .utils import logging
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class BatchRequestHandler:
     """Helper class used to read and write json files with request and response data."""
-
-    @staticmethod
-    def _write_prompt_to_file(
-        f: TextIO,
-        custom_id: str,
-        prompt: str,
-        model: str,
-        instruction: Optional[str] = None
-    ):
-        """Function that writes a prompt request in JSON format to a file.
-
-        Args:
-            f (TextIO): File output buffer. The request will be written to this file.
-            custom_id (str): An identifier, which can be used to map client outputs to the input samples.
-            prompt (str): Request prompt.
-            model (str): Model identifier of the LLM API.
-            instruction (str | None): System prompt instruction. If this is None, the default system prompt
-                will be used. Defaults to None.
-        """
-        body = {"model": model, "input": prompt}
-        if instruction:
-            body["instructions"] = instruction
-
-        api_request_dict = {
-            "custom_id": custom_id,
-            "method": "POST",
-            "url": "/v1/responses",
-            "body": body}
-
-        f.write(json.dumps(api_request_dict) + "\n")
 
     @staticmethod
     def _create_question_prompt(
@@ -80,7 +55,7 @@ class BatchRequestHandler:
         task_config: TaskInfo,
         dataframe: pd.DataFrame,
         persona_configs: List[PersonaConfig],
-        model: str
+        llm_client: LLMClient
     ) -> Tuple[Path, int]:
         """Creates a request file for persona generation.
 
@@ -88,7 +63,7 @@ class BatchRequestHandler:
             task_config (TaskConfig): Task configuration attributes.
             dataframe (pd.DataFrame): Dataframe containing samples of the task.
             persona_configs (List[PersonaConfig]): List of persona configurations.
-            model (str): Model string identifier.
+            llm_client (LLMClient): LLM client instance.
 
         Returns:
             Tuple[Path, int]: A string identifier of the created task request file and number of requests created.
@@ -112,7 +87,8 @@ class BatchRequestHandler:
                         question=row_dict[QUESTION_COLUMN])
 
                     custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{persona_name}"
-                    BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model)
+                    llm_client.write_prompt(f, custom_id, prompt)
+                    # BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt)
                     request_count += 1
         return request_file, request_count
 
@@ -122,7 +98,7 @@ class BatchRequestHandler:
         dataframe: pd.DataFrame,
         question_type: QuestionType,
         persona_configs: List[PersonaConfig],
-        model: str
+        llm_client: LLMClient
     ) -> Tuple[Path, int]:
         """Creates a request file for task question answering.
 
@@ -131,7 +107,7 @@ class BatchRequestHandler:
             dataframe (pd.DataFrame): Dataframe containing samples of the task.
             question_type (str): The question type of this task.
             persona_configs (List[PersonaConfig]): List of persona configurations.
-            model (str): Model string identifier.
+            llm_client (LLMClient): LLM client instance.
 
         Returns:
             Tuple[Path, int]: A string identifier of the created task request file and number of requests created.
@@ -155,7 +131,8 @@ class BatchRequestHandler:
                         continue
 
                     custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{answer_column_df}"
-                    BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model, row_dict[persona_name])
+                    llm_client.write_prompt(f, custom_id, prompt, row_dict[persona_name])
+                    # BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model, row_dict[persona_name])
                     request_count += 1
         return request_file, request_count
 
@@ -164,7 +141,7 @@ class BatchRequestHandler:
         task_config: TaskInfo,
         dataframe: pd.DataFrame,
         persona_configs: List[PersonaConfig],
-        model: str
+        llm_client: LLMClient
     ) -> Tuple[Path, int]:
         """Creates a request file for judgment evaluation.
 
@@ -172,7 +149,7 @@ class BatchRequestHandler:
             task_config (TaskConfig): Task configuration.
             dataframe (pd.DataFrame): Dataframe containing samples of the task.
             persona_configs (List[PersonaConfig]): List of persona configurations.
-            model (str): Model string identifier.
+            llm_client (LLMClient): LLM client instance.
 
         Returns:
             Tuple[Path, int]: A string identifier of the created task request file and number of requests created.
@@ -188,7 +165,6 @@ class BatchRequestHandler:
         request_file = TEMP_PATH / f"{task_config.task_id}_judgment_request.jsonl"
         with request_file.open("w", encoding="utf-8") as f:
             for row_dict in dataframe.to_dict(orient="records"):
-
                 prompt_template = TRANSLATION_JUDGE_TEMPLATE
                 for persona_config in persona_configs:
                     answer_column = persona_config.answer_column
@@ -197,15 +173,42 @@ class BatchRequestHandler:
                     if judgment_column in row_dict and row_dict[judgment_column] is not None:
                         continue
 
+                    # Shuffle requests to limit bias towards one completion
+                    static_id = row_dict[STATIC_ID_COLUMN]
+
+                    sample_number = int(static_id.split("_")[-1])
+                    translations = [row_dict[answer_column], row_dict[GROUND_TRUTH_COLUMN]]
+                    if sample_number % 2 == 0:
+                        translations.reverse()
+
                     prompt = prompt_template.format(
                         reference=row_dict[QUESTION_COLUMN],
-                        translation_1=row_dict[answer_column],
-                        translation_2=row_dict[GROUND_TRUTH_COLUMN],
-                    )
-                    custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{judgment_column}"
-                    BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model)
+                        translation_1=translations[0],
+                        translation_2=translations[1])
+
+                    custom_id = f"{static_id}_{judgment_column}"
+                    llm_client.write_prompt(f, custom_id, prompt)
+                    # BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model)
                     request_count += 1
         return request_file, request_count
+
+    @staticmethod
+    def read_response_stream(batch_file: BatchFile, download_fn: Callable[[str], bytes]):
+        """Downloads an API response and saves it to a file.
+
+        Args:
+            batch_file (BatchFile): Batch file information.
+            download_fn (Callable[[str], bytes]): Callable that downloads the stream from the API.
+        """
+        local_file_path = batch_file.local_file_path
+        remote_file_id = batch_file.remote_file_id
+        if local_file_path.exists() and local_file_path.stat().st_size > 0:
+            log.debug("File already fetched.")
+            return
+
+        response_stream = download_fn(remote_file_id)
+        with local_file_path.open("wb") as f:
+            f.write(response_stream)
 
     @staticmethod
     def read_response_file(file_name: Path) -> pd.DataFrame:
