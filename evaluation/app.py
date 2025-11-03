@@ -30,9 +30,14 @@ class App:
             "s": ("Check batch statuses", self.check_batch_statuses),
             "f": ("Fetch batch responses", self.evaluator.fetch_batch_responses),
             "c": ("Check task statuses", self.check_task_statuses),
+            "r": ("Reset tasks", self.reset_tasks),
             "clear": ("Clears the CLI", self.clear_cli),
             "h": ("Show this help", self.show_help),
         }
+
+    def reset_tasks(self):
+        """Reset all tasks statuses to the default value."""
+        self.evaluator.reset_tasks()
 
     def main(self) -> None:
         """Main loop that listens for user input."""

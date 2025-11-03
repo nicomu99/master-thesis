@@ -268,7 +268,10 @@ class BatchRequestHandler:
         with file_name.open("r", encoding="utf-8") as f:
             for line in f:
                 response_line = json.loads(line)
-                response = response_line["response"]["body"]["error"]["message"]
-                error_messages.add(response)
+                try:
+                    response = response_line["response"]["body"]["error"]["message"]
+                    error_messages.add(response)
+                except KeyError as e:
+                    log.error("Error while reading file: %s", e, exc_info=True)
 
         return list(error_messages)

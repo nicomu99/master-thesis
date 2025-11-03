@@ -47,6 +47,10 @@ class TaskInfo:
         if self.category_name is None:
             self.category_name = self.field
 
+    def reset(self):
+        """Reset the task status to TaskStatus.PERSONAS_PENDING."""
+        self.status = TaskStatus.PERSONAS_PENDING
+
     def is_personas_pending(self) -> bool:
         """Returns true if the task status is TaskStatus.PERSONAS_PENDING.
 

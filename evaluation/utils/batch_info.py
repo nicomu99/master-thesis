@@ -239,6 +239,12 @@ class BatchInfo:
             self.progress_message = (
                 f"Progress: {completed} out of {self.request_count} finished; "
                 f"{failed} requests failed.")
+        elif self.request_count > 0:
+            self.progress_message = (
+                f"Processing {self.request_count} requests.")
+        else:
+            self.progress_message = (
+                "No progress information.")
 
     @staticmethod
     def get_key_field() -> str:

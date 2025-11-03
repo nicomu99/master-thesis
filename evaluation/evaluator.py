@@ -57,6 +57,11 @@ class Evaluator:
             self.task_info_file, self.task_infos,
             key_field=TaskInfo.get_key_field())
 
+    def reset_tasks(self):
+        """Reset all tasks statuses to the default value."""
+        for task_info in self.task_infos.values():
+            task_info.reset()
+
     def get_personas_pending_tasks(self) -> List[str]:
         """Returns a list with all tasks that have missing personas.
 
@@ -243,25 +248,29 @@ class Evaluator:
 
         for batch_info in retrieved_batches:
             tid = batch_info.task_id
+            task_info = self.task_infos[tid]
+            dataset_id = task_info.dataset_id
             if tid not in self.task_infos:
                 log.warning("Batch for inactive task %s found. Skipping.", tid)
                 continue
 
-            task_info = self.task_infos[tid]
-            dataset_id = task_info.dataset_id
+            try:
+                if batch_info.has_output():
+                    output_file = batch_info.get_output_file()
+                    response_df = BatchRequestHandler.read_response_file(output_file.local_file_path)
+                    self.dataset_handler.merge_and_write(dataset_id, response_df)
 
-            if batch_info.has_output():
-                output_file = batch_info.get_output_file()
-                response_df = BatchRequestHandler.read_response_file(output_file.local_file_path)
-                self.dataset_handler.merge_and_write(dataset_id, response_df)
-
-            if batch_info.has_error():
-                error_file = batch_info.get_error_file()
-                error_messages = BatchRequestHandler.read_error_file(error_file.local_file_path)
-                for message in error_messages:
-                    log.error("Task %s failed: %s", tid, message)
-
-            task_info.update_status(batch_info.is_retrieved())
+                if batch_info.has_error():
+                    error_file = batch_info.get_error_file()
+                    error_messages = BatchRequestHandler.read_error_file(error_file.local_file_path)
+                    for message in error_messages:
+                        log.error("Task %s failed: %s", tid, message)
+                task_info.update_status(batch_info.is_retrieved())
+            except KeyError as e:
+                log.error(
+                    "Error while reading file for task %s: %s",
+                    tid, e, exc_info=True
+                )
         self._save()
 
     def _task_iterator(
