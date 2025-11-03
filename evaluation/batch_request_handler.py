@@ -174,6 +174,7 @@ class BatchRequestHandler:
                         continue
 
                     # Shuffle requests to limit bias towards one completion
+                    # If the sample number is even, the ground truth comes first, else the LLM completion
                     static_id = row_dict[STATIC_ID_COLUMN]
 
                     sample_number = int(static_id.split("_")[-1])
