@@ -7,7 +7,6 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from .dataset_handler import DatasetHandler
 from .communication_handler import CommunicationHandler
 from .persona_registry import PersonaRegistry
-from .batch_request_handler import BatchRequestHandler
 from .utils import columns_full, load_dataclass_dict, save_dataclass_dict, load_task_config
 from .utils import TaskInfo, BatchInfo, TEMP_PATH
 
@@ -261,23 +260,13 @@ class Evaluator:
                 log.warning("Batch for inactive task %s found. Skipping.", tid)
                 continue
 
-            try:
-                if batch_info.has_output():
-                    output_file = batch_info.get_output_file()
-                    response_df = BatchRequestHandler.read_response_file(output_file.local_file_path)
-                    self.dataset_handler.merge_and_write(dataset_id, response_df)
+            response = self.communication_handler.read_batch_file(batch_info)
+            if isinstance(response, pd.DataFrame):
+                batch_info.finish_batch()
+                self.dataset_handler.merge_and_write(dataset_id, response)
 
-                if batch_info.has_error():
-                    error_file = batch_info.get_error_file()
-                    error_messages = BatchRequestHandler.read_error_file(error_file.local_file_path)
-                    for message in error_messages:
-                        log.error("Task %s failed: %s", tid, message)
+            if response is not False:
                 task_info.update_status(batch_info.is_retrieved())
-            except KeyError as e:
-                log.error(
-                    "Error while reading file for task %s: %s",
-                    tid, e, exc_info=True
-                )
         self._save()
 
     def _task_iterator(

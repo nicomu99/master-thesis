@@ -192,9 +192,8 @@ class CommunicationHandler:
                 log.warning("Skipping batch for inactive task %s", tid)
                 continue
 
-            client = batch_info.client
             try:
-                client = self._get_client(client)
+                client = self._get_client(batch_info.client)
                 if batch_info.has_output():
                     output_file = batch_info.get_output_file()
                     BatchRequestHandler.read_response_stream(
@@ -204,14 +203,38 @@ class CommunicationHandler:
                     error_file = batch_info.get_error_file()
                     BatchRequestHandler.read_response_stream(
                         error_file, client.fetch_response)
+                    error_messages = BatchRequestHandler.read_error_file(error_file.local_file_path)
+                    for message in error_messages:
+                        log.error("Task %s failed: %s", tid, message)
 
-                batch_info.finish_batch()
                 retrieved_batches.append(batch_info)
             except (ValueError, APIConnectionError) as e:
                 log.error("Error: %s", e, exc_info=True)
 
         self._save()
         return retrieved_batches
+
+    def read_batch_file(
+        self,
+        batch_info: BatchInfo
+    ) -> bool | pd.DataFrame:
+        """Reads the response object of a batch.
+
+        Args:
+            batch_info (BatchInfo): Batch information object.
+
+        Returns:
+            bool | pd.DataFrame: Returns false if the response could not be loaded, else a dataframe containing
+                the response contents.
+        """
+        try:
+            if batch_info.has_output():
+                client = self._get_client(batch_info.client)
+                output_file = batch_info.get_output_file()
+                return BatchRequestHandler.read_response_file(output_file.local_file_path, client.read_response_line)
+        except (KeyError, TypeError) as e:
+            log.error("Error: %s", e, exc_info=True)
+        return False
 
     def _send_batch(
         self,

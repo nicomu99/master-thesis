@@ -36,7 +36,7 @@ class GenAIClient(LLMClient):
         return response.text
 
     def write_prompt(self, file: TextIO, custom_id: str, prompt: str, instruction: Optional[str] = None) -> None:
-        request = dict()
+        request = {}
         request["contents"] = [{"parts": [{"text": prompt}]}]
         if instruction:
             request["system_instruction"] = instruction
@@ -47,6 +47,14 @@ class GenAIClient(LLMClient):
         }
 
         file.write(json.dumps(api_request_dict) + "\n")
+
+    def read_response_line(self, line: str) -> Tuple[str, str | None]:
+        response_line = json.loads(line)
+        response = response_line["response"]["candidates"][0]["content"]
+        completion = None
+        if "parts" in response:
+            completion = "".join(o["text"] for o in response["parts"])
+        return response_line["key"], completion
 
     def send_batch(self, batch_file: Path) -> str:
         batch_input_file = self.client.files.upload(

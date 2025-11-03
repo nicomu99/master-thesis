@@ -62,6 +62,22 @@ class OpenAIClient(LLMClient):
 
         return batch_job.id
 
+    def read_response_line(self, line: str) -> Tuple[str, str | None]:
+        response_line = json.loads(line)
+
+        response = response_line["response"]
+        if "body" in response:
+            response = response["body"]
+
+        completion = "".join(
+            c["text"]
+            for o in response["output"]
+            for c in o.get("content", [])
+            if c.get("type") == "output_text"
+        )
+
+        return response_line["custom_id"], completion
+
     def get_batch_progress(self, batch_id: str) -> Tuple[str, int, int, str | None, str | None]:
         remote_batch = self.client.batches.retrieve(batch_id)
         status = remote_batch.status

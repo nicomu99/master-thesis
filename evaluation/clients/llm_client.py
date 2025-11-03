@@ -29,7 +29,7 @@ class LLMClient(ABC):
 
     @abstractmethod
     def write_prompt(self, file: TextIO, custom_id: str, prompt: str, instruction: Optional[str] = None) -> None:
-        """Writes a prompt request in JSON format to a file.
+        """Writes a prompt request in JSONL format to a file.
 
         Args:
             file (TextIO): File output buffer. The request will be written to this file.
@@ -37,6 +37,20 @@ class LLMClient(ABC):
             prompt (str): Request prompt.
             instruction (str | None): System prompt instruction. If this is None, the default system prompt
                 will be used. Defaults to None.
+        """
+
+    @abstractmethod
+    def read_response_line(self, line: str) -> Tuple[str, str | None]:
+        """Reads the contents of a JSONL file.
+
+        Args:
+            line (str): JSONL line.
+
+        Returns:
+            Tuple[str, str]: A tuple containing the sample ID and completion.
+
+        Raises:
+            KeyError: If the response line does not match the correct format.
         """
 
     @abstractmethod

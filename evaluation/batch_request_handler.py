@@ -212,7 +212,7 @@ class BatchRequestHandler:
             f.write(response_stream)
 
     @staticmethod
-    def read_response_file(file_name: Path) -> pd.DataFrame:
+    def read_response_file(file_name: Path, read_line_fn: Callable[[str], Tuple[str, str]]) -> pd.DataFrame:
         """Helper function that reads the contents of a batch response json file.
 
         The contents are returned as a pandas dataframe.
@@ -223,27 +223,17 @@ class BatchRequestHandler:
         Returns:
             pd.DataFrame: Dataframe containing one row per sample and one column for each persona type.
         """
+        log.info("Reading response file %s", file_name)
         response_data = defaultdict(lambda: defaultdict(str))
 
         with file_name.open("r", encoding="utf-8") as f:
             for line in f:
-                response_line = json.loads(line)
+                key, completion = read_line_fn(line)
 
                 # The custom id is constructed from the manually defined static_id and the persona type
-                response_id = response_line["custom_id"].split("_")
+                response_id = key.split("_")
                 sample_id = "_".join(response_id[:2])
                 column_id = "_".join(response_id[2:])
-
-                response = response_line["response"]
-                if "body" in response:
-                    response = response["body"]
-
-                completion = "".join(
-                    c["text"]
-                    for o in response["output"]
-                    for c in o.get("content", [])
-                    if c.get("type") == "output_text"
-                )
 
                 response_data[sample_id][column_id] = completion
 
