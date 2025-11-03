@@ -36,7 +36,7 @@ class GenAIClient(LLMClient):
         return response.text
 
     def write_prompt(self, file: TextIO, custom_id: str, prompt: str, instruction: Optional[str] = None) -> None:
-        request = {}
+        request = dict()
         request["contents"] = [{"parts": [{"text": prompt}]}]
         if instruction:
             request["system_instruction"] = instruction
@@ -57,13 +57,13 @@ class GenAIClient(LLMClient):
             )
         )
         if batch_input_file.name is None:
-            raise ConnectionError(f"Unexpected error occured during upload of {str(batch_file)}")
+            raise ConnectionError(f"Unexpected error occurred during upload of {str(batch_file)}")
 
         batch_job = self.client.batches.create(
             model=self.model,
             src=batch_input_file.name)
         if batch_job.name is None:
-            raise ConnectionError(f"Unexpected error occured during upload of {str(batch_file)}")
+            raise ConnectionError(f"Unexpected error occurred during upload of {str(batch_file)}")
         return batch_job.name
 
     @staticmethod
@@ -81,7 +81,7 @@ class GenAIClient(LLMClient):
     def get_batch_progress(self, batch_id: str) -> Tuple[str, int, int, str | None, str | None]:
         batch_job = self.client.batches.get(name=batch_id)
         if batch_job is None or batch_job.state is None:
-            raise ConnectionError(f"Unexpected error occured during upload of {batch_id}")
+            raise ConnectionError(f"Unexpected error occurred during upload of {batch_id}")
 
         new_status = self._status_transition(batch_job.state.name)
         completed, failed = 0, 0

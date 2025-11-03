@@ -32,7 +32,7 @@ class LLMClient(ABC):
         """Writes a prompt request in JSON format to a file.
 
         Args:
-            f (TextIO): File output buffer. The request will be written to this file.
+            file (TextIO): File output buffer. The request will be written to this file.
             custom_id (str): An identifier, which can be used to map client outputs to the input samples.
             prompt (str): Request prompt.
             instruction (str | None): System prompt instruction. If this is None, the default system prompt
@@ -62,7 +62,7 @@ class LLMClient(ABC):
             int: Completed requests.
             int: Failed requests.
             str | None: Output file id.
-            str | None: Errro file id.
+            str | None: Error file id.
         """
 
     @abstractmethod

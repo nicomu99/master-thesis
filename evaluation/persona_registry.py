@@ -29,7 +29,7 @@ class PersonaConfig:
         template (str): The template used to generate personas of this class. Defaults to None.
         answer_column (str): A string identifier of the column in dataframes where the answer of this persona will be
             saved into. Is simply the name of the persona with "persona" changed to "answer".
-        judgment_column (str): A string identifier of the dataframe column name, where LLM-as-a-judge judgements of
+        judgment_column (str): A string identifier of the dataframe column name, where LLM-as-a-judge judgments of
             the associated persona are stored. Defaults to persona name with "persona" changed to "judgment".
     """
     name: str

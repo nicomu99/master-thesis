@@ -233,7 +233,8 @@ class BatchInfo:
         """Updates the progress message.
 
         Args:
-            remote_batch (Batch): Remote batch object.
+            completed (int): Number of successful completions.
+            failed (int): Number of failed completions.
         """
         if completed > 0 or failed > 0:
             self.progress_message = (
