@@ -165,13 +165,16 @@ class Evaluator:
         task_df = self._generate_teacher_personas(task_info, task_df)
         self.dataset_handler.merge_and_write(task_info.dataset_id, task_df)
 
-        request_count = self._generate_dynamic_personas(task_info, task_df)
-        if request_count == 0:
+        result = self._generate_dynamic_personas(task_info, task_df)
+        if result is False:
+            return 0
+
+        if result == 0:
             task_info.skip_personas()
         else:
             task_info.increment_status()
         self._save()
-        return request_count
+        return result
 
     def generate_all_static_personas(self) -> None:
         """Creates static personas on task level for all tasks."""
@@ -200,12 +203,14 @@ class Evaluator:
         persona_configs = self.persona_registry.get_configs()
         task_df = self.dataset_handler.get_task_df_from_info(task_info)
 
-        request_count = self.communication_handler.send_answer_batch(
+        result = self.communication_handler.send_answer_batch(
             task_info, task_df, dataset_config.question_type, persona_configs)
+        if result is False:
+            return 0
 
         task_info.increment_status()
         self._save()
-        return request_count
+        return result
 
     def send_judgment_requests(
         self,
@@ -223,12 +228,14 @@ class Evaluator:
         task_df = self.dataset_handler.get_task_df_from_info(task_info)
         persona_configs = self.persona_registry.get_configs()
 
-        request_count = self.communication_handler.send_judgment_batch(
+        result = self.communication_handler.send_judgment_batch(
             task_info, task_df, persona_configs, "genai")
+        if result is False:
+            return 0
 
         task_info.increment_status()
         self._save()
-        return request_count
+        return result
 
     def check_batch_statuses(self) -> Dict[str, BatchInfo]:
         """Prints the batch statuses.

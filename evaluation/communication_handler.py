@@ -71,7 +71,7 @@ class CommunicationHandler:
         task_df: pd.DataFrame,
         persona_configs: List[PersonaConfig],
         llm_name: Literal["openai", "genai"] = "openai"
-    ) -> int:
+    ) -> int | bool:
         """Sends a persona batch request to the LLM API.
 
         Args:
@@ -98,7 +98,7 @@ class CommunicationHandler:
         question_type: QuestionType,
         persona_configs: List[PersonaConfig],
         llm_name: Literal["openai", "genai"] = "openai"
-    ) -> int:
+    ) -> int | bool:
         """Sends a task question answering request to the LLM API.
 
         Args:
@@ -127,7 +127,7 @@ class CommunicationHandler:
         task_df: pd.DataFrame,
         persona_configs: List[PersonaConfig],
         llm_name: Literal["openai", "genai"] = "openai"
-    ) -> int:
+    ) -> int | bool:
         """Sends a LLM-as-a-judge request to the LLM API.
 
         Args:
@@ -221,14 +221,14 @@ class CommunicationHandler:
         create_fn: Callable[..., Tuple[Path, int]],
         *create_args,
         llm_name: Literal["openai", "genai"] = "openai",
-    ) -> int:
+    ) -> int | bool:
         """Generic helper to send any type of batch to the LLM API."""
         try:
             client = self._get_client(llm_name)
             file_name, request_count = create_fn(task_info, task_df, *create_args, client)
 
             if request_count < 1:
-                raise ValueError(f"No requests created for task {task_info.task_id}")
+                return 0
 
             batch_id = client.send_batch(file_name)
             batch_info = BatchInfo(
@@ -236,9 +236,9 @@ class CommunicationHandler:
             self.batches_info_store[batch_info.batch_id] = batch_info
             self._save()
             return batch_info.request_count
-        except (ValueError, OSError, ConnectionError) as e:
+        except (ValueError, OSError, ConnectionError, KeyError) as e:
             log.error(
                 "Failed to create and send %s batch for task %s: %s",
                 batch_type.name.lower(), task_info.task_id, e, exc_info=True,
             )
-        return 0
+        return False
