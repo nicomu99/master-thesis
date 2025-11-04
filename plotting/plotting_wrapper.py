@@ -37,7 +37,9 @@ class PlottingWrapper:
     ):
         bars = []
         for column, value in plot_dict.items():
-            label = " ".join(column.replace("answer_option", "persona").split("_"))
+            label = " ".join(column.replace("_answer_option", "").split("_"))
+            if label == "no":
+                label = "empty"
             plot_bar = ax.bar(column, value, label=label, color=self.color_map[column])
             bars.append([plot_bar, value])
 
