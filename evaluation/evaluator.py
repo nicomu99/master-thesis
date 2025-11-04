@@ -223,9 +223,10 @@ class Evaluator:
         task_info = self.task_infos[task_id]
         task_df = self.dataset_handler.get_task_df_from_info(task_info)
         persona_configs = self.persona_registry.get_configs()
+        reference_config = self.persona_registry.get_reference_config()
 
         result = self.communication_handler.send_judgment_batch(
-            task_info, task_df, persona_configs, "genai")
+            task_info, task_df, persona_configs, reference_config, "genai")
         if result is False:
             return 0
 

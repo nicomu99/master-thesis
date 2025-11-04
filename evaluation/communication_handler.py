@@ -127,6 +127,7 @@ class CommunicationHandler:
         task_info: TaskInfo,
         task_df: pd.DataFrame,
         persona_configs: list[PersonaConfig],
+        reference_config: PersonaConfig,
         llm_name: Literal["openai", "genai"] = "openai"
     ) -> int | bool:
         """Sends a LLM-as-a-judge request to the LLM API.
@@ -135,6 +136,7 @@ class CommunicationHandler:
             task_info (TaskConfig): Task metadata.
             task_df (pd.DataFrame): Dataframe containing samples associated with this task.
             persona_configs (list[PersonaConfig]): Persona configuration list.
+            reference_cfg (PersonaConfig): The persona type used as a baseline for comparison.
             llm_name (Literal["openai", "genai"]): String identifier of the LLM client. Defaults to "openai".
 
         Returns:
@@ -146,6 +148,7 @@ class CommunicationHandler:
             BatchType.JUDGMENT,
             BatchRequestHandler.create_judgment_batch_request_file,
             persona_configs,
+            reference_config,
             llm_name=llm_name
         )
 
