@@ -276,11 +276,30 @@ class Evaluator:
                 task_iterator.set_description(f"{desc} {task_id}")
                 yield task_id, task_info
 
+    def _get_dataset_tasks(self, dataset_id: str) -> list[TaskInfo]:
+        return [t for t in self.task_infos.values() if t.dataset_id == dataset_id]
+
     def get_data(
         self,
         dataset_id: str
     ) -> tuple[list[str], pd.DataFrame]:
-        dataset_tasks = [tinfo for tinfo in self.task_infos.values() if tinfo.dataset_id == dataset_id]
+        """Returns all data instances of active tasks for a given dataset.
+
+        Args:
+            dataset_id (str): Dataset identifier.
+
+        Returns:
+            tuple[list[str], pd.DataFrame]: _description_
+        """
+        dataset_tasks = self._get_dataset_tasks(dataset_id)
         task_ids = [t.task_id for t in dataset_tasks]
         task_names = [t.category_name for t in dataset_tasks if t.category_name is not None]
         return task_ids, self.dataset_handler.get_data(dataset_id, task_names)
+
+    def get_persona_registry(self) -> PersonaRegistry:
+        """Returns the persona registry.
+
+        Returns:
+            PersonaRegistry: The registry containing all available personas.
+        """
+        return self.persona_registry
