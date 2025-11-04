@@ -1,5 +1,4 @@
-from typing import Any, TextIO, Optional, Tuple
-
+import io
 import json
 from pathlib import Path
 
@@ -25,7 +24,7 @@ class OpenAIClient(LLMClient):
         self.model = "gpt-5-nano"
         self.client = OpenAI()
 
-    def get_api_response(self, template: str, **kwargs: Any) -> str:
+    def get_api_response(self, template: str, **kwargs) -> str:
         prompt = template.format(**kwargs)
         response = self.client.responses.create(
             model=self.model, input=prompt)
@@ -33,10 +32,10 @@ class OpenAIClient(LLMClient):
 
     def write_prompt(
         self,
-        file: TextIO,
+        file: io.TextIOBase,
         custom_id: str,
         prompt: str,
-        instruction: Optional[str] = None
+        instruction: str | None = None
     ):
         body = {"model": self.model, "input": prompt}
         if instruction:
@@ -62,7 +61,7 @@ class OpenAIClient(LLMClient):
 
         return batch_job.id
 
-    def read_response_line(self, line: str) -> Tuple[str, str]:
+    def read_response_line(self, line: str) -> tuple[str, str]:
         response_line = json.loads(line)
 
         response = response_line["response"]
@@ -78,7 +77,7 @@ class OpenAIClient(LLMClient):
 
         return response_line["custom_id"], completion
 
-    def get_batch_progress(self, batch_id: str) -> Tuple[str, int, int, str | None, str | None]:
+    def get_batch_progress(self, batch_id: str) -> tuple[str, int, int, str | None, str | None]:
         remote_batch = self.client.batches.retrieve(batch_id)
         status = remote_batch.status
         output_file_id = remote_batch.output_file_id

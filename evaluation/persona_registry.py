@@ -1,5 +1,3 @@
-from typing import List, Dict
-
 from dataclasses import dataclass, field
 
 from .utils import PersonaCategory
@@ -79,7 +77,7 @@ class PersonaRegistry:
     """A registry containing persona configurations.
 
     Attributes:
-        persona_configs (List[PersonaConfig]): A list containing persona configurations and templates.
+        persona_configs (list[PersonaConfig]): A list containing persona configurations and templates.
     """
     def __init__(self):
         self.base_persona_string = BASE_PERSONA
@@ -106,114 +104,114 @@ class PersonaRegistry:
         """
         return self.base_persona_string
 
-    def get_names(self) -> List[str]:
+    def get_names(self) -> list[str]:
         """Returns all persona names.
 
         Returns:
-            List[str]: List with all persona names.
+            list[str]: list with all persona names.
         """
         return [p.name for p in self.persona_configs]
 
-    def get_empty_names(self) -> List[str]:
+    def get_empty_names(self) -> list[str]:
         """Returns names of empty persona types.
 
         Returns:
-            List[str]: A list containing persona names
+            list[str]: A list containing persona names
         """
         return [p.name for p in self.persona_configs if p.is_empty()]
 
-    def get_static_names(self) -> List[str]:
+    def get_static_names(self) -> list[str]:
         """Returns static and base persona names.
 
         Returns:
-            List[str]: A list containing all static persona names.
+            list[str]: A list containing all static persona names.
         """
         return [p.name for p in self.persona_configs if p.is_static()]
 
-    def get_dynamic_names(self) -> List[str]:
+    def get_dynamic_names(self) -> list[str]:
         """Returns dynamic persona names.
 
         Returns:
-            List[str]: List containing all dynamic persona names.
+            list[str]: list containing all dynamic persona names.
         """
         return [p.name for p in self.persona_configs if p.is_dynamic()]
 
-    def get_teacher_static_names(self) -> List[str]:
+    def get_teacher_static_names(self) -> list[str]:
         """Returns static teacher persona names.
 
         Returns:
-            List[str]: A list containing all static teacher persona configs.
+            list[str]: A list containing all static teacher persona configs.
         """
         return [p.name for p in self.persona_configs if p.is_static_teacher()]
 
-    def get_teacher_statics(self) -> List[PersonaConfig]:
+    def get_teacher_statics(self) -> list[PersonaConfig]:
         """Returns static teacher persona names.
 
         Returns:
-            List[PersonaConfig]: A list containing all static teacher persona configs.
+            list[PersonaConfig]: A list containing all static teacher persona configs.
         """
         return [p for p in self.persona_configs if p.is_static_teacher()]
 
-    def get_empty_templates(self) -> Dict[str, str]:
+    def get_empty_templates(self) -> dict[str, str]:
         """Returns the empty persona templates.
 
         Returns:
-            Dict[str, str]: A dictionary with persona names as items and templates as values.
+            dict[str, str]: A dictionary with persona names as items and templates as values.
         """
         return {p.name: p.template for p in self.persona_configs if p.is_empty()}
 
-    def get_static_templates(self) -> Dict[str, str]:
+    def get_static_templates(self) -> dict[str, str]:
         """Returns the static persona templates.
 
         Returns:
-            Dict[str, str]: A dictionary with persona names as items and templates as values.
+            dict[str, str]: A dictionary with persona names as items and templates as values.
         """
         return {p.name: p.template for p in self.persona_configs if p.is_static()}
 
-    def get_dynamic_templates(self) -> Dict[str, str]:
+    def get_dynamic_templates(self) -> dict[str, str]:
         """Returns the dynamic persona templates.
 
         Returns:
-            Dict[str, str]: A dictionary with persona names as items and templates as values.
+            dict[str, str]: A dictionary with persona names as items and templates as values.
         """
         return {p.name: p.template for p in self.persona_configs if p.is_dynamic()}
 
-    def get_teacher_static_templates(self) -> Dict[str, str]:
+    def get_teacher_static_templates(self) -> dict[str, str]:
         """Returns the static teacher persona templates.
 
         Returns:
-            Dict[str, str]: A dictionary with persona names as items and templates as values.
+            dict[str, str]: A dictionary with persona names as items and templates as values.
         """
         return {p.name: p.template for p in self.persona_configs if p.is_static_teacher()}
 
-    def get_dynamic_configs(self) -> List[PersonaConfig]:
+    def get_dynamic_configs(self) -> list[PersonaConfig]:
         """Returns the dynamic persona configs.
 
         Returns:
-            List[PersonaConfig]: A list with persona configs.
+            list[PersonaConfig]: A list with persona configs.
         """
         return [p for p in self.persona_configs if p.is_dynamic()]
 
-    def get_configs(self) -> List[PersonaConfig]:
+    def get_configs(self) -> list[PersonaConfig]:
         """Returns all persona configs.
 
         Returns:
-            List[PersonaConfig]: A list with persona configs.
+            list[PersonaConfig]: A list with persona configs.
         """
         return self.persona_configs
 
-    def get_config_dict(self) -> Dict[str, PersonaConfig]:
+    def get_config_dict(self) -> dict[str, PersonaConfig]:
         """Returns a dictionary with persona configs as items and persona identifiers as keys.
 
         Returns:
-            Dict[str, PersonaConfig]: Dictionary with persona configs.
+            dict[str, PersonaConfig]: Dictionary with persona configs.
         """
         return {p.name: p for p in self.persona_configs}
 
-    def get_answer_columns(self) -> List[str]:
+    def get_answer_columns(self) -> list[str]:
         """Returns all answer columns.
 
         Returns:
-            List[str]: List with answer columns.
+            list[str]: list with answer columns.
         """
         return [p.answer_column for p in self.persona_configs]

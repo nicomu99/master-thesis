@@ -1,4 +1,3 @@
-from typing import Optional, Tuple
 from dataclasses import dataclass
 
 from .batch_file import BatchFile
@@ -19,9 +18,9 @@ class BatchInfo:
         task_id (str): Identifier of the associated task.
         batch_type (BatchType): Type of batch.
         status (BatchStatus): Possibly outdated process status of the batch.
-        progress_message (Optional[str]): Remote status message.
-        output_file (Optional[BatchFile]): Output metadata of the generated responses. Defaults to None.
-        output_file (Optional[BatchFile]): Metadata for possible errors during processing of the batch.
+        progress_message (str | None): Remote status message.
+        output_file (BatchFile | None): Output metadata of the generated responses. Defaults to None.
+        output_file (BatchFile | None): Metadata for possible errors during processing of the batch.
             Defaults to None.
     """
 
@@ -31,9 +30,9 @@ class BatchInfo:
     status: BatchStatus = BatchStatus.SENT
     request_count: int = 0
     client: str = "openai"
-    progress_message: Optional[str] = None
-    output_file: Optional[BatchFile] = None
-    error_file: Optional[BatchFile] = None
+    progress_message: str | None = None
+    output_file: BatchFile | None = None
+    error_file: BatchFile | None = None
 
     _STR_TRANSITIONS = {
         "validating": BatchStatus.VALIDATING,
@@ -203,12 +202,12 @@ class BatchInfo:
 
     def update_batch(
         self,
-        batch_update_data: Tuple[str, int, int, str | None, str | None]
+        batch_update_data: tuple[str, int, int, str | None, str | None]
     ):
         """Updates the batch info
 
         Args:
-            batch_update_data (Tuple[str, int, int, str  |  None, str  |  None]): Tuple consisting of new status,
+            batch_update_data (tuple[str, int, int, str  |  None, str  |  None]): Tuple consisting of new status,
                 number of completed and failed requests, output file id and error file id.
         """
         new_status, completed, failed, output_file_id, error_file_id = batch_update_data

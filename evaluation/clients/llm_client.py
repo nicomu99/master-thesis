@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TextIO, Optional, Any, Tuple
+import io
 
 from pathlib import Path
 
@@ -13,14 +13,14 @@ class LLMClient(ABC):
     """
 
     @abstractmethod
-    def get_api_response(self, template: str, **kwargs: Any) -> str:
+    def get_api_response(self, template: str, **kwargs) -> str:
         """Return a single, synchronous output from an LLM API.
 
         The function fills the template with the given keyword arguments and sends the prompt to the
         LLM API.
 
         Args:
-            template: A string template with placeholders.
+            template (str): A string template with placeholders.
             **kwargs: Keyword arguments to be inserted into ``template``. Must match the placeholders.
 
         Returns:
@@ -28,11 +28,11 @@ class LLMClient(ABC):
         """
 
     @abstractmethod
-    def write_prompt(self, file: TextIO, custom_id: str, prompt: str, instruction: Optional[str] = None) -> None:
+    def write_prompt(self, file: io.TextIOBase, custom_id: str, prompt: str, instruction: str | None = None) -> None:
         """Writes a prompt request in JSONL format to a file.
 
         Args:
-            file (TextIO): File output buffer. The request will be written to this file.
+            file (io.TextIOBase): File output buffer. The request will be written to this file.
             custom_id (str): An identifier, which can be used to map client outputs to the input samples.
             prompt (str): Request prompt.
             instruction (str | None): System prompt instruction. If this is None, the default system prompt
@@ -40,14 +40,14 @@ class LLMClient(ABC):
         """
 
     @abstractmethod
-    def read_response_line(self, line: str) -> Tuple[str, str]:
+    def read_response_line(self, line: str) -> tuple[str, str]:
         """Reads the contents of a JSONL file.
 
         Args:
             line (str): JSONL line.
 
         Returns:
-            Tuple[str, str]: A tuple containing the sample ID and completion.
+            tuple[str, str]: A tuple containing the sample ID and completion.
 
         Raises:
             KeyError: If the response line does not match the correct format.
@@ -65,7 +65,7 @@ class LLMClient(ABC):
         """
 
     @abstractmethod
-    def get_batch_progress(self, batch_id: str) -> Tuple[str, int, int, str | None, str | None]:
+    def get_batch_progress(self, batch_id: str) -> tuple[str, int, int, str | None, str | None]:
         """Sends a synchronous request to the LLM API to retrieve the current progress of the batch.
 
         Args:

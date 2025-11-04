@@ -1,9 +1,10 @@
-from typing import Any, Dict, List, Tuple, cast, Callable
+from typing import cast
+from collections import defaultdict
+from collections.abc import Callable
 
 import json
 import string
 from pathlib import Path
-from collections import defaultdict
 
 import pandas as pd
 
@@ -23,7 +24,7 @@ class BatchRequestHandler:
 
     @staticmethod
     def _create_question_prompt(
-        task_data: Dict[str, Any],
+        task_data: dict[str, str],
         question_type: QuestionType,
     ) -> str:
         """Returns a question prompt template with filled out placeholders.
@@ -31,7 +32,7 @@ class BatchRequestHandler:
         For a given question type, fetches the correct prompt template and fills all placeholders.
 
         Args:
-            task_data (Dict[str, str]): A dictionary containing the relevant information to fill in placeholders.
+            task_data (dict[str, str]): A dictionary containing the relevant information to fill in placeholders.
             question_type (QuestionType): String identifier of the correct question template. Must be "open_question",
                 "mc_question" or "summarization".
 
@@ -54,19 +55,19 @@ class BatchRequestHandler:
     def create_persona_batch_request_file(
         task_config: TaskInfo,
         dataframe: pd.DataFrame,
-        persona_configs: List[PersonaConfig],
+        persona_configs: list[PersonaConfig],
         llm_client: LLMClient
-    ) -> Tuple[Path, int]:
+    ) -> tuple[Path, int]:
         """Creates a request file for persona generation.
 
         Args:
             task_config (TaskConfig): Task configuration attributes.
             dataframe (pd.DataFrame): Dataframe containing samples of the task.
-            persona_configs (List[PersonaConfig]): List of persona configurations.
+            persona_configs (list[PersonaConfig]): List of persona configurations.
             llm_client (LLMClient): LLM client instance.
 
         Returns:
-            Tuple[Path, int]: A string identifier of the created task request file and number of requests created.
+            tuple[Path, int]: A string identifier of the created task request file and number of requests created.
 
         Raises:
             OSError: If the request file cannot be written to disk.
@@ -97,20 +98,20 @@ class BatchRequestHandler:
         task_config: TaskInfo,
         dataframe: pd.DataFrame,
         question_type: QuestionType,
-        persona_configs: List[PersonaConfig],
+        persona_configs: list[PersonaConfig],
         llm_client: LLMClient
-    ) -> Tuple[Path, int]:
+    ) -> tuple[Path, int]:
         """Creates a request file for task question answering.
 
         Args:
             task_config (TaskConfig): Task configuration attributes.
             dataframe (pd.DataFrame): Dataframe containing samples of the task.
             question_type (str): The question type of this task.
-            persona_configs (List[PersonaConfig]): List of persona configurations.
+            persona_configs (list[PersonaConfig]): List of persona configurations.
             llm_client (LLMClient): LLM client instance.
 
         Returns:
-            Tuple[Path, int]: A string identifier of the created task request file and number of requests created.
+            tuple[Path, int]: A string identifier of the created task request file and number of requests created.
 
         Raises:
             OSError: If the request file cannot be written to disk.
@@ -119,7 +120,7 @@ class BatchRequestHandler:
         request_file = TEMP_PATH / f"{task_config.task_id}_request.jsonl"
         with request_file.open("w", encoding="utf-8") as f:
             for row_dict in dataframe.to_dict(orient="records"):
-                row_dict = cast(Dict[str, Any], row_dict)
+                row_dict = cast(dict[str, str], row_dict)
                 prompt = BatchRequestHandler._create_question_prompt(
                     row_dict, question_type)
 
@@ -140,19 +141,19 @@ class BatchRequestHandler:
     def create_judgment_batch_request_file(
         task_config: TaskInfo,
         dataframe: pd.DataFrame,
-        persona_configs: List[PersonaConfig],
+        persona_configs: list[PersonaConfig],
         llm_client: LLMClient
-    ) -> Tuple[Path, int]:
+    ) -> tuple[Path, int]:
         """Creates a request file for judgment evaluation.
 
         Args:
             task_config (TaskConfig): Task configuration.
             dataframe (pd.DataFrame): Dataframe containing samples of the task.
-            persona_configs (List[PersonaConfig]): List of persona configurations.
+            persona_configs (list[PersonaConfig]): List of persona configurations.
             llm_client (LLMClient): LLM client instance.
 
         Returns:
-            Tuple[Path, int]: A string identifier of the created task request file and number of requests created.
+            tuple[Path, int]: A string identifier of the created task request file and number of requests created.
 
         Raises:
             ValueError: If the dataframe is missing required columns or contains invalid data.
@@ -212,13 +213,14 @@ class BatchRequestHandler:
             f.write(response_stream)
 
     @staticmethod
-    def read_response_file(file_name: Path, read_line_fn: Callable[[str], Tuple[str, str]]) -> pd.DataFrame:
+    def read_response_file(file_name: Path, read_line_fn: Callable[[str], tuple[str, str]]) -> pd.DataFrame:
         """Helper function that reads the contents of a batch response json file.
 
         The contents are returned as a pandas dataframe.
 
         Args:
             file_name (Path): Path to the json file to read.
+            read_line_fn (Callable[[str], tuple[str, str]]): Callable that reads a line of JSONL.
 
         Returns:
             pd.DataFrame: Dataframe containing one row per sample and one column for each persona type.
@@ -247,14 +249,14 @@ class BatchRequestHandler:
         return pd.DataFrame(structured_response)
 
     @staticmethod
-    def read_error_file(file_name: Path) -> List[str]:
+    def read_error_file(file_name: Path) -> list[str]:
         """Reads the contents of an error file and returns a list with each unique error message.
 
         Args:
             file_name (Path): File path to the error file.
 
         Returns:
-            List[str]: A list of error messages
+            list[str]: A list of error messages
         """
 
         error_messages = set()

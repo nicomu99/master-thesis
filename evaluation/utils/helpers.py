@@ -1,4 +1,4 @@
-from typing import Dict, Type, TypeVar, Any, get_origin
+from typing import TypeVar, Any, get_origin
 
 import json
 from enum import Enum
@@ -10,14 +10,14 @@ from .task_info import TaskInfo
 T = TypeVar("T")
 
 
-def encode_dataclass(obj: object):
+def encode_dataclass(obj: Any):
     """Converts enum objects to their values.
 
     This is a helper class for serializing enum members of dataclasses. It simply converts each enum member field to
     its string value.
 
     Args:
-        obj (object): The object which should be converted.
+        obj (Any): The object which should be converted.
 
     Raises:
         TypeError: If obj is not an enum, an error is thrown.
@@ -63,18 +63,18 @@ def decode_dataclass(data: dict, cls: Any) -> Any:
 
 def load_dataclass_dict(
     file_path: str | Path,
-    cls: Type[T],
+    cls: type[T],
     key_field: str
-) -> Dict[str, T]:
+) -> dict[str, Any]:
     """Loads a json file with dataclass objects into a dictionary.
 
     Args:
         file_path (str | Path): The path to the file to be loaded.
-        cls (Type[T]): The data class template to use.
+        cls (type[T]): The data class template to use.
         key_field (str): The identifier field of the dataclass object.
 
     Returns:
-        Dict[str, T]: A dictionary with dataclass identifiers as keys and the dataclass object as values.
+        dict[str, T]: A dictionary with dataclass identifiers as keys and the dataclass object as values.
     """
     file_path = Path(file_path)
     if not file_path.exists():
@@ -86,7 +86,7 @@ def load_dataclass_dict(
     return {k: decode_dataclass({key_field: k, **v}, cls) for k, v in raw_data.items()}
 
 
-def load_task_config(path: str | Path) -> Dict[str, TaskInfo]:
+def load_task_config(path: str | Path) -> dict[str, TaskInfo]:
     """Loads and decodes all task configurations from a JSON file.
 
     The JSON file is expected to contain a nested mapping of dataset IDs to
@@ -97,7 +97,7 @@ def load_task_config(path: str | Path) -> Dict[str, TaskInfo]:
         path (str | Path): Path to the JSON configuration file.
 
     Returns:
-        Dict[str, TaskInfo]: A mapping from task IDs to their corresponding
+        dict[str, TaskInfo]: A mapping from task IDs to their corresponding
         ``TaskInfo`` instances, each annotated with its ``dataset_id`` and
         ``task_id``.
     """
@@ -105,7 +105,7 @@ def load_task_config(path: str | Path) -> Dict[str, TaskInfo]:
     with path.open("r", encoding="utf-8") as f:
         data = json.load(f)
 
-    task_infos: Dict[str, TaskInfo] = {}
+    task_infos: dict[str, TaskInfo] = {}
 
     for dataset_id, tasks in data.items():
         for task_id, cfg in tasks.items():

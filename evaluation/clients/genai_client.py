@@ -1,5 +1,4 @@
-from typing import Optional, TextIO, Any, Tuple
-
+import io
 import json
 from pathlib import Path
 
@@ -27,7 +26,7 @@ class GenAIClient(LLMClient):
         self.model = "gemini-2.5-flash"
         self.client = genai.Client()
 
-    def get_api_response(self, template: str, **kwargs: Any) -> str:
+    def get_api_response(self, template: str, **kwargs) -> str:
         prompt = template.format(**kwargs)
         response = self.client.models.generate_content(
             model=self.model, contents=prompt)
@@ -35,9 +34,8 @@ class GenAIClient(LLMClient):
             raise ConnectionError("No response retrieved.")
         return response.text
 
-    def write_prompt(self, file: TextIO, custom_id: str, prompt: str, instruction: Optional[str] = None) -> None:
-        request = {}
-        request["contents"] = [{"parts": [{"text": prompt}]}]
+    def write_prompt(self, file: io.TextIOBase, custom_id: str, prompt: str, instruction: str | None = None) -> None:
+        request: dict[str, object] = {"contents": [{"parts": [{"text": prompt}]}]}
         if instruction:
             request["system_instruction"] = instruction
 
@@ -48,7 +46,7 @@ class GenAIClient(LLMClient):
 
         file.write(json.dumps(api_request_dict) + "\n")
 
-    def read_response_line(self, line: str) -> Tuple[str, str]:
+    def read_response_line(self, line: str) -> tuple[str, str]:
         response_line = json.loads(line)
         response = response_line["response"]["candidates"][0]["content"]
         completion = ""
@@ -86,7 +84,7 @@ class GenAIClient(LLMClient):
         }
         return status_transitions[remote_status]
 
-    def get_batch_progress(self, batch_id: str) -> Tuple[str, int, int, str | None, str | None]:
+    def get_batch_progress(self, batch_id: str) -> tuple[str, int, int, str | None, str | None]:
         batch_job = self.client.batches.get(name=batch_id)
         if batch_job is None or batch_job.state is None:
             raise ConnectionError(f"Unexpected error occurred during upload of {batch_id}")

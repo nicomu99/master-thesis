@@ -1,4 +1,3 @@
-from typing import Optional
 from dataclasses import dataclass
 from .enums import TaskStatus
 from .log_conf import logging
@@ -26,7 +25,7 @@ class TaskInfo:
     field: str
     need_judgment: bool = False
     status: TaskStatus = TaskStatus.PERSONAS_PENDING
-    category_name: Optional[str] = None
+    category_name: str | None = None
 
     _STATUS_INCREMENT = {
         TaskStatus.PERSONAS_PENDING: TaskStatus.PERSONAS_REQUESTED,

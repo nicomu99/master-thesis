@@ -1,4 +1,3 @@
-from typing import Optional
 from dataclasses import dataclass
 from .enums import QuestionType
 
@@ -14,7 +13,7 @@ class HFConfig:
     """
     huggingface_id: str
     split: str
-    load_name: Optional[str] = None
+    load_name: str | None = None
 
 
 @dataclass
@@ -36,5 +35,5 @@ class DatasetConfig:
     hf_config: HFConfig
     question_type: QuestionType
     question_column: str
-    category_column: Optional[str] = None
-    answer_column: Optional[str] = None
+    category_column: str | None = None
+    answer_column: str | None = None

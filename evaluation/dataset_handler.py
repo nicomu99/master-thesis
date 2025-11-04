@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Iterable, Union
+from collections.abc import Iterable
 
 import json
 from pathlib import Path
@@ -21,20 +21,20 @@ class DatasetHandler:
 
     def __init__(
         self,
-        include_datasets: Optional[Iterable[str]] = None,
-        exclude_datasets: Optional[Iterable[str]] = None,
+        include_datasets: Iterable[str] | None = None,
+        exclude_datasets: Iterable[str] | None = None,
     ) -> None:
         self.dataset_path = Path("data")
 
-        self.dataset_ids: List[str] = []
-        self.dataframes: Dict[str, pd.DataFrame] = {}
-        self.dataset_configs: Dict[str, DatasetConfig] = {}
+        self.dataset_ids: list[str] = []
+        self.dataframes: dict[str, pd.DataFrame] = {}
+        self.dataset_configs: dict[str, DatasetConfig] = {}
         self._load(include_datasets, exclude_datasets)
 
     def _load(
         self,
-        include_datasets: Optional[Iterable[str]] = None,
-        exclude_datasets: Optional[Iterable[str]] = None
+        include_datasets: Iterable[str] | None = None,
+        exclude_datasets: Iterable[str] | None = None
     ):
         """Loads the dataset configurations and samples.
 
@@ -43,9 +43,9 @@ class DatasetHandler:
         datasets will be ignored.
 
         Args:
-            include_datasets (Optional[Iterable[str]], optional): Dataset ids that should be loaded. If not specified,
+            include_datasets (Iterable[str] | None, optional): Dataset ids that should be loaded. If not specified,
                 all datasets will be loaded. Defaults to None.
-            exclude_datasets (Optional[Iterable[str]], optional): Dataset ids that should be excluded from loading.
+            exclude_datasets (Iterable[str] | None, optional): Dataset ids that should be excluded from loading.
                 If not specified, all will be loaded. Defaults to None.
         """
 
@@ -71,8 +71,8 @@ class DatasetHandler:
     def _select_dataset_ids(
         self,
         dataset_ids: Iterable[str],
-        include_datasets: Optional[Iterable[str]] = None,
-        exclude_datasets: Optional[Iterable[str]] = None,
+        include_datasets: Iterable[str] | None = None,
+        exclude_datasets: Iterable[str] | None = None,
     ):
         """Filters dataset_names.
 
@@ -82,9 +82,9 @@ class DatasetHandler:
 
         Args:
             dataset_ids (Iterable[str]): Dataset keys.
-            include_datasets (Optional[Iterable[str]], optional): Dataset keys that should be kept in consideration.
+            include_datasets (Iterable[str] | None, optional): Dataset keys that should be kept in consideration.
                 If not specified, all will be kept. Defaults to None.
-            exclude_datasets (Optional[Iterable[str]], optional): Dataset keys that should not be kept. If not
+            exclude_datasets (Iterable[str] | None, optional): Dataset keys that should not be kept. If not
                 specified, no keys will be deleted. Defaults to None.
         """
         dataset_ids = list(dataset_ids)
@@ -198,7 +198,7 @@ class DatasetHandler:
     def get_data(
         self,
         dataset_id: str,
-        task_names: List[str]
+        task_names: list[str]
     ) -> pd.DataFrame:
         dataset_config = self.dataset_configs[dataset_id]
         dataframe = self.dataframes[dataset_id]
@@ -209,13 +209,13 @@ class DatasetHandler:
     def get_task_dataframe(
         self,
         dataset_id: str,
-        task_name: Optional[str]
+        task_name: str | None
     ) -> pd.DataFrame:
         """Returns a dataframe with task samples.
 
         Args:
             dataset_id (str): String identifier of the dataset.
-            task_name (Optional[str]): Name of the task. If a dataset contains several tasks, this value is used to
+            task_name (str | None): Name of the task. If a dataset contains several tasks, this value is used to
                 pick correct samples.
 
         Returns:
@@ -246,7 +246,7 @@ class DatasetHandler:
     def merge_and_write(
         self,
         dataset_id: str,
-        subset_df: Union[pd.DataFrame, List[Dict]]
+        subset_df: list[dict] | pd.DataFrame
     ):
         """Merges a subset dataframe to the initial one by the static_id column.
 
@@ -255,10 +255,10 @@ class DatasetHandler:
 
         Args:
             dataset_id (str): String identifier of the parent dataframe.
-            subset_df (pd.DataFrame | List[Dict]): Subset dataframe that will be merged to the parent.
+            subset_df (list[dict] | pd.DataFrame): Subset dataframe that will be merged to the parent.
         """
         dataframe = self.dataframes[dataset_id]
-        if isinstance(subset_df, List):
+        if isinstance(subset_df, list):
             subset_df = pd.DataFrame(subset_df)
 
         dataframe.set_index(STATIC_ID_COLUMN, inplace=True)

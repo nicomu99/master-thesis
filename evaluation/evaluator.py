@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Iterable, List, Tuple
+from collections.abc import Iterable
 
 import pandas as pd
 from tqdm import tqdm
@@ -21,8 +21,8 @@ class Evaluator:
 
     def __init__(
         self,
-        include_datasets: Optional[Iterable[str]] = None,
-        exclude_datasets: Optional[Iterable[str]] = None,
+        include_datasets: Iterable[str] | None = None,
+        exclude_datasets: Iterable[str] | None = None,
     ):
         self.dataset_handler = DatasetHandler(include_datasets, exclude_datasets)
 
@@ -32,7 +32,7 @@ class Evaluator:
         self.config_path = "config_task.json"
 
         self.task_info_file = TEMP_PATH / "task_info.json"
-        self.task_infos: Dict[str, TaskInfo] = {}
+        self.task_infos: dict[str, TaskInfo] = {}
         self._load()
 
     def _load(self):
@@ -61,27 +61,27 @@ class Evaluator:
         for task_info in self.task_infos.values():
             task_info.reset()
 
-    def get_personas_pending_tasks(self) -> List[str]:
+    def get_personas_pending_tasks(self) -> list[str]:
         """Returns a list with all tasks that have missing personas.
 
         Returns:
-            List[str]: A list of string identifiers of tasks that have missing personas.
+            list[str]: A list of string identifiers of tasks that have missing personas.
         """
         return [k for k, v in self.task_infos.items() if v.is_personas_pending()]
 
-    def get_answer_pending_tasks(self) -> List[str]:
+    def get_answer_pending_tasks(self) -> list[str]:
         """Returns a list with all tasks that have missing answers.
 
         Returns:
-            List[str]: A list of string identifiers of tasks that have missing answers.
+            list[str]: A list of string identifiers of tasks that have missing answers.
         """
         return [k for k, v in self.task_infos.items() if v.is_answers_pending()]
 
-    def get_judgment_pending_tasks(self) -> List[str]:
+    def get_judgment_pending_tasks(self) -> list[str]:
         """Returns a list with all tasks that have missing judgment evaluation.
 
         Returns:
-            List[str]: A list of string identifiers of tasks that have missing judgment evaluation.
+            list[str]: A list of string identifiers of tasks that have missing judgment evaluation.
         """
         return [k for k, v in self.task_infos.items() if v.is_judgment_pending()]
 
@@ -89,7 +89,7 @@ class Evaluator:
         self,
         task_info: TaskInfo,
         task_df: pd.DataFrame,
-        persona_templates: Dict[str, str],
+        persona_templates: dict[str, str],
     ):
         if columns_full(task_df, list(persona_templates)):
             return task_df
@@ -233,11 +233,11 @@ class Evaluator:
         self._save()
         return result
 
-    def check_batch_statuses(self) -> Dict[str, BatchInfo]:
+    def check_batch_statuses(self) -> dict[str, BatchInfo]:
         """Prints the batch statuses.
 
         Returns:
-            Dict[str, BatchInfo]: Dictionary with batch information of active batches.
+            dict[str, BatchInfo]: Dictionary with batch information of active batches.
         """
         active_batches = self.communication_handler.check_batch_statuses()
         for bid, batch_info in active_batches.items():
@@ -279,7 +279,7 @@ class Evaluator:
     def get_data(
         self,
         dataset_id: str
-    ) -> Tuple[List[str], pd.DataFrame]:
+    ) -> tuple[list[str], pd.DataFrame]:
         dataset_tasks = [tinfo for tinfo in self.task_infos.values() if tinfo.dataset_id == dataset_id]
         task_ids = [t.task_id for t in dataset_tasks]
         task_names = [t.category_name for t in dataset_tasks if t.category_name is not None]

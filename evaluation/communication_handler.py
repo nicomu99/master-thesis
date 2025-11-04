@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Iterable, Callable, Tuple, Literal
+from typing import Any, Literal
+from collections.abc import Iterable, Callable
 
 from pathlib import Path
 
@@ -69,7 +70,7 @@ class CommunicationHandler:
         self,
         task_info: TaskInfo,
         task_df: pd.DataFrame,
-        persona_configs: List[PersonaConfig],
+        persona_configs: list[PersonaConfig],
         llm_name: Literal["openai", "genai"] = "openai"
     ) -> int | bool:
         """Sends a persona batch request to the LLM API.
@@ -77,7 +78,7 @@ class CommunicationHandler:
         Args:
             task_info (TaskConfig): Configuration parameters of the task.
             task_df (pd.DataFrame): Dataframe containing task samples.
-            persona_configs (List[PersonaConfig]): List of persona configurations.
+            persona_configs (list[PersonaConfig]): List of persona configurations.
             llm_name (Literal["openai", "genai"]): String identifier of the LLM client. Defaults to "openai".
 
         Returns:
@@ -96,7 +97,7 @@ class CommunicationHandler:
         task_info: TaskInfo,
         task_df: pd.DataFrame,
         question_type: QuestionType,
-        persona_configs: List[PersonaConfig],
+        persona_configs: list[PersonaConfig],
         llm_name: Literal["openai", "genai"] = "openai"
     ) -> int | bool:
         """Sends a task question answering request to the LLM API.
@@ -105,7 +106,7 @@ class CommunicationHandler:
             task_info (TaskConfig): Configuration parameters of the task.
             task_df (pd.DataFrame): Dataframe containing task samples.
             question_type (QuestionType): The type of questions of the task samples.
-            persona_configs (List[PersonaConfig]): The persona configurations to use for generating answers.
+            persona_configs (list[PersonaConfig]): The persona configurations to use for generating answers.
             llm_name (Literal["openai", "genai"]): String identifier of the LLM client. Defaults to "openai".
 
         Returns:
@@ -125,7 +126,7 @@ class CommunicationHandler:
         self,
         task_info: TaskInfo,
         task_df: pd.DataFrame,
-        persona_configs: List[PersonaConfig],
+        persona_configs: list[PersonaConfig],
         llm_name: Literal["openai", "genai"] = "openai"
     ) -> int | bool:
         """Sends a LLM-as-a-judge request to the LLM API.
@@ -133,7 +134,7 @@ class CommunicationHandler:
         Args:
             task_info (TaskConfig): Task metadata.
             task_df (pd.DataFrame): Dataframe containing samples associated with this task.
-            persona_configs (List[PersonaConfig]): Persona configuration list.
+            persona_configs (list[PersonaConfig]): Persona configuration list.
             llm_name (Literal["openai", "genai"]): String identifier of the LLM client. Defaults to "openai".
 
         Returns:
@@ -148,11 +149,11 @@ class CommunicationHandler:
             llm_name=llm_name
         )
 
-    def check_batch_statuses(self) -> Dict[str, BatchInfo]:
+    def check_batch_statuses(self) -> dict[str, BatchInfo]:
         """Fetches and returns statuses of batch requests.
 
         Returns:
-            Dict[str, BatchInfo]: A dictionary of batch information.
+            dict[str, BatchInfo]: A dictionary of batch information.
         """
         active_batches = {
             k: v for k, v in self.batches_info_store.items()
@@ -173,11 +174,11 @@ class CommunicationHandler:
     def download_batch_files(
         self,
         task_ids: Iterable[str]
-    ) -> List[BatchInfo]:
+    ) -> list[BatchInfo]:
         """Fetches responses for batch requests and saves them to files.
 
         Returns:
-            List[BatchInfo]: A list with batch information of batches that finished.
+            list[BatchInfo]: A list with batch information of batches that finished.
         """
         self.check_batch_statuses()
         completed_batches = [
@@ -241,7 +242,7 @@ class CommunicationHandler:
         task_info: TaskInfo,
         task_df: pd.DataFrame,
         batch_type: BatchType,
-        create_fn: Callable[..., Tuple[Path, int]],
+        create_fn: Callable[..., tuple[Path, int]],
         *create_args,
         llm_name: Literal["openai", "genai"] = "openai",
     ) -> int | bool:

@@ -1,11 +1,9 @@
-from typing import List
-
 import pandas as pd
 
 
 def columns_full(
     dataframe: pd.DataFrame,
-    column_names: List[str],
+    column_names: list[str],
 ) -> bool:
     """Check whether all values in the given columns are non-null.
 

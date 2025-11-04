@@ -1,5 +1,3 @@
-from typing import List
-
 import subprocess
 import platform
 from dotenv import load_dotenv
@@ -52,7 +50,7 @@ class App:
                 print("Command unknown. Type \"h\" for help.")
 
     @staticmethod
-    def _print_and_evaluate_input(task_ids: List[str]) -> List[str]:
+    def _print_and_evaluate_input(task_ids: list[str]) -> list[str]:
         user_input_map = {
             f"{idx + 1}": tid for idx, tid in enumerate(task_ids)}
 
@@ -153,7 +151,7 @@ class App:
         subprocess.run(command, shell=True, check=False)
 
     @staticmethod
-    def _print_table(table_content: List[List[str]]):
+    def _print_table(table_content: list[list[str]]):
         for row in table_content:
             row_output = " ".join(row)
             print(row_output)
