@@ -133,16 +133,49 @@ class BatchRequestHandler:
 
                     custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{answer_column_df}"
                     llm_client.write_prompt(f, custom_id, prompt, row_dict[persona_name])
-                    # BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model, row_dict[persona_name])
                     request_count += 1
         return request_file, request_count
+
+    @staticmethod
+    def _fill_judgment_prompt(
+        sample_id: str,
+        sample_data: dict[str, str],
+        answer_column: str,
+        reference_column: str
+    ) -> str:
+        """Fills the judgment prompt.
+
+        To mitigate any biases towards an answer, the answers are shuffled. If the sample id is odd, the reference
+        answer is put first, else it is second.
+
+        Args:
+            sample_id (str): String identifier of the sample.
+            sample_data (dict[str, str]): Dictionary containing the sample data.
+            answer_column (str): Key of the answer to compare.
+            reference_column (str): Key of the reference answer.
+
+        Returns:
+            str: Filled template.
+        """
+        prompt_template = TRANSLATION_JUDGE_TEMPLATE
+        sample_number = int(sample_id.split("_")[-1])
+        translations = [sample_data[reference_column], sample_data[answer_column]]
+        if sample_number % 2 == 0:
+            translations.reverse()
+
+        prompt = prompt_template.format(
+            reference=sample_data[QUESTION_COLUMN],
+            translation_1=translations[0],
+            translation_2=translations[1])
+        return prompt
 
     @staticmethod
     def create_judgment_batch_request_file(
         task_config: TaskInfo,
         dataframe: pd.DataFrame,
         persona_configs: list[PersonaConfig],
-        llm_client: LLMClient
+        reference_cfg: PersonaConfig,
+        llm_client: LLMClient,
     ) -> tuple[Path, int]:
         """Creates a request file for judgment evaluation.
 
@@ -150,47 +183,34 @@ class BatchRequestHandler:
             task_config (TaskConfig): Task configuration.
             dataframe (pd.DataFrame): Dataframe containing samples of the task.
             persona_configs (list[PersonaConfig]): List of persona configurations.
+            reference_cfg (PersonaConfig): The persona type used as a baseline for comparison.
             llm_client (LLMClient): LLM client instance.
 
         Returns:
             tuple[Path, int]: A string identifier of the created task request file and number of requests created.
 
         Raises:
-            ValueError: If the dataframe is missing required columns or contains invalid data.
             OSError: If the request file cannot be written to disk.
         """
-        if GROUND_TRUTH_COLUMN not in dataframe.columns:
-            raise ValueError(f"Missing answer column for task {task_config.task_id}")
-
         request_count = 0
         request_file = TEMP_PATH / f"{task_config.task_id}_judgment_request.jsonl"
         with request_file.open("w", encoding="utf-8") as f:
             for row_dict in dataframe.to_dict(orient="records"):
-                prompt_template = TRANSLATION_JUDGE_TEMPLATE
-                for persona_config in persona_configs:
-                    answer_column = persona_config.answer_column
-                    judgment_column = persona_config.judgment_column
-
-                    if judgment_column in row_dict and row_dict[judgment_column] is not None:
+                row_dict = cast(dict[str, str], row_dict)
+                for cfg in persona_configs:
+                    judgment_column = cfg.judgment_column
+                    if (
+                        cfg.name == reference_cfg.name or
+                        judgment_column in row_dict and row_dict[judgment_column] is not None
+                    ):
                         continue
 
-                    # Shuffle requests to limit bias towards one completion
-                    # If the sample number is even, the ground truth comes first, else the LLM completion
                     static_id = row_dict[STATIC_ID_COLUMN]
-
-                    sample_number = int(static_id.split("_")[-1])
-                    translations = [row_dict[answer_column], row_dict[GROUND_TRUTH_COLUMN]]
-                    if sample_number % 2 == 0:
-                        translations.reverse()
-
-                    prompt = prompt_template.format(
-                        reference=row_dict[QUESTION_COLUMN],
-                        translation_1=translations[0],
-                        translation_2=translations[1])
+                    prompt = BatchRequestHandler._fill_judgment_prompt(
+                        static_id, row_dict, cfg.answer_column, reference_cfg.answer_column)
 
                     custom_id = f"{static_id}_{judgment_column}"
                     llm_client.write_prompt(f, custom_id, prompt)
-                    # BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt, model)
                     request_count += 1
         return request_file, request_count
 
