@@ -27,6 +27,8 @@ class CommunicationHandler:
             "genai": GenAIClient()
         }
 
+        self.request_handler = BatchRequestHandler()
+
         self.batches_info_file = TEMP_PATH / "batches_info_file.json"
         self.batches_info_store = {}
         self._load()
@@ -88,7 +90,7 @@ class CommunicationHandler:
             task_info,
             task_df,
             BatchType.PERSONAS,
-            BatchRequestHandler.create_persona_batch_request_file,
+            self.request_handler.create_persona_batch_request_file,
             persona_configs,
             llm_name=llm_name)
 
@@ -116,7 +118,7 @@ class CommunicationHandler:
             task_info,
             task_df,
             BatchType.ANSWERS,
-            BatchRequestHandler.create_answer_batch_request_file,
+            self.request_handler.create_answer_batch_request_file,
             question_type,
             persona_configs,
             llm_name=llm_name
@@ -146,7 +148,7 @@ class CommunicationHandler:
             task_info,
             task_df,
             BatchType.JUDGMENT,
-            BatchRequestHandler.create_judgment_batch_request_file,
+            self.request_handler.create_judgment_batch_request_file,
             persona_configs,
             reference_config,
             llm_name=llm_name
@@ -200,14 +202,14 @@ class CommunicationHandler:
                 client = self._get_client(batch_info.client)
                 if batch_info.has_output():
                     output_file = batch_info.get_output_file()
-                    BatchRequestHandler.read_response_stream(
+                    self.request_handler.read_response_stream(
                         output_file, client.fetch_response)
 
                 if batch_info.has_error():
                     error_file = batch_info.get_error_file()
-                    BatchRequestHandler.read_response_stream(
+                    self.request_handler.read_response_stream(
                         error_file, client.fetch_response)
-                    error_messages = BatchRequestHandler.read_error_file(error_file.local_file_path)
+                    error_messages = self.request_handler.read_error_file(error_file.local_file_path)
                     for message in error_messages:
                         log.error("Task %s failed: %s", tid, message)
 
@@ -235,7 +237,7 @@ class CommunicationHandler:
             if batch_info.has_output():
                 client = self._get_client(batch_info.client)
                 output_file = batch_info.get_output_file()
-                return BatchRequestHandler.read_response_file(output_file.local_file_path, client.read_response_line)
+                return self.request_handler.read_response_file(output_file.local_file_path, client.read_response_line)
         except (KeyError, TypeError) as e:
             log.error("Error: %s", e, exc_info=True)
         return False

@@ -60,8 +60,8 @@ class BatchRequestHandler:
 
         return template.format(**prompt_kwargs)
 
-    @staticmethod
     def create_persona_batch_request_file(
+        self,
         task_config: TaskInfo,
         dataframe: pd.DataFrame,
         persona_configs: list[PersonaConfig],
@@ -82,7 +82,7 @@ class BatchRequestHandler:
             OSError: If the request file cannot be written to disk.
         """
         request_count = 0
-        request_file = BatchRequestHandler._create_file(task_config.task_id, "personas")
+        request_file = self._create_file(task_config.task_id, "personas")
         with request_file.open("w", encoding="utf-8") as f:
             for row_dict in dataframe.to_dict(orient="records"):
                 for persona_config in persona_configs:
@@ -98,12 +98,11 @@ class BatchRequestHandler:
 
                     custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{persona_name}"
                     llm_client.write_prompt(f, custom_id, prompt)
-                    # BatchRequestHandler._write_prompt_to_file(f, custom_id, prompt)
                     request_count += 1
         return request_file, request_count
 
-    @staticmethod
     def create_answer_batch_request_file(
+        self,
         task_config: TaskInfo,
         dataframe: pd.DataFrame,
         question_type: QuestionType,
@@ -126,11 +125,11 @@ class BatchRequestHandler:
             OSError: If the request file cannot be written to disk.
         """
         request_count = 0
-        request_file = BatchRequestHandler._create_file(task_config.task_id, "answers")
+        request_file = self._create_file(task_config.task_id, "answers")
         with request_file.open("w", encoding="utf-8") as f:
             for row_dict in dataframe.to_dict(orient="records"):
                 row_dict = cast(dict[str, str], row_dict)
-                prompt = BatchRequestHandler._create_question_prompt(
+                prompt = self._create_question_prompt(
                     row_dict, question_type)
 
                 for persona_config in persona_configs:
@@ -178,8 +177,8 @@ class BatchRequestHandler:
             translation_2=translations[1])
         return prompt
 
-    @staticmethod
     def create_judgment_batch_request_file(
+        self,
         task_config: TaskInfo,
         dataframe: pd.DataFrame,
         persona_configs: list[PersonaConfig],
@@ -202,7 +201,7 @@ class BatchRequestHandler:
             OSError: If the request file cannot be written to disk.
         """
         request_count = 0
-        request_file = BatchRequestHandler._create_file(task_config.task_id, "judgments")
+        request_file = self._create_file(task_config.task_id, "judgments")
         with request_file.open("w", encoding="utf-8") as f:
             for row_dict in dataframe.to_dict(orient="records"):
                 row_dict = cast(dict[str, str], row_dict)
@@ -215,7 +214,7 @@ class BatchRequestHandler:
                         continue
 
                     static_id = row_dict[STATIC_ID_COLUMN]
-                    prompt = BatchRequestHandler._fill_judgment_prompt(
+                    prompt = self._fill_judgment_prompt(
                         static_id, row_dict, cfg.answer_column, reference_cfg.answer_column)
 
                     custom_id = f"{static_id}_{judgment_column}"
