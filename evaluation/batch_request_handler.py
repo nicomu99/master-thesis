@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, Literal
 from collections import defaultdict
 from collections.abc import Callable
 
@@ -21,6 +21,15 @@ log.setLevel(logging.DEBUG)
 
 class BatchRequestHandler:
     """Helper class used to read and write json files with request and response data."""
+
+    @staticmethod
+    def _create_file(
+        task_id: str,
+        file_type: Literal["personas", "answers", "judgments"]
+    ) -> Path:
+        request_file = TEMP_PATH / f"{task_id}/requests/{file_type}.jsonl"
+        request_file.parent.mkdir(parents=True, exist_ok=True)
+        return request_file
 
     @staticmethod
     def _create_question_prompt(
@@ -73,7 +82,7 @@ class BatchRequestHandler:
             OSError: If the request file cannot be written to disk.
         """
         request_count = 0
-        request_file = TEMP_PATH / f"{task_config.task_id}_persona_request.jsonl"
+        request_file = BatchRequestHandler._create_file(task_config.task_id, "personas")
         with request_file.open("w", encoding="utf-8") as f:
             for row_dict in dataframe.to_dict(orient="records"):
                 for persona_config in persona_configs:
@@ -117,7 +126,7 @@ class BatchRequestHandler:
             OSError: If the request file cannot be written to disk.
         """
         request_count = 0
-        request_file = TEMP_PATH / f"{task_config.task_id}_request.jsonl"
+        request_file = BatchRequestHandler._create_file(task_config.task_id, "answers")
         with request_file.open("w", encoding="utf-8") as f:
             for row_dict in dataframe.to_dict(orient="records"):
                 row_dict = cast(dict[str, str], row_dict)
@@ -193,7 +202,7 @@ class BatchRequestHandler:
             OSError: If the request file cannot be written to disk.
         """
         request_count = 0
-        request_file = TEMP_PATH / f"{task_config.task_id}_judgment_request.jsonl"
+        request_file = BatchRequestHandler._create_file(task_config.task_id, "judgments")
         with request_file.open("w", encoding="utf-8") as f:
             for row_dict in dataframe.to_dict(orient="records"):
                 row_dict = cast(dict[str, str], row_dict)
