@@ -54,6 +54,10 @@ class TaskInfo:
         """Reset the task status to TaskStatus.ANSWERS_PENDING."""
         self.status = TaskStatus.ANSWERS_PENDING
 
+    def reset_to_judgments(self):
+        """Reset the task status to TaskStatus.JUDGMENT_PENDING."""
+        self.status = TaskStatus.JUDGMENT_PENDING
+
     def is_personas_pending(self) -> bool:
         """Returns true if the task status is TaskStatus.PERSONAS_PENDING.
 

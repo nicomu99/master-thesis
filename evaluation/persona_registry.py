@@ -99,12 +99,12 @@ class PersonaRegistry:
     def get_reference_config(self) -> PersonaConfig:
         """Returns the reference config for tasks that require judgment.
 
-        For tasks that require a reference, the helpful persona was chosen as a baseline.
+        For tasks that require a reference, the empty persona was chosen as a baseline.
 
         Returns:
             PersonaConfig: Reference persona config.
         """
-        return self.persona_configs[1]
+        return self.persona_configs[0]
 
     def get_base_persona_string(self) -> str:
         """Returns the base persona string.

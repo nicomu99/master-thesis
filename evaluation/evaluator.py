@@ -94,8 +94,8 @@ class Evaluator:
             task_info.reset()
         self._save()
 
-    def reset_tasks(self, task_ids: list[str]):
-        """Resets all tasks to the answer pending stage.
+    def reset_tasks_to_answers(self, task_ids: list[str]):
+        """Resets the specified tasks to the answer pending stage.
 
         Args:
             task_ids (list[str]): List of tasks to update.
@@ -106,6 +106,22 @@ class Evaluator:
             dataset_id = tinfo.dataset_id
             self.dataset_handler.clear_columns(dataset_id, tinfo.category_name, answer_columns)
             tinfo.reset_to_answers()
+        self._save()
+
+    def reset_tasks_to_judgments(self, task_ids: list[str]):
+        """Resets the specified tasks to the judgment pending stage.
+
+        Args:
+            task_ids (list[str]): List of tasks to update.
+        """
+        judgment_columns = self.persona_registry.get_judgment_columns()
+        for tid in task_ids:
+            tinfo = self.task_infos[tid]
+            if not tinfo.need_judgment:
+                continue
+            dataset_id = tinfo.dataset_id
+            self.dataset_handler.clear_columns(dataset_id, tinfo.category_name, judgment_columns)
+            tinfo.reset_to_judgments()
         self._save()
 
     def _static_persona_helper(
