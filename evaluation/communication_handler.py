@@ -136,7 +136,7 @@ class CommunicationHandler:
             task_info (TaskConfig): Task metadata.
             task_df (pd.DataFrame): Dataframe containing samples associated with this task.
             persona_configs (list[PersonaConfig]): Persona configuration list.
-            reference_cfg (PersonaConfig): The persona type used as a baseline for comparison.
+            reference_config (PersonaConfig): The persona type used as a baseline for comparison.
             llm_name (Literal["openai", "genai"]): String identifier of the LLM client. Defaults to "openai".
 
         Returns:
