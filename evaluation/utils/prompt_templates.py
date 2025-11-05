@@ -195,8 +195,15 @@ DYNAMIC_TEACHER_TEMPLATE = (
 OPEN_QUESTION_TEMPLATE = "{question}"
 
 MC_QUESTION_TEMPLATE = (
+    "Carefully read the question and the available choices below.\n\n"
+    "Question:\n"
     "{question}\n\n"
-    "{choices}"
+    "Choices:\n"
+    "{choices}\n\n"
+    "Start your answer with \"The correct answer is: \" followed by the letter corresponding to the best choice.\n"
+    "Then, in the same paragraph, briefly explain your reasoning.\n"
+    "You must provide your answer in exactly this format:\n"
+    "The correct answer is: <LETTER>. <your explanation>\n"
 )
 
 SUMMARIZATION_TEMPLATE = (
