@@ -18,7 +18,10 @@ class BatchInfo:
         task_id (str): Identifier of the associated task.
         batch_type (BatchType): Type of batch.
         status (BatchStatus): Possibly outdated process status of the batch.
-        progress_message (str | None): Remote status message.
+        progress (int | tuple[int, int, int]): Progress information. If this is an int, it denotes the number of
+            requests sent. If it is a tuple, the first value is the number of requests, the second one is the
+            number of completed requests and the third is the number of failed requests.
+        client (str): The client that sent the request.
         output_file (BatchFile | None): Output metadata of the generated responses. Defaults to None.
         output_file (BatchFile | None): Metadata for possible errors during processing of the batch.
             Defaults to None.
@@ -28,9 +31,8 @@ class BatchInfo:
     task_id: str
     batch_type: BatchType
     status: BatchStatus = BatchStatus.SENT
-    request_count: int = 0
+    progress: int | tuple[int, int, int] = (0, 0, 0)
     client: str = "openai"
-    progress_message: str | None = None
     output_file: BatchFile | None = None
     error_file: BatchFile | None = None
 
@@ -43,6 +45,10 @@ class BatchInfo:
         "cancelled": BatchStatus.RETRIEVED,
         "completed": BatchStatus.COMPLETED
     }
+
+    def __post_init__(self):
+        if isinstance(self.progress, int):
+            self.progress = (self.progress, 0, 0)
 
     def is_completed(self) -> bool:
         """Check whether the batch status is completed.
@@ -238,16 +244,21 @@ class BatchInfo:
             completed (int): Number of successful completions.
             failed (int): Number of failed completions.
         """
-        if completed > 0 or failed > 0:
-            self.progress_message = (
-                f"Progress: {completed} out of {self.request_count} finished; "
-                f"{failed} requests failed.")
-        elif self.request_count > 0:
-            self.progress_message = (
-                f"Processing {self.request_count} requests.")
+        if isinstance(self.progress, int):
+            self.progress = (self.progress, completed, failed)
         else:
-            self.progress_message = (
-                "No progress information.")
+            self.progress = (self.progress[0], completed, failed)
+        self.progress = (self.progress[0], completed, failed)
+
+    def get_progress(self) -> tuple[int, int, int]:
+        """Returns the progress.
+
+        Returns:
+            tuple[int, int, int]: Current batch progress.
+        """
+        if isinstance(self.progress, int):
+            return (self.progress, 0, 0)
+        return self.progress
 
     @staticmethod
     def get_key_field() -> str:

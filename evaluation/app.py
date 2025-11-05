@@ -170,6 +170,16 @@ class App:
             row_output = " ".join(row)
             print(row_output)
 
+    @staticmethod
+    def _get_progress_message(progress: tuple[int, int, int]) -> str:
+        if progress[1] > 0 or progress[2] > 0:
+            return (
+                f"Progress: {progress[1]} out of {progress[0]} finished; "
+                f"{progress[2]} requests failed.")
+        if progress[0] > 0:
+            return f"Processing {progress} requests."
+        return "No progress found."
+
     def check_batch_statuses(self):
         """Fetches batch statuses from the API and prints them to the terminal."""
         print("Checking batch statuses...\n")
@@ -193,8 +203,7 @@ class App:
                 status = "\033[33m" + f"{status:<15}" + "\033[0m"
 
             table_row = [f"{task_id:<30}", f"{batch_info.batch_type:<15}", status, f"{batch_info.client:<15}", ""]
-            if batch_info.progress_message is not None:
-                table_row[3] += batch_info.progress_message
+            table_row[3] = self._get_progress_message(batch_info.get_progress())
             table_content.append(table_row)
         self._print_table(table_content)
 

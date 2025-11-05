@@ -259,10 +259,10 @@ class CommunicationHandler:
 
             batch_id = client.send_batch(file_name)
             batch_info = BatchInfo(
-                batch_id, task_info.task_id, batch_type, request_count=request_count, client=llm_name)
+                batch_id, task_info.task_id, batch_type, progress=request_count, client=llm_name)
             self.batches_info_store[batch_info.batch_id] = batch_info
             self._save()
-            return batch_info.request_count
+            return request_count
         except (ValueError, OSError, ConnectionError, KeyError) as e:
             log.error(
                 "Failed to create and send %s batch for task %s: %s",
