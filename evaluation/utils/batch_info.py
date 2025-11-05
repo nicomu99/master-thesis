@@ -119,7 +119,8 @@ class BatchInfo:
             remote_id (str): The unique identifier of the remote output file.
         """
         file_id = self.batch_id.replace("/", "_")
-        local_file_path = TEMP_PATH / f"{self.task_id}_{file_id}_output.jsonl"
+        local_file_path = TEMP_PATH / f"{self.task_id}/output/{file_id}.jsonl"
+        local_file_path.parent.mkdir(parents=True, exist_ok=True)
         self.output_file = BatchFile(remote_id, local_file_path)
 
     def get_output_file(self) -> BatchFile:
@@ -156,7 +157,8 @@ class BatchInfo:
         Args:
             remote_id (str): The unique identifier of the remote error file.
         """
-        local_file_path = TEMP_PATH / f"{self.task_id}_{self.batch_id}_error.jsonl"
+        local_file_path = TEMP_PATH / f"{self.task_id}/output/{self.batch_id}_error.jsonl"
+        local_file_path.parent.mkdir(parents=True, exist_ok=True)
         self.error_file = BatchFile(remote_id, local_file_path)
 
     def get_error_file(self) -> BatchFile:
