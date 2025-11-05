@@ -178,7 +178,7 @@ class DatasetHandler:
             existing_df = existing_df.set_index(STATIC_ID_COLUMN)
             update_df = update_df.set_index(STATIC_ID_COLUMN)
 
-            existing_df.update(update_df)
+            existing_df.loc[update_df.index, update_df.columns] = update_df
             merged_df = existing_df.reset_index()
         else:
             merged_df = update_df.copy()
@@ -198,24 +198,24 @@ class DatasetHandler:
     def get_data(
         self,
         dataset_id: str,
-        task_names: list[str]
+        category_names: list[str]
     ) -> pd.DataFrame:
         dataset_config = self.dataset_configs[dataset_id]
         dataframe = self.dataframes[dataset_id]
-        if len(task_names) == 0:
+        if len(category_names) == 0:
             return dataframe
-        return dataframe[dataframe[dataset_config.category_column].isin(task_names)]
+        return dataframe[dataframe[dataset_config.category_column].isin(category_names)]
 
     def get_task_dataframe(
         self,
         dataset_id: str,
-        task_name: str | None
+        category_name: str | None
     ) -> pd.DataFrame:
         """Returns a dataframe with task samples.
 
         Args:
             dataset_id (str): String identifier of the dataset.
-            task_name (str | None): Name of the task. If a dataset contains several tasks, this value is used to
+            category_name (str | None): Name of the task. If a dataset contains several tasks, this value is used to
                 pick correct samples.
 
         Returns:
@@ -223,8 +223,8 @@ class DatasetHandler:
         """
         dataframe = self.dataframes[dataset_id]
         category_column = self.dataset_configs[dataset_id].category_column
-        if category_column:
-            return dataframe[dataframe[category_column] == task_name]
+        if category_column is not None:
+            return dataframe[dataframe[category_column] == category_name]
         return dataframe
 
     def get_task_df_from_info(
@@ -240,8 +240,8 @@ class DatasetHandler:
             pd.DataFrame: Dataframe with task samples.
         """
         dataset_id = task_info.dataset_id
-        task_name = task_info.category_name
-        return self.get_task_dataframe(dataset_id, task_name)
+        category_name = task_info.category_name
+        return self.get_task_dataframe(dataset_id, category_name)
 
     def merge_and_write(
         self,
@@ -270,4 +270,27 @@ class DatasetHandler:
         dataframe.update(subset_df)
         dataframe.reset_index(inplace=True)
 
+        self.write_dataframe(dataset_id)
+
+    def clear_columns(
+        self,
+        dataset_id: str,
+        category_name: str | None,
+        columns: list[str]
+    ):
+        """Clears the specified columns for a given category or the entire dataset.
+
+        The method modifies the dataframe in-place. All values in the provided columns will be set to ``None``.
+
+        Args:
+            dataset_id (str): Dataset identifier whose columns should be cleared.
+            category_name (str | None): Name of the category whose rows should be cleared.
+            columns (list[str]): Columns that should be cleared.
+        """
+        dataframe = self.dataframes[dataset_id]
+        category_column = self.dataset_configs[dataset_id].category_column
+        if category_column is not None:
+            dataframe.loc[dataframe[category_column] == category_name, columns] = None
+        else:
+            dataframe.loc[:, columns] = None
         self.write_dataframe(dataset_id)

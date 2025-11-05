@@ -29,13 +29,20 @@ class App:
             "f": ("Fetch batch responses", self.evaluator.fetch_batch_responses),
             "c": ("Check task statuses", self.check_task_statuses),
             "r": ("Reset tasks", self.reset_tasks),
+            "ra": ("Reset tasks to answers pending", self.reset_to_answers),
             "clear": ("Clears the CLI", self.clear_cli),
             "h": ("Show this help", self.show_help),
         }
 
     def reset_tasks(self):
         """Reset all tasks statuses to the default value."""
-        self.evaluator.reset_tasks()
+        self.evaluator.reset_all_tasks()
+
+    def reset_to_answers(self):
+        """Lets the user pick which tasks to reset to the answer pending status."""
+        task_ids = self.evaluator.get_tasks()
+        chosen_task_ids = self._print_and_evaluate_input(task_ids)
+        self.evaluator.reset_tasks(chosen_task_ids)
 
     def main(self) -> None:
         """Main loop that listens for user input."""

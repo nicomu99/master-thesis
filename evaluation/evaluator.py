@@ -56,10 +56,13 @@ class Evaluator:
             self.task_info_file, self.task_infos,
             key_field=TaskInfo.get_key_field())
 
-    def reset_tasks(self):
-        """Reset all tasks statuses to the default value."""
-        for task_info in self.task_infos.values():
-            task_info.reset()
+    def get_tasks(self) -> list[str]:
+        """Returns a list with all task identifiers.
+
+        Returns:
+            list[str]: A list of string identifiers of tasks.
+        """
+        return list(self.task_infos)
 
     def get_personas_pending_tasks(self) -> list[str]:
         """Returns a list with all tasks that have missing personas.
@@ -84,6 +87,26 @@ class Evaluator:
             list[str]: A list of string identifiers of tasks that have missing judgment evaluation.
         """
         return [k for k, v in self.task_infos.items() if v.is_judgment_pending()]
+
+    def reset_all_tasks(self):
+        """Reset all tasks statuses to the default value."""
+        for task_info in self.task_infos.values():
+            task_info.reset()
+        self._save()
+
+    def reset_tasks(self, task_ids: list[str]):
+        """Resets all tasks to the answer pending stage.
+
+        Args:
+            task_ids (list[str]): List of tasks to update.
+        """
+        answer_columns = self.persona_registry.get_answer_columns()
+        for tid in task_ids:
+            tinfo = self.task_infos[tid]
+            dataset_id = tinfo.dataset_id
+            self.dataset_handler.clear_columns(dataset_id, tinfo.category_name, answer_columns)
+            tinfo.reset_to_answers()
+        self._save()
 
     def _static_persona_helper(
         self,

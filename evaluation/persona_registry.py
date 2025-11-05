@@ -225,3 +225,12 @@ class PersonaRegistry:
             list[str]: list with answer columns.
         """
         return [p.answer_column for p in self.persona_configs]
+
+    def get_judgment_columns(self) -> list[str]:
+        """Returns all judgment columns.
+
+        Returns:
+            list[str]: list with judgment columns.
+        """
+        reference_cfg = self.get_reference_config()
+        return [p.judgment_column for p in self.persona_configs if p.name != reference_cfg.name]
