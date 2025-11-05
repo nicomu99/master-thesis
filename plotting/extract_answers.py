@@ -15,41 +15,13 @@ def extract_answer_mmlu(
         str | list[str]: The extracted number or a list of numbers.
     """
     option_range = f"A-{chr(65 + answer_range - 1)}"
+    pattern = rf"The correct answer is:\s*([{option_range}])\b"
+    match = re.search(pattern, completion)
 
-    double_parentheses = re.search(rf"\(([{option_range}])\)", completion)
-    if double_parentheses:
-        return double_parentheses.group(1)
+    if not match:
+        return "Invalid response format"
 
-    single_parantheses = re.search(rf"([{option_range}])\)", completion)
-    if single_parantheses:
-        return single_parantheses.group(1)
-
-    all_matches = re.findall(rf"\(?([{option_range}])\)?", completion)
-    if all_matches:
-        if len(all_matches) == 1:
-            return all_matches[0]
-
-        first_letter = re.match(rf"^([{option_range}])\s", completion)
-        if first_letter:
-            return first_letter.group(1)
-
-        letter_dot = re.match(rf"^([{option_range}])\.", completion)
-        if letter_dot:
-            return letter_dot.group(1)
-
-        answer_letter_pattern = re.compile(rf"^Answer:\s*([{option_range}])(?:\s+(?!and\b).+)?$", re.MULTILINE)
-        answer_letter = re.findall(answer_letter_pattern, completion)
-        if len(answer_letter) == 1:
-            return answer_letter[0]
-
-        correct_option_pattern = re.compile(rf"^Correct option:\s*([{option_range}])(?:\s+(?!and\b).+)?$", re.MULTILINE)
-        correct_option = re.findall(correct_option_pattern, completion)
-        if len(correct_option) == 1:
-            return correct_option[0]
-
-        return all_matches
-
-    return "Not found"
+    return match.group(1)
 
 
 def extract_answer_math(completion: str) -> str:
@@ -65,3 +37,32 @@ def extract_answer_math(completion: str) -> str:
     if not lines:
         return ""
     return lines[-1]
+
+
+def extract_answer_flores(
+    completion: str,
+    sample_id: str
+) -> str:
+    """Extracts answers for the flores dataset.
+
+    Args:
+        completion (str): LLM completion.
+        sample_id (str): Sample identifier.
+
+    Returns:
+        str: The extracted answer.
+    """
+    sample_number = int(sample_id.split("_")[-1])
+    match_single = re.match(r"The better translation is:\s*(1|2)\b(.*)", completion, re.IGNORECASE | re.DOTALL)
+    if match_single:
+        if (
+            sample_number % 2 == 0 and int(match_single.group(1)) == 2 or
+            sample_number % 2 == 1 and int(match_single.group(1)) == 1
+        ):
+            return "reference"
+        return "persona"
+
+    match_equal = re.match(r"Both translations are equal:\s*(.*)", completion, re.IGNORECASE | re.DOTALL)
+    if match_equal:
+        return "both"
+    return "no response"

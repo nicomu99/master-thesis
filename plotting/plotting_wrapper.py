@@ -9,6 +9,8 @@ class PlottingWrapper:
 
     def __init__(self, personas: list[str]):
         self.color_map = self.create_persona_colormap(personas)
+        self.judgment_colors = ["red", "grey", "green"]
+        self.judgment_labels = ["Helpful win", "Equal", "Persona win"]
 
     @staticmethod
     def create_persona_colormap(
@@ -20,7 +22,7 @@ class PlottingWrapper:
             columns (list[str]): List of columns to create the color map for.
 
         Returns:
-            dict[str, Any]: Dictionary containig color values.
+            dict[str, Any]: Dictionary containing color values.
         """
         cmap = plt.get_cmap("tab10")
         colors = {col: cmap(i % 10) for i, col in enumerate(columns)}
@@ -118,3 +120,46 @@ class PlottingWrapper:
             y_label=y_label,
             legend=legend
         )
+
+    def plot_stacked_barchart(
+        self,
+        ax: Axes,
+        plot_dict: dict[str, list[int]],
+        cols: list[str],
+        y_label: str = "Percentage",
+        title: str = "Win Rate vs. Ground Truth",
+    ) -> None:
+        """Plot a stacked bar chart.
+
+        Args:
+            ax (Axes): Axis object on which the plot will be created.
+            plot_dict (dict[str, list[int]]): Dictionary containing plot values.
+            cols (list[str]): The columns to plot.
+            y_label (str, optional): y-axis label. Defaults to "Percentage".
+            title (str, optional): Axis title. Defaults to "Win Rate vs. Ground Truth".
+        """
+        for col_idx, col in enumerate(cols):
+            bottom = 0
+            for val_idx, val in enumerate(plot_dict[col]):
+                x_label = " ".join(col.replace("_judgment_option", "").split("_"))
+                if x_label == "no":
+                    x_label = "empty"
+                ax.bar(
+                    x_label, val, bottom=bottom,
+                    label=self.judgment_labels[val_idx] if col_idx == 0 else "",
+                    color=self.judgment_colors[val_idx])
+
+                # add bar label
+                if val > 0.05:
+                    ax.text(
+                        col_idx, bottom + val / 2, f"{val * 100:.1f}%",
+                        ha="center", va="center", color="white", fontsize=9)
+                bottom += val
+
+        ax.set_ylabel(y_label)
+        ax.set_ylim(0, 1)
+        ax.set_title(title)
+        ax.legend()
+
+        for label in ax.get_xticklabels()[1::2]:
+            label.set_y(label.get_position()[1] - 0.05)

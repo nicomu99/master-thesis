@@ -18,7 +18,7 @@ def compute_accuracy_df(
         category_col (str, optional): The column on which to group instances on. Defaults to "category".
 
     Returns:
-        pd.DataFrame: _description_
+        pd.DataFrame: A DataFrame containing computed accuracies.
     """
     accuracy_rows = []
     for category, group in df.groupby(category_col):
@@ -78,7 +78,6 @@ def get_plot_dict(
         ignore_cols = [category_col]
     else:
         ignore_cols.append(category_col)
-
     row = accuracy_df.loc[accuracy_df[category_col] == category_name].iloc[0]
 
     plot_dict = {}
@@ -87,3 +86,47 @@ def get_plot_dict(
             continue
         plot_dict[category] = row[category]
     return plot_dict
+
+
+def get_plot_dict_stacked(
+    df: pd.DataFrame,
+    columns: list[str],
+    category_col: str = "category",
+) -> dict[str, dict[str, list[int]]]:
+    """Returns a dictionary for creating stacked bar charts.
+
+    The dictionary has format:
+
+    {
+        category_1: {
+            column_a: [percentage_ref, percentage_tied, percentage_persona],
+        },
+        ...
+    }
+
+    Args:
+        df (pd.DataFrame): DataFrame with plot data.
+        columns (list[str]): The columns for which to calculate the percentages for.
+        category_col (str, optional): The dataframe column containing categorical identifiers. Defaults to "category".
+
+    Returns:
+        dict[str, dict[str, list[int]]]: A dictionary with one entry per category. Each entry has another dictionary
+            containing persona identifiers and lists with percentage values of win rates.
+    """
+    labels_order = ["reference", "both", "persona"]
+    accuracy_dict = {}
+    for category, group in df.groupby(category_col):
+        category_values = {}
+        for col in columns:
+            valid = group[group[col] != "no response"][col]
+            if valid.empty:
+                shares = [0.0, 0.0, 0.0]
+            else:
+                shares = (
+                    valid.value_counts(normalize=True)
+                    .reindex(labels_order, fill_value=0.0)
+                    .tolist()
+                )
+            category_values[col] = shares
+        accuracy_dict[category] = category_values
+    return accuracy_dict
