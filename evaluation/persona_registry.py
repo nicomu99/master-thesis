@@ -4,16 +4,16 @@ from .utils import PersonaCategory
 from .utils import (
     BASE_PERSONA,
     HELPFUL_PERSONA,
-    TEACHER_PERSONA,
     BASE_TEMPLATE,
     STATIC_SHORT_TEMPLATE,
     # STATIC_MEDIUM_TEMPLATE,
     STATIC_LONG_TEMPLATE,
-    STATIC_TEACHER_TEMPLATE,
     DYNAMIC_SHORT_TEMPLATE,
     # DYNAMIC_MEDIUM_TEMPLATE,
     DYNAMIC_LONG_TEMPLATE,
-    DYNAMIC_TEACHER_TEMPLATE
+    BEGINNER_TEACHER_TEMPLATE,
+    INTERMEDIATE_TEACHER_TEMPLATE,
+    EXPERT_TEACHER_TEMPLATE
 )
 
 
@@ -86,14 +86,14 @@ class PersonaRegistry:
         self.persona_configs = [
             PersonaConfig("no_persona", PersonaCategory.EMPTY, " "),
             PersonaConfig("helpful_persona", PersonaCategory.EMPTY, HELPFUL_PERSONA),
-            PersonaConfig("teacher_persona", PersonaCategory.EMPTY, TEACHER_PERSONA),
             PersonaConfig("base_persona", PersonaCategory.STATIC, BASE_TEMPLATE),
             PersonaConfig("static_short_persona", PersonaCategory.STATIC, STATIC_SHORT_TEMPLATE),
             PersonaConfig("static_long_persona", PersonaCategory.STATIC, STATIC_LONG_TEMPLATE),
-            PersonaConfig("static_teacher_persona", PersonaCategory.STATIC_TEACHER, STATIC_TEACHER_TEMPLATE),
             PersonaConfig("dynamic_short_persona", PersonaCategory.DYNAMIC, DYNAMIC_SHORT_TEMPLATE),
             PersonaConfig("dynamic_long_persona", PersonaCategory.DYNAMIC, DYNAMIC_LONG_TEMPLATE),
-            PersonaConfig("dynamic_teacher_persona", PersonaCategory.DYNAMIC, DYNAMIC_TEACHER_TEMPLATE)
+            PersonaConfig("beginner_teacher_persona", PersonaCategory.DYNAMIC, BEGINNER_TEACHER_TEMPLATE),
+            PersonaConfig("intermediate_teacher_persona", PersonaCategory.DYNAMIC, INTERMEDIATE_TEACHER_TEMPLATE),
+            PersonaConfig("expert_teacher_persona", PersonaCategory.DYNAMIC, EXPERT_TEACHER_TEMPLATE)
         ]
 
     def get_reference_config(self) -> PersonaConfig:

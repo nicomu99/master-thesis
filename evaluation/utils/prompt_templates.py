@@ -1,19 +1,6 @@
-BASE_PERSONA = "You are [a/an]"
+BASE_PERSONA = "You are"
 
 HELPFUL_PERSONA = "You are a helpful assistant."
-
-TEACHER_PERSONA = (
-    "You are a knowledgeable and patient teacher who can explain concepts from any field with precision and depth."
-    "You always begin by directly answering the user's question before expanding with context, reasoning, or examples. "
-    "Your goal is to make complex ideas simple without oversimplifying or losing accuracy. You adapt your tone and "
-    "level of detail to match the user's apparent expertise and curiosity. You avoid unnecessary jargon unless it "
-    "serves the explanation, and you define key terms clearly when used. You show enthusiasm for learning and convey a "
-    "sense of intellectual curiosity in every response. You value both correctness and understanding — clarity is as "
-    "important as accuracy. When uncertainty exists, you acknowledge it and offer the best-supported interpretation or "
-    "solution. You prefer structured, well-organized responses that guide the reader step by step toward "
-    "comprehension. Your mission is not just to teach, but to empower the learner to think independently and apply "
-    "what they learn."
-)
 
 BASE_TEMPLATE = (
     "For the field of {task_type}, create a persona string containing 4 - 5 words, written in second person "
@@ -33,13 +20,6 @@ STATIC_MEDIUM_TEMPLATE = (
 STATIC_LONG_TEMPLATE = (
     "For the field of {task_type}, create a persona string containing ten sentences, written in second person "
     "perspective. The persona string should start with \"{persona_string}\"."
-)
-
-STATIC_TEACHER_TEMPLATE = (
-    "For the field of {task_type}, create a teacher persona string containing ten sentences, written in second person "
-    "perspective. The persona string should start with \"{persona_string}\". The persona should answer questions "
-    "directly and then explain them clearly, using a patient and knowledgeable tone. Focus on clarity, structure, and "
-    "accessibility while keeping the explanations engaging and precise."
 )
 
 DYNAMIC_SHORT_TEMPLATE = (
@@ -162,24 +142,85 @@ DYNAMIC_LONG_TEMPLATE = (
     "The string should be tailored to the question:\n \"{question}\""
 )
 
-DYNAMIC_TEACHER_TEMPLATE = (
+BEGINNER_TEACHER_TEMPLATE = (
     "For the field of {task_type}, create a teacher persona string containing ten sentences, written in second person "
-    "perspective. The persona should reflect the knowledge, experience, and expertise needed to answer questions in "
-    "this field accurately. Describe teaching style, tone, and approach, focusing on clear explanations and direct "
-    "answers. Be specific and detailed, but do not include any hints, clues, or conclusions about potential answers. "
+    "perspective. The persona should reflect the knowledge, experience, and communication style required to explain "
+    "this field to a beginner audience with little prior understanding. Describe how you simplify ideas, use intuitive "
+    "language, avoid jargon, and build concepts step by step. Emphasize patience, clarity, encouragement, and an "
+    "approach that focuses on foundational understanding. Do not include any hints, clues, or conclusions about "
+    "potential answers. Start your description with \"You are\".\n\n"
+
+    "Use the following examples as guidance: \n"
+
+    "Question 1\n"
+    "Suppose that an expansionary fiscal policy leads to a large increase in real output and a small increase "
+    "in price level. From this it can be inferred that:\n"
+
+    "Answer\n"
+    "You are a knowledgeable macroeconomist who simplifies complex relationships, connects theory to intuitive "
+    "examples, explains concepts gently and step-by-step, and helps beginners form a solid mental model of how "
+    "fiscal policy affects the economy.\n\n"
+
+    "Question 2\n"
+    "The rate, r, of a zero-order chemical reaction A → B can be expressed as which of the following?:\n"
+
+    "Answer\n"
+    "You are a supportive chemistry instructor who explains reaction rates using familiar analogies, avoids "
+    "technical jargon, reinforces key definitions, and patiently guides beginners toward understanding fundamental "
+    "ideas in chemical kinetics.\n\n"
+
+    "The string should be tailored to the question:\n \"{question}\""
+)
+
+INTERMEDIATE_TEACHER_TEMPLATE = (
+    "For the field of {task_type}, create a teacher persona string containing ten sentences, written in second "
+    "person perspective. The persona should reflect the knowledge and teaching approach suitable for an intermediate "
+    "audience that already understands basic concepts but needs help connecting ideas, applying methods, and "
+    "recognizing common pitfalls. Describe how you balance accessibility with technical depth, introduce formal "
+    "terminology when appropriate, and encourage analytical thinking. Do not include any hints, clues, or conclusions "
+    "about potential answers. Start your description with \"You are\".\n\n"
+
+    "Use the following examples as guidance: \n"
+
+    "Question 1\n"
+    "Suppose that an expansionary fiscal policy leads to a large increase in real output and a small increase "
+    "in price level. From this it can be inferred that:\n"
+
+    "Answer\n"
+    "You are a knowledgeable macroeconomist who connects theoretical frameworks to real-world patterns, uses "
+    "intermediate mathematical reasoning, and helps learners compare models and evaluate policy implications with "
+    "growing independence.\n\n"
+
+    "Question 2\n"
+    "The rate, r, of a zero-order chemical reaction A → B can be expressed as which of the following?:\n"
+
+    "Answer\n"
+    "You are an analytical chemistry mentor who reinforces foundational principles, introduces more advanced "
+    "terminology, highlights experimental considerations, and guides students toward a deeper and more structured "
+    "understanding of chemical kinetics.\n\n"
+
+    "The string should be tailored to the question:\n \"{question}\""
+)
+
+EXPERT_TEACHER_TEMPLATE = (
+    "For the field of {task_type}, create a teacher persona string containing ten sentences, written in second person "
+    "perspective. The persona should reflect the knowledge, specialization, and professional expertise required to "
+    "teach advanced or expert-level learners who already have strong foundational understanding. Describe how you "
+    "engage with technical depth, emphasize rigor, reference advanced methods or frameworks, and communicate with "
+    "precision suitable for expert audiences. Highlight your ability to mentor on complex reasoning, formal analysis, "
+    "and domain-specific best practices. Do not include any hints, clues, or conclusions about potential answers. "
     "Start your description with \"You are\".\n\n"
 
     "Use the following examples as guidance: \n"
 
     "Question 1\n"
     "Suppose that an expansionary fiscal policy leads to a large increase in real output and a small increase "
-    "and price level. From this it can be inferred that:\n"
+    "in price level. From this it can be inferred that:\n"
 
     "Answer\n"
     "You are a knowledgeable macroeconomist who synthesizes theory and empirical evidence, builds and "
     "interprets models and forecasts, assesses fiscal and monetary policy trade-offs, and communicates clear, "
     "practical guidance to policymakers, analysts, and the public.\n\n"
-
 
     "Question 2\n"
     "The rate, r, of a zero-order chemical reaction A → B can be expressed as which of the following?:\n"

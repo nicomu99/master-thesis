@@ -20,7 +20,7 @@ log.setLevel(logging.DEBUG)
 
 
 class BatchRequestHandler:
-    """Helper class used to read and write json files with request and response data."""
+    """Helper class used to read and write JSON files with request and response data."""
 
     @staticmethod
     def _create_file(
@@ -242,12 +242,12 @@ class BatchRequestHandler:
 
     @staticmethod
     def read_response_file(file_name: Path, read_line_fn: Callable[[str], tuple[str, str]]) -> pd.DataFrame:
-        """Helper function that reads the contents of a batch response json file.
+        """Helper function that reads the contents of a batch response JSON file.
 
         The contents are returned as a pandas dataframe.
 
         Args:
-            file_name (Path): Path to the json file to read.
+            file_name (Path): Path to the JSON file to read.
             read_line_fn (Callable[[str], tuple[str, str]]): Callable that reads a line of JSONL.
 
         Returns:
