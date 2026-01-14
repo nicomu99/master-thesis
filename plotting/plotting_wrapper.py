@@ -1,3 +1,4 @@
+"""This module contains a class for creating plots."""
 from typing import Any
 
 import matplotlib.pyplot as plt
@@ -10,7 +11,7 @@ class PlottingWrapper:
     def __init__(self, personas: list[str]):
         self.color_map = self.create_persona_colormap(personas)
         self.judgment_colors = ["red", "grey", "green"]
-        self.judgment_labels = ["Helpful win", "Equal", "Persona win"]
+        self.judgment_labels = ["No Persona win", "Equal", "Persona win"]
 
     @staticmethod
     def create_persona_colormap(
@@ -138,7 +139,8 @@ class PlottingWrapper:
             y_label (str, optional): y-axis label. Defaults to "Percentage".
             title (str, optional): Axis title. Defaults to "Win Rate vs. Ground Truth".
         """
-        for col_idx, col in enumerate(cols):
+        assert_cols = [col for col in cols if col in plot_dict]
+        for col_idx, col in enumerate(assert_cols):
             bottom = 0
             for val_idx, val in enumerate(plot_dict[col]):
                 x_label = " ".join(col.replace("_judgment_option", "").split("_"))

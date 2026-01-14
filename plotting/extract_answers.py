@@ -1,3 +1,4 @@
+"""Helper functions for extracting the answer from LLM generations."""
 import re
 
 
@@ -42,7 +43,7 @@ def extract_answer_math(completion: str) -> str:
 def extract_answer_flores(
     completion: str,
     sample_id: str
-) -> str:
+) -> int:
     """Extracts answers for the flores dataset.
 
     Args:
@@ -50,19 +51,19 @@ def extract_answer_flores(
         sample_id (str): Sample identifier.
 
     Returns:
-        str: The extracted answer.
+        int: The extracted answer.
     """
     sample_number = int(sample_id.split("_")[-1])
-    match_single = re.match(r"The better translation is:\s*(1|2)\b(.*)", completion, re.IGNORECASE | re.DOTALL)
+    match_single = re.match(r"The better translation is:\s*([12])\b(.*)", completion, re.IGNORECASE | re.DOTALL)
     if match_single:
         if (
             sample_number % 2 == 0 and int(match_single.group(1)) == 2 or
             sample_number % 2 == 1 and int(match_single.group(1)) == 1
         ):
-            return "reference"
-        return "persona"
+            return 0
+        return 2
 
     match_equal = re.match(r"Both translations are equal:\s*(.*)", completion, re.IGNORECASE | re.DOTALL)
     if match_equal:
-        return "both"
-    return "no response"
+        return 1
+    return 0

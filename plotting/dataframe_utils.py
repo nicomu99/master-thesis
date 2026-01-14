@@ -1,3 +1,4 @@
+"""This module contains preprocessing functions for creating plots."""
 from typing import Any
 
 import pandas as pd
@@ -118,12 +119,16 @@ def get_plot_dict_stacked(
     for category, group in df.groupby(category_col):
         category_values = {}
         for col in columns:
+            if col not in group.columns:
+                continue
+
             valid = group[group[col] != "no response"][col]
             if valid.empty:
                 shares = [0.0, 0.0, 0.0]
             else:
                 shares = (
                     valid.value_counts(normalize=True)
+                    .rename(index={0: "reference", 1: "both", 2: "persona"})
                     .reindex(labels_order, fill_value=0.0)
                     .tolist()
                 )
