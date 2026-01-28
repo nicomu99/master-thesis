@@ -5,3 +5,6 @@ pydantic
 matplotlib
 PyQt6
 dotenv
+accelerate
+transformers
+datasets
