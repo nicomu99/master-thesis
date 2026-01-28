@@ -21,10 +21,15 @@ class Evaluator:
 
     def __init__(
         self,
+        dataset_path: str | None = None,
         include_datasets: Iterable[str] | None = None,
         exclude_datasets: Iterable[str] | None = None,
     ):
-        self.dataset_handler = DatasetHandler(include_datasets, exclude_datasets)
+        self.dataset_handler = DatasetHandler(
+            dataset_path,
+            include_datasets,
+            exclude_datasets
+        )
 
         self.communication_handler = CommunicationHandler()
         self.persona_registry = PersonaRegistry()

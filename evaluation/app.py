@@ -1,3 +1,4 @@
+import argparse
 import subprocess
 import platform
 from dotenv import load_dotenv
@@ -15,9 +16,9 @@ log.setLevel(logging.DEBUG)
 class App:
     """Small CLI application to control the program."""
 
-    def __init__(self):
+    def __init__(self, dataset_path: str | None):
         self.run = True
-        self.evaluator = Evaluator()
+        self.evaluator = Evaluator(dataset_path)
 
         self.commands = {
             "q": ("Quit program", self.quit_program),
@@ -30,7 +31,7 @@ class App:
             "c": ("Check task statuses", self.check_task_statuses),
             "r": ("Reset tasks", self.reset_tasks),
             "ra": ("Reset tasks to answers pending", self.reset_to_answers),
-            "rj": ("Reset tasks to judgment pending", self.reset_to_judmgents),
+            "rj": ("Reset tasks to judgment pending", self.reset_to_judgments),
             "clear": ("Clears the CLI", self.clear_cli),
             "h": ("Show this help", self.show_help),
         }
@@ -45,7 +46,7 @@ class App:
         chosen_task_ids = self._print_and_evaluate_input(task_ids)
         self.evaluator.reset_tasks_to_answers(chosen_task_ids)
 
-    def reset_to_judmgents(self):
+    def reset_to_judgments(self):
         """Lets the user pick which tasks to reset to the judgment pending status."""
         task_ids = self.evaluator.get_tasks()
         chosen_task_ids = self._print_and_evaluate_input(task_ids)
@@ -220,5 +221,14 @@ if __name__ == "__main__":
     disable_progress_bar()
     disable_progress_bars()
 
-    app = App()
+    parser = argparse.ArgumentParser(
+        description="CLI Application with the intention to communicate to LLM APIs.")
+    parser.add_argument(
+        "--path",
+        help="The data path, used for reading and writing.",
+        type=str,
+        default=None)
+    args = parser.parse_args()
+
+    app = App(args.path)
     app.main()

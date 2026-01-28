@@ -21,10 +21,13 @@ class DatasetHandler:
 
     def __init__(
         self,
+        dataset_path: str | None,
         include_datasets: Iterable[str] | None = None,
         exclude_datasets: Iterable[str] | None = None,
     ) -> None:
-        self.dataset_path = Path("data")
+        self.dataset_path = Path(f"data")
+        if dataset_path is not None:
+            self.dataset_path /= Path(dataset_path)
 
         self.dataset_ids: list[str] = []
         self.dataframes: dict[str, pd.DataFrame] = {}
@@ -200,6 +203,15 @@ class DatasetHandler:
         dataset_id: str,
         category_names: list[str]
     ) -> pd.DataFrame:
+        """Returns a dataframe subset.
+
+        Args:
+            dataset_id (str): String identifier of the dataset.
+            category_names (list[str]): Dataset categories to return.
+
+        Returns:
+            pd.DataFrame: A DataFrame object of the subset defined by category_names.
+        """
         dataset_config = self.dataset_configs[dataset_id]
         dataframe = self.dataframes[dataset_id]
         if len(category_names) == 0:
