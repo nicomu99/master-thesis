@@ -1,20 +1,61 @@
 """Helper functions for extracting the answer from LLM generations."""
 import re
+import pandas as pd
+
+
+def extract_answers(
+    dataframe: pd.DataFrame,
+    columns: list[str],
+    extraction_fn: str
+) -> pd.DataFrame:
+    """Extracts answers from LLM completions.
+
+    Args:
+        dataframe (pd.DataFrame): Dataframe to extract answers from.
+        columns (list[str]): Columns to extract answers from.
+        extraction_fn (str): String identifier of the extraction function to use.
+            Must be 'mmlu', 'flores' or 'math'.
+
+    Returns:
+        pd.DataFrame: A dataframe with extracted answers.
+    """
+    _extraction_fns = {
+        "mmlu": extract_answer_mmlu,
+        "math": extract_answer_math,
+        "flores": extract_answer_flores
+    }
+    if extraction_fn not in _extraction_fns:
+        raise ValueError(
+            "Extraction function unknown. Must be 'mmlu', 'math' or 'flores'."
+        )
+    _extraction_fn = _extraction_fns[extraction_fn]
+
+    dataframe = dataframe.assign(
+        **{
+            f"{column.replace("_answer", "")}": dataframe.apply(
+                lambda row: _extraction_fn(row, column), axis=1)
+            for column in columns
+        }
+    )
+    return dataframe
 
 
 def extract_answer_mmlu(
-    completion: str,
-    answer_range: int
+    sample: pd.Series,
+    column: str
 ) -> str | list[str]:
     """Extracts answers for the MMLU-pro dataset.
 
     Args:
-        completion (str): LLM completion.
-        answer_range (int): Number of answer options in the dataframe.
+        sample (pd.Series): Sample row.
+        column (str): Column identifier.
 
     Returns:
         str | list[str]: The extracted number or a list of numbers.
     """
+    completion = sample[column]
+    answer_range = len(sample["answers"])
+
     option_range = f"A-{chr(65 + answer_range - 1)}"
     pattern = rf"The correct answer is:\s*([{option_range}])\b"
     match = re.search(pattern, completion)
@@ -25,15 +66,20 @@ def extract_answer_mmlu(
     return match.group(1)
 
 
-def extract_answer_math(completion: str) -> str:
+def extract_answer_math(
+    sample: pd.Series,
+    column: str
+) -> str:
     """Extracts answers for the MATH dataset.
 
     Args:
-        completion (str): LLM completion.
+        sample (pd.Series): Sample row.
+        column (str): Column identifier.
 
     Returns:
         str: The extracted answer.
     """
+    completion = sample[column]
     lines = [line.strip() for line in completion.splitlines() if line.strip()]
     if not lines:
         return ""
@@ -41,20 +87,30 @@ def extract_answer_math(completion: str) -> str:
 
 
 def extract_answer_flores(
-    completion: str,
-    sample_id: str
+    sample: pd.Series,
+    column: str,
 ) -> int:
     """Extracts answers for the flores dataset.
 
     Args:
-        completion (str): LLM completion.
-        sample_id (str): Sample identifier.
+        sample (pd.Series): Sample row.
+        column (str): Column identifier.
 
     Returns:
         int: The extracted answer.
     """
+    completion = sample[column]
+    sample_id = sample["static_id"]
     sample_number = int(sample_id.split("_")[-1])
-    match_single = re.match(r"The better translation is:\s*([12])\b(.*)", completion, re.IGNORECASE | re.DOTALL)
+    try:
+        match_single = re.match(r"The better translation is:\s*([12])\b(.*)", completion, re.IGNORECASE | re.DOTALL)
+    except Exception:
+        print(column)
+        print(completion)
+        print(sample_id)
+        print(sample_number)
+        print(sample)
+        raise RuntimeError()
     if match_single:
         if (
             sample_number % 2 == 0 and int(match_single.group(1)) == 2 or
