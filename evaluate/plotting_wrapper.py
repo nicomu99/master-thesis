@@ -6,7 +6,7 @@ from matplotlib.axes import Axes
 
 
 class PlottingWrapper:
-    """Utility wrapper for plotting functions."""
+    """Utility wrapper for evaluate functions."""
 
     def __init__(self, personas: list[str]):
         self.color_map = self.create_persona_colormap(personas)
