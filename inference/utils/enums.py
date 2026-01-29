@@ -79,7 +79,7 @@ class TaskStatus(StringEnum):
         ANSWERS_PENDING: Personas have been merged to the task dataframe and answers can be generated.
         ANSWERS_REQUESTED: A request has been sent for question answering.
         JUDGMENT_PENDING: If the task requires LLM-as-a-judge, the status turns to judgment pending.
-        JUDGMENT_REQUESTED: A request has been sent for judgment evaluation.
+        JUDGMENT_REQUESTED: A request has been sent for judgment inference.
         FINISHED: Answers have been merged to the task dataframe. The task has finished.
     """
     PERSONAS_PENDING = "personas_pending"

@@ -17,7 +17,7 @@ log.setLevel(logging.DEBUG)
 
 
 class Evaluator:
-    """Main evaluation class."""
+    """Main inference class."""
 
     def __init__(
         self,
@@ -86,10 +86,10 @@ class Evaluator:
         return [k for k, v in self.task_infos.items() if v.is_answers_pending()]
 
     def get_judgment_pending_tasks(self) -> list[str]:
-        """Returns a list with all tasks that have missing judgment evaluation.
+        """Returns a list with all tasks that have missing judgment inference.
 
         Returns:
-            list[str]: A list of string identifiers of tasks that have missing judgment evaluation.
+            list[str]: A list of string identifiers of tasks that have missing judgment inference.
         """
         return [k for k, v in self.task_infos.items() if v.is_judgment_pending()]
 
@@ -256,7 +256,7 @@ class Evaluator:
         self,
         task_id: str
     ) -> int:
-        """Sends judgment evaluation requests to the LLM API.
+        """Sends judgment inference requests to the LLM API.
 
         Args:
             task_id (str): String identifier of the task.

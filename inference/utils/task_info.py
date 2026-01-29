@@ -14,7 +14,7 @@ class TaskInfo:
         task_id (str): Task identifier.
         dataset_id (str): Identifier of the associated dataset.
         field (str): High-level field of study of this task.
-        need_judgment (bool): Whether the task requires LLM-as-a-judge evaluation.
+        need_judgment (bool): Whether the task requires LLM-as-a-judge inference.
         status (TaskStatus): The current status of the task. Defaults to PERSONAS_PENDING.
         category_name (None | str): Category identifier of the task. If the dataset of this task contains
             several areas of expertise, this value is used to identify rows of the same expertise.

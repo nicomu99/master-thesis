@@ -5,7 +5,7 @@ from pathlib import Path
 from google import genai
 from google.genai import types
 
-from evaluation.utils import logging
+from inference.utils import logging
 
 from .llm_client import LLMClient
 

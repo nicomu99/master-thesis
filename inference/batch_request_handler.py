@@ -185,7 +185,7 @@ class BatchRequestHandler:
         reference_cfg: PersonaConfig,
         llm_client: LLMClient,
     ) -> tuple[Path, int]:
-        """Creates a request file for judgment evaluation.
+        """Creates a request file for judgment inference.
 
         Args:
             task_config (TaskConfig): Task configuration.

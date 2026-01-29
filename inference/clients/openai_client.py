@@ -4,7 +4,7 @@ from pathlib import Path
 
 from openai import OpenAI
 
-from evaluation.utils import logging
+from inference.utils import logging
 from .llm_client import LLMClient
 
 
