@@ -21,7 +21,7 @@ class OpenAIClient(LLMClient):
     """
 
     def __init__(self):
-        self.model = "gpt-5-nano"
+        self.model = "gpt-4.1-nano"
         self.client = OpenAI()
 
     def get_api_response(self, template: str, **kwargs) -> str:
