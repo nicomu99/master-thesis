@@ -7,4 +7,5 @@ PyQt6
 dotenv
 accelerate
 transformers
-datasets
+flash-attn
+tqdm
