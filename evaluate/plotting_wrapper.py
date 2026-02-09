@@ -25,8 +25,8 @@ class PlottingWrapper:
         Returns:
             dict[str, Any]: Dictionary containing color values.
         """
-        cmap = plt.get_cmap("tab10")
-        colors = {col: cmap(i % 10) for i, col in enumerate(columns)}
+        cmap = plt.get_cmap("Dark2")
+        colors = {col: cmap(i % 8) for i, col in enumerate(columns)}
         return colors
 
     def _plot_bar(
@@ -34,35 +34,42 @@ class PlottingWrapper:
         ax: Axes,
         plot_dict: dict[str, Any],
         bar_label: str,
-        title: str = "Title",
+        title: str | None,
         y_label: str = "Accuracy",
         legend: bool = False
     ):
         bars = []
         for column, value in plot_dict.items():
-            label = " ".join(column.replace("_answer_option", "").split("_"))
-            if label == "no":
-                label = "empty"
+            label = " ".join(
+                [c.capitalize() for c in column.replace("_answer_option", "").split("_")]
+            )
+            if label == "No":
+                label = "No Persona"
             plot_bar = ax.bar(column, value, label=label, color=self.color_map[column])
             bars.append([plot_bar, value])
 
         # Add text labels
         for plot_bar, val in bars:
             for rect in plot_bar:
+                y_pos = rect.get_height()
+                if val < 0:
+                    y_pos = 0
                 ax.text(
                     rect.get_x() + rect.get_width() / 2,
-                    rect.get_height(),
+                    y_pos,
                     bar_label.format(val=val),
                     ha="center",
                     va="bottom",
                     fontsize=9,
                 )
 
-        ax.set_ylabel(y_label)
-        ax.set_xlabel("")
-        ax.set_title(title)
+        ax.set_ylabel(y_label, fontsize=12)
+        ax.set_xlabel("Persona Type", fontsize=12)
+        if title is not None:
+            ax.set_title(title, fontsize=12, loc="left")
         ax.set_xticks([])
         ax.set_xticklabels([])
+        ax.spines[["right", "top"]].set_visible(False)
         if legend:
             ax.legend(title="Persona types")
 
@@ -71,7 +78,7 @@ class PlottingWrapper:
         ax: Axes,
         plot_dict: dict[str, Any],
         bar_label_template: str = "{val:.3f}",
-        title: str = "Title",
+        title: str | None = None,
         y_label: str = "Accuracy",
         legend: bool = True
     ):
@@ -100,7 +107,7 @@ class PlottingWrapper:
         plot_dict: dict[str, Any],
         bar_label_template: str = "{val:+.3f}",
         title: str = "Title",
-        y_label: str = "Accuracy Gain",
+        y_label: str = "$\Delta$ Accuracy",
         legend: bool = False
     ):
         """Plots a bar plot with relative accuracy differences.
@@ -127,8 +134,8 @@ class PlottingWrapper:
         ax: Axes,
         plot_dict: dict[str, list[int]],
         cols: list[str],
-        y_label: str = "Percentage",
-        title: str = "Win Rate vs. Ground Truth",
+        y_label: str = "Win Rate",
+        title: str | None = None,
     ) -> None:
         """Plot a stacked bar chart.
 
@@ -137,13 +144,15 @@ class PlottingWrapper:
             plot_dict (dict[str, list[int]]): Dictionary containing plot values.
             cols (list[str]): The columns to plot.
             y_label (str, optional): y-axis label. Defaults to "Percentage".
-            title (str, optional): Axis title. Defaults to "Win Rate vs. Ground Truth".
+            title (str, optional): Axis title. Defaults to None.
         """
         assert_cols = [col for col in cols if col in plot_dict]
         for col_idx, col in enumerate(assert_cols):
             bottom = 0
             for val_idx, val in enumerate(plot_dict[col]):
-                x_label = " ".join(col.replace("_judgment_option", "").split("_"))
+                x_label = " ".join(
+                    [c.capitalize() for c in col.replace("_judgment", "").split("_")]
+                )
                 if x_label == "no":
                     x_label = "empty"
                 ax.bar(
@@ -158,10 +167,12 @@ class PlottingWrapper:
                         ha="center", va="center", color="white", fontsize=9)
                 bottom += val
 
-        ax.set_ylabel(y_label)
+        ax.set_ylabel(y_label, fontsize=12)
         ax.set_ylim(0, 1)
-        ax.set_title(title)
+        if title is not None:
+            ax.set_title(title, fontsize=12, loc="left")
         ax.legend()
+        ax.spines[["right", "top"]].set_visible(False)
 
         for label in ax.get_xticklabels()[1::2]:
             label.set_y(label.get_position()[1] - 0.05)
