@@ -33,7 +33,7 @@ def compute_accuracy_df(
 def compute_accuracy_difference(
     df: pd.DataFrame,
     reference_column: str,
-    drop_cols: list[str],
+    drop_cols: list[str] = None,
     category_col: str = "category"
 ) -> pd.DataFrame:
     """Computes accuracy difference against a reference column.
@@ -47,13 +47,16 @@ def compute_accuracy_difference(
     Returns:
         pd.DataFrame: A DataFrame containing computed accuracy differences.
     """
+    if drop_cols is None:
+        drop_cols = []
+    drop_cols.extend([reference_column])
+
     gains_vs_reference = df.copy()
     for col in df.columns:
         if col in (category_col, reference_column):
             continue
         gains_vs_reference[col] = df[col] - df[reference_column]
-    drop_cols.extend([reference_column])
-    gains_vs_reference.drop(columns=drop_cols)
+    gains_vs_reference = gains_vs_reference.drop(columns=drop_cols)
     return gains_vs_reference
 
 
@@ -134,4 +137,47 @@ def get_plot_dict_stacked(
                 )
             category_values[col] = shares
         accuracy_dict[category] = category_values
+    return accuracy_dict
+
+
+def get_plot_dict_cum(
+    df: pd.DataFrame,
+    columns: list[str],
+) -> dict[str, list[int]]:
+    """Returns a dictionary for creating stacked bar charts.
+
+    The dictionary has format:
+
+    {
+        category_1: {
+            column_a: [percentage_ref, percentage_tied, percentage_persona],
+        },
+        ...
+    }
+
+    Args:
+        df (pd.DataFrame): DataFrame with plot data.
+        columns (list[str]): The columns for which to calculate the percentages for.
+
+    Returns:
+        dict[str, list[int]]: A dictionary with one entry per category. Each entry has another dictionary
+            containing persona identifiers and lists with percentage values of win rates.
+    """
+    labels_order = ["reference", "both", "persona"]
+    accuracy_dict = {}
+    for col in columns:
+        if col not in df.columns:
+            continue
+
+        valid = df.loc[df[col] != "no response", col]
+        if valid.empty:
+            shares = [0.0, 0.0, 0.0]
+        else:
+            shares = (
+                valid.value_counts(normalize=True)
+                .rename(index={0: "reference", 1: "both", 2: "persona"})
+                .reindex(labels_order, fill_value=0.0)
+                .tolist()
+            )
+        accuracy_dict[col] = shares
     return accuracy_dict
