@@ -32,7 +32,7 @@ class BatchRequestHandler:
         return request_file
 
     @staticmethod
-    def _create_question_prompt(
+    def create_question_prompt(
         task_data: dict[str, str],
         question_type: QuestionType,
     ) -> str:
@@ -129,7 +129,7 @@ class BatchRequestHandler:
         with request_file.open("w", encoding="utf-8") as f:
             for row_dict in dataframe.to_dict(orient="records"):
                 row_dict = cast(dict[str, str], row_dict)
-                prompt = self._create_question_prompt(
+                prompt = self.create_question_prompt(
                     row_dict, question_type)
 
                 for persona_config in persona_configs:
