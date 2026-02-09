@@ -1,3 +1,4 @@
+from typing import Generator
 from collections.abc import Iterable
 
 import pandas as pd
@@ -7,7 +8,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from .dataset_handler import DatasetHandler
 from .communication_handler import CommunicationHandler
 from .persona_registry import PersonaRegistry
-from .utils import columns_full, load_dataclass_dict, save_dataclass_dict, load_task_config
+from .utils import columns_full, load_dataclass_dict, save_dataclass_dict, load_task_config, QuestionType
 from .utils import TaskInfo, BatchInfo, TEMP_PATH
 
 from .utils import logging
@@ -216,9 +217,9 @@ class Evaluator:
         self._save()
         return result
 
-    def generate_all_static_personas(self) -> None:
+    def generate_all_static_personas(self):
         """Creates static personas on task level for all tasks."""
-        for tid, task_info in self._task_iterator(desc="Processing"):
+        for tid, task_info in self.task_iterator(desc="Processing"):
             task_df = self.dataset_handler.get_task_df_from_info(task_info)
             task_df = self._generate_empty_personas(task_df)
             task_df = self._generate_static_personas(task_info, task_df)
@@ -311,10 +312,18 @@ class Evaluator:
                 task_info.update_status(increment=batch_info.is_retrieved())
         self._save()
 
-    def _task_iterator(
+    def task_iterator(
         self,
         desc: str,
-    ):
+    ) -> Generator[tuple[str, TaskInfo]]:
+        """Iterates all tasks with a tqdm decorator.
+
+        Args:
+            desc (str): Description used by tqdm.
+
+        Returns:
+            Generator[tuple[str, TaskInfo]]: Tuples with the task id and task info.
+        """
         task_iterator = tqdm(self.task_infos.items(), desc=desc)
         with logging_redirect_tqdm(loggers=[log]):
             for task_id, task_info in task_iterator:
@@ -323,6 +332,14 @@ class Evaluator:
 
     def _get_dataset_tasks(self, dataset_id: str) -> list[TaskInfo]:
         return [t for t in self.task_infos.values() if t.dataset_id == dataset_id]
+
+    def get_dataset_names(self) -> set[str]:
+        """Returns the unique dataset names.
+
+        Returns:
+            set[str]: A set with dataset names.
+        """
+        return {t.dataset_id for t in self.task_infos.values()}
 
     def get_data(
         self,
@@ -340,6 +357,21 @@ class Evaluator:
         task_ids = [t.task_id for t in dataset_tasks]
         task_names = [t.category_name for t in dataset_tasks if t.category_name is not None]
         return task_ids, self.dataset_handler.get_data(dataset_id, task_names)
+
+    def get_question_type(
+        self,
+        dataset_id: str
+    ) -> QuestionType:
+        """Returns the question type present in a dataset.
+
+        Args:
+            dataset_id (str): Dataset identifier.
+
+        Returns:
+            QuestionType: Question type associated with a dataset.
+        """
+        dataset_config = self.dataset_handler.get_config(dataset_id)
+        return dataset_config.question_type
 
     def get_persona_registry(self) -> PersonaRegistry:
         """Returns the persona registry.
