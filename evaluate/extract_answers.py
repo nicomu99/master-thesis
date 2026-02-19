@@ -83,7 +83,38 @@ def extract_answer_math(
     lines = [line.strip() for line in completion.splitlines() if line.strip()]
     if not lines:
         return ""
-    return lines[-1]
+    if lines[-1] == "\\]":
+        lines = lines[:-1]
+    if lines[-1] == "}":
+        lines = lines[:-1]
+
+    answer = lines[-1]
+    answer = "".join(answer.split())
+
+    # Get rid of leading point
+    if answer.endswith("."):
+        answer = answer[:-1]
+    if answer.startswith("\\[") and answer.endswith("\\]"):
+        answer = answer[2:-2]
+
+    wrappers = ("boxed", "text", "mathrm", "mathbf")  # choose your safe list
+    wrapper_re = re.compile(rf"^\\(?:{'|'.join(wrappers)})\{{(.*)\}}$")
+    while True:
+        m = wrapper_re.match(answer)
+        if not m:
+            break
+        answer = m.group(1)
+
+    # Remove wrapping $$...$$ or $...$
+    if answer.startswith("$$") and answer.endswith("$$"):
+        answer = answer[2:-2]
+    elif answer.startswith("$") and answer.endswith("$"):
+        answer = answer[1:-1]
+    # Remove \( and \)
+    if answer.startswith("\\(") and answer.endswith("\\)"):
+        answer = answer[2:-2]
+
+    return answer
 
 
 def extract_answer_flores(
