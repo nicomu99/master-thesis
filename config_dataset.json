@@ -27,5 +27,13 @@
         "question_type": "translation",
         "question_column": "text",
         "category_column": "iso_639_3"
+    },
+    "IFBench": {
+        "hf_config": {
+            "huggingface_id": "allenai/IFBench_test",
+            "split": "train"
+        },
+        "question_type": "open",
+        "question_column": "prompt"
     }
 }

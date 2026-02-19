@@ -57,5 +57,10 @@
             "need_judgment": true,
             "category_name": "swh"
         }
+    },
+    "IFBench": {
+        "IfBench_all": {
+            "field": "instruction following"
+        }
     }
 }
