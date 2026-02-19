@@ -304,11 +304,12 @@ class Evaluator:
 
             response = self.communication_handler.read_batch_file(batch_info)
             if isinstance(response, pd.DataFrame):
-                batch_info.finish_batch()
                 self.dataset_handler.merge_and_write(dataset_id, response)
+                batch_info.finish_batch()
 
             if response is not False:
                 task_info.update_status(increment=batch_info.is_retrieved())
+        self.communication_handler.save()
         self._save()
 
     def task_iterator(

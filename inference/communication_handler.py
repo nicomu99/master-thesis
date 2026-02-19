@@ -37,7 +37,8 @@ class CommunicationHandler:
         self.batches_info_store = load_dataclass_dict(
             self.batches_info_file, BatchInfo, BatchInfo.get_key_field())
 
-    def _save(self):
+    def save(self):
+        """Saves the batch info store."""
         save_dataclass_dict(self.batches_info_file, self.batches_info_store, BatchInfo.get_key_field())
 
     def _get_client(self, name: str) -> LLMClient:
@@ -173,7 +174,7 @@ class CommunicationHandler:
                 batch_info.update_batch(status_output)
             except (APIConnectionError, ConnectionError, ValueError) as e:
                 log.error("Error: %s", e, exc_info=True)
-        self._save()
+        self.save()
         return active_batches
 
     def download_batch_files(
@@ -217,7 +218,7 @@ class CommunicationHandler:
             except (ValueError, APIConnectionError) as e:
                 log.error("Error: %s", e, exc_info=True)
 
-        self._save()
+        self.save()
         return retrieved_batches
 
     def read_batch_file(
@@ -263,7 +264,7 @@ class CommunicationHandler:
             batch_info = BatchInfo(
                 batch_id, task_info.task_id, batch_type, progress=request_count, client=llm_name)
             self.batches_info_store[batch_info.batch_id] = batch_info
-            self._save()
+            self.save()
             return request_count
         except (ValueError, OSError, ConnectionError, KeyError) as e:
             log.error(
