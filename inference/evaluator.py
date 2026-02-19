@@ -1,5 +1,4 @@
-from typing import Generator
-from collections.abc import Iterable
+from typing import Iterable
 
 import pandas as pd
 from tqdm import tqdm
@@ -315,14 +314,14 @@ class Evaluator:
     def task_iterator(
         self,
         desc: str,
-    ) -> Generator[tuple[str, TaskInfo]]:
+    ) -> Iterable[tuple[str, TaskInfo]]:
         """Iterates all tasks with a tqdm decorator.
 
         Args:
             desc (str): Description used by tqdm.
 
         Returns:
-            Generator[tuple[str, TaskInfo]]: Tuples with the task id and task info.
+            Iterable[tuple[str, TaskInfo]]: Tuples with the task id and task info.
         """
         task_iterator = tqdm(self.task_infos.items(), desc=desc)
         with logging_redirect_tqdm(loggers=[log]):
