@@ -16,9 +16,9 @@ log.setLevel(logging.DEBUG)
 class App:
     """Small CLI application to control the program."""
 
-    def __init__(self, dataset_path: str | None):
+    def __init__(self, dataset_path: str | None, openai_model: str):
         self.run = True
-        self.evaluator = Evaluator(dataset_path)
+        self.evaluator = Evaluator(dataset_path, openai_model)
 
         self.commands = {
             "q": ("Quit program", self.quit_program),
@@ -227,8 +227,15 @@ if __name__ == "__main__":
         "--path",
         help="The data path, used for reading and writing.",
         type=str,
-        default=None)
+        default=None
+    )
+    parser.add_argument(
+        "--model",
+        help="The model used for inference.",
+        type=str,
+        default="gpt-5.0-nano"
+    )
     args = parser.parse_args()
 
-    app = App(args.path)
+    app = App(args.path, args.model)
     app.main()

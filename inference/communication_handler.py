@@ -21,9 +21,9 @@ log.setLevel(logging.INFO)
 class CommunicationHandler:
     """Primary class for communicating with the api."""
 
-    def __init__(self):
+    def __init__(self, openai_model: str = "gpt-5.0-nano"):
         self.clients = {
-            "openai": OpenAIClient(),
+            "openai": OpenAIClient(openai_model),
             "genai": GenAIClient()
         }
 

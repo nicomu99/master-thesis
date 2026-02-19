@@ -22,6 +22,7 @@ class Evaluator:
     def __init__(
         self,
         dataset_path: str | None = None,
+        openai_model: str | None = None,
         include_datasets: Iterable[str] | None = None,
         exclude_datasets: Iterable[str] | None = None,
     ):
@@ -31,7 +32,7 @@ class Evaluator:
             exclude_datasets
         )
 
-        self.communication_handler = CommunicationHandler()
+        self.communication_handler = CommunicationHandler(openai_model)
         self.persona_registry = PersonaRegistry()
 
         self.config_path = "config_task.json"

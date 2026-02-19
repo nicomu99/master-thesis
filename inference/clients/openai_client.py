@@ -20,8 +20,8 @@ class OpenAIClient(LLMClient):
         client (OpenAI): Instance of the official OpenAI client used to perform API operations.
     """
 
-    def __init__(self):
-        self.model = "gpt-4.1-nano"
+    def __init__(self, model: str):
+        self.model = model
         self.client = OpenAI()
 
     def get_api_response(self, template: str, **kwargs) -> str:
