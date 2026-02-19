@@ -4,7 +4,7 @@ openai
 pydantic
 matplotlib
 PyQt6
-dotenv
+python-dotenv
 accelerate
 transformers
 flash-attn
