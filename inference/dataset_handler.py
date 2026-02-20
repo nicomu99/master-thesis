@@ -214,7 +214,7 @@ class DatasetHandler:
         """
         dataset_config = self.dataset_configs[dataset_id]
         dataframe = self.dataframes[dataset_id]
-        if len(category_names) == 0:
+        if dataset_config.category_column is None or len(category_names) == 0:
             return dataframe
         return dataframe[dataframe[dataset_config.category_column].isin(category_names)]
 
