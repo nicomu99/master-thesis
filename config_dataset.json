@@ -35,5 +35,13 @@
         },
         "question_type": "open",
         "question_column": "prompt"
+    },
+    "alpaca": {
+        "hf_config": {
+            "huggingface_id": "tatsu-lab/alpaca_eval",
+            "split": "eval"
+        },
+        "question_type": "open",
+        "question_column": "instruction"
     }
 }

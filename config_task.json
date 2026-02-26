@@ -43,23 +43,38 @@
     },
     "flores": {
         "flores_deu": {
-            "field": "german to english translation",
+            "field": "German to English translation",
             "need_judgment": true,
             "category_name": "deu"
         },
         "flores_cmn": {
-            "field": "chinese to english translation",
+            "field": "Chinese to English translation",
             "need_judgment": true,
             "category_name": "cmn"
         },
         "flores_swh": {
-            "field": "swahili to english translation",
+            "field": "Swahili to English translation",
             "need_judgment": true,
             "category_name": "swh"
+        },
+        "flores_spa": {
+            "field": "Spanish to English translation",
+            "need_judgment": true,
+            "category_name": "spa"
+        },
+        "flores_ace": {
+            "field": "Arab to English translation",
+            "need_judgment": true,
+            "category_name": "ace"
         }
     },
     "IFBench": {
         "IfBench_all": {
+            "field": "instruction following"
+        }
+    },
+    "alpaca": {
+        "alpaca_all": {
             "field": "instruction following"
         }
     }
