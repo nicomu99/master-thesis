@@ -128,9 +128,9 @@ class DatasetHandler:
             load_name = hf_config.load_name
             dataset_split = hf_config.split
             if load_name:
-                dataset = load_dataset(hf_id, split=dataset_split, name=load_name)
+                dataset = load_dataset(hf_id, split=dataset_split, name=load_name, trust_remote_code=True)
             else:
-                dataset = load_dataset(hf_id, split=dataset_split)
+                dataset = load_dataset(hf_id, split=dataset_split, trust_remote_code=True)
 
             assert isinstance(dataset, Dataset), \
                 f"Error while loading {dataset_id}: Wrong dataset type {type(dataset)}, should be Dataset."
