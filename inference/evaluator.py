@@ -1,5 +1,7 @@
 from typing import Iterable
 
+from pathlib import Path
+
 import pandas as pd
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
@@ -8,7 +10,7 @@ from .dataset_handler import DatasetHandler
 from .communication_handler import CommunicationHandler
 from .persona_registry import PersonaRegistry
 from .utils import columns_full, load_dataclass_dict, save_dataclass_dict, load_task_config, QuestionType
-from .utils import TaskInfo, BatchInfo, TEMP_PATH
+from .utils import TaskInfo, BatchInfo
 
 from .utils import logging
 
@@ -26,18 +28,23 @@ class Evaluator:
         include_datasets: Iterable[str] | None = None,
         exclude_datasets: Iterable[str] | None = None,
     ):
+        self.dataset_path = Path("data")
+        if dataset_path is not None:
+            self.dataset_path /= Path(dataset_path)
         self.dataset_handler = DatasetHandler(
-            dataset_path,
+            self.dataset_path,
             include_datasets,
             exclude_datasets
         )
 
-        self.communication_handler = CommunicationHandler(openai_model)
+        self.communication_handler = CommunicationHandler(
+            self.dataset_path, openai_model)
+
         self.persona_registry = PersonaRegistry()
 
         self.config_path = "config_task.json"
 
-        self.task_info_file = TEMP_PATH / "task_info.json"
+        self.task_info_file = self.dataset_path / "task_info.json"
         self.task_infos: dict[str, TaskInfo] = {}
         self._load()
 
@@ -69,6 +76,18 @@ class Evaluator:
             list[str]: A list of string identifiers of tasks.
         """
         return list(self.task_infos)
+
+    def get_judgment_tasks(self) -> list[str]:
+        """Returns a list with all task identifiers of tasks that require judgments.
+
+        Returns:
+            list[str]: A list of string identifiers of tasks.
+        """
+        task_ids = [
+            tid for tid, task_info in self.task_infos.items()
+            if task_info.need_judgment
+        ]
+        return task_ids
 
     def get_personas_pending_tasks(self) -> list[str]:
         """Returns a list with all tasks that have missing personas.
@@ -342,6 +361,11 @@ class Evaluator:
         """
         return {t.dataset_id for t in self.task_infos.values()}
 
+    def quit(self):
+        """Ends the program."""
+        self._save()
+        self.communication_handler.save()
+
     def get_data(
         self,
         dataset_id: str
@@ -358,6 +382,19 @@ class Evaluator:
         task_ids = [t.task_id for t in dataset_tasks]
         task_names = [t.category_name for t in dataset_tasks if t.category_name is not None]
         return task_ids, self.dataset_handler.get_data(dataset_id, task_names)
+
+    def save_data(
+        self,
+        dataset_id: str,
+        subset_df: pd.DataFrame
+    ):
+        """Save the subset dataframe.
+
+        Args:
+            dataset_id (str): String identifier of the dataset.
+            subset_df (pd.DataFrame): Subset dataframe that will be merged into the dataset.
+        """
+        self.dataset_handler.merge_and_write(dataset_id, subset_df)
 
     def get_question_type(
         self,

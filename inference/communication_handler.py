@@ -11,7 +11,6 @@ from .persona_registry import PersonaConfig
 from .utils import TaskInfo, BatchInfo, QuestionType, BatchType
 from .batch_request_handler import BatchRequestHandler
 from .utils import load_dataclass_dict, save_dataclass_dict
-from .utils import TEMP_PATH
 from .utils import logging
 
 log = logging.getLogger(__name__)
@@ -21,7 +20,11 @@ log.setLevel(logging.INFO)
 class CommunicationHandler:
     """Primary class for communicating with the api."""
 
-    def __init__(self, openai_model: str = "gpt-5.0-nano"):
+    def __init__(
+        self,
+        dataset_path: Path,
+        openai_model: str = "gpt-5.0-nano"
+    ):
         self.clients = {
             "openai": OpenAIClient(openai_model),
             "genai": GenAIClient()
@@ -29,7 +32,7 @@ class CommunicationHandler:
 
         self.request_handler = BatchRequestHandler()
 
-        self.batches_info_file = TEMP_PATH / "batches_info_file.json"
+        self.batches_info_file = dataset_path / "batches_info_file.json"
         self.batches_info_store = {}
         self._load()
 

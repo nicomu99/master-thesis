@@ -48,7 +48,7 @@ class App:
 
     def reset_to_judgments(self):
         """Lets the user pick which tasks to reset to the judgment pending status."""
-        task_ids = self.evaluator.get_tasks()
+        task_ids = self.evaluator.get_judgment_tasks()
         chosen_task_ids = self._print_and_evaluate_input(task_ids)
         self.evaluator.reset_tasks_to_judgments(chosen_task_ids)
 
@@ -131,6 +131,7 @@ class App:
 
     def quit_program(self):
         """Quits the program."""
+        self.evaluator.quit()
         self.run = False
 
     def check_task_statuses(self):

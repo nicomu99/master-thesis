@@ -21,14 +21,11 @@ class DatasetHandler:
 
     def __init__(
         self,
-        dataset_path: str | None,
+        dataset_path: Path,
         include_datasets: Iterable[str] | None = None,
         exclude_datasets: Iterable[str] | None = None,
     ) -> None:
-        self.dataset_path = Path(f"data")
-        if dataset_path is not None:
-            self.dataset_path /= Path(dataset_path)
-
+        self.dataset_path = dataset_path
         self.dataset_ids: list[str] = []
         self.dataframes: dict[str, pd.DataFrame] = {}
         self.dataset_configs: dict[str, DatasetConfig] = {}
