@@ -3752,7 +3752,7 @@
     "batches/nzzeyeunqpiqiopjaelxsydk34mzti8ygr7c": {
         "task_id": "flores_cmn",
         "batch_type": "judgment",
-        "status": "validating",
+        "status": "retrieved",
         "progress": [
             400,
             0,
@@ -3765,7 +3765,7 @@
     "batches/3dqe1zpjie774nk33vl8kjgdmbn5uuhmquu6": {
         "task_id": "flores_swh",
         "batch_type": "judgment",
-        "status": "validating",
+        "status": "retrieved",
         "progress": [
             400,
             0,
@@ -3778,7 +3778,7 @@
     "batches/jc9b7chqyx22wi4no96p076zfjrhgw27nzxk": {
         "task_id": "flores_spa",
         "batch_type": "judgment",
-        "status": "validating",
+        "status": "retrieved",
         "progress": [
             2200,
             0,
@@ -3791,7 +3791,7 @@
     "batches/ftnpxitr232g1m5n1dullpsv8hkrwivvgd7m": {
         "task_id": "flores_ace",
         "batch_type": "judgment",
-        "status": "validating",
+        "status": "retrieved",
         "progress": [
             2200,
             0,
