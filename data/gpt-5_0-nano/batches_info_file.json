@@ -3739,7 +3739,7 @@
     "batches/5xhau5khusxolu06k0jocfqfzil17etrbd7e": {
         "task_id": "flores_deu",
         "batch_type": "judgment",
-        "status": "validating",
+        "status": "retrieved",
         "progress": [
             400,
             0,
@@ -3804,7 +3804,7 @@
     "batches/d6nedvkn9mw6ix2q9znxn9avabqtr7nctujg": {
         "task_id": "flores_deu",
         "batch_type": "judgment",
-        "status": "retrieved",
+        "status": "validating",
         "progress": [
             2200,
             0,
