@@ -1,0 +1,236 @@
+{
+    "batch_69a15bdda6208190a8d86d3bc59d3a09": {
+        "task_id": "mmlu-pro_math",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            2400,
+            1729,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15be1dff08190ae30867a43dbe39a": {
+        "task_id": "mmlu-pro_physics",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            2400,
+            204,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15be61f4c8190b1e4246e690ffb92": {
+        "task_id": "mmlu-pro_philosophy",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            2400,
+            204,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15bea3c5c8190accb23100d84d2ae": {
+        "task_id": "mmlu-pro_chemistry",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            2400,
+            0,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15bf01af88190bb30315e9bd7dfe6": {
+        "task_id": "mmlu-pro_engineering",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            2400,
+            290,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15bf483f88190bb8bc1227a5f5321": {
+        "task_id": "mmlu-pro_economics",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            2400,
+            108,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15bf6db808190b7113f8e07a58fc9": {
+        "task_id": "MATH_algebra",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            1488,
+            35,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15bf9073881908f16a89e5d454277": {
+        "task_id": "MATH_intermediate_algebra",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            1164,
+            0,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15bfac2248190a7a8d558bf133e96": {
+        "task_id": "MATH_prealgebra",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            984,
+            0,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15bfce4e8819095b01cc9c8fb1932": {
+        "task_id": "MATH_number_theory",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            744,
+            7,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15bfe8c6081909d7c03ab5e493ad5": {
+        "task_id": "MATH_precalculus",
+        "batch_type": "answers",
+        "status": "validating",
+        "progress": [
+            672,
+            0,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15c021f88819080cdc4a4cc46e7e5": {
+        "task_id": "flores_deu",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            2400,
+            0,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15c04f9d881909e787de31d06f5a4": {
+        "task_id": "flores_cmn",
+        "batch_type": "answers",
+        "status": "validating",
+        "progress": [
+            2400,
+            0,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15c08e0fc819089e4a53f11429350": {
+        "task_id": "flores_swh",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            2400,
+            0,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15c0bddac8190af5904a9d87e124e": {
+        "task_id": "flores_spa",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            2400,
+            0,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15c0f3a288190a56195c1bafb0b44": {
+        "task_id": "flores_ace",
+        "batch_type": "answers",
+        "status": "validating",
+        "progress": [
+            2400,
+            0,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15c13b66481909177908a959d9044": {
+        "task_id": "IfBench_all",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            3600,
+            300,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69a15c18cacc8190ada7ea500d24bac4": {
+        "task_id": "alpaca_all",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            6000,
+            0,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    }
+}
