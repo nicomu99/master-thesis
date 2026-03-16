@@ -366,5 +366,85 @@
             "local_file_path": "temp/flores_ace/output/batches_cbs26ube89i5h5he5gx204r14nrw3cfmspwr.jsonl"
         },
         "error_file": null
+    },
+    "batches/as3q3odtqpqfynl7ru76sd87f5ogz4akfrly": {
+        "task_id": "flores_deu",
+        "batch_type": "judgment",
+        "status": "retrieved",
+        "progress": [
+            2200,
+            0,
+            0
+        ],
+        "client": "genai",
+        "output_file": {
+            "remote_file_id": "files/batch-as3q3odtqpqfynl7ru76sd87f5ogz4akfrly",
+            "local_file_path": "temp/flores_deu/output/batches_as3q3odtqpqfynl7ru76sd87f5ogz4akfrly.jsonl"
+        },
+        "error_file": null
+    },
+    "batches/hm7yj6ppwc8vejwy5r3hz1od6vsymc8klag5": {
+        "task_id": "flores_cmn",
+        "batch_type": "judgment",
+        "status": "retrieved",
+        "progress": [
+            2200,
+            0,
+            0
+        ],
+        "client": "genai",
+        "output_file": {
+            "remote_file_id": "files/batch-hm7yj6ppwc8vejwy5r3hz1od6vsymc8klag5",
+            "local_file_path": "temp/flores_cmn/output/batches_hm7yj6ppwc8vejwy5r3hz1od6vsymc8klag5.jsonl"
+        },
+        "error_file": null
+    },
+    "batches/av9a13xi8iawtowpvkv8wm7lzdfx2vd9may5": {
+        "task_id": "flores_swh",
+        "batch_type": "judgment",
+        "status": "retrieved",
+        "progress": [
+            2200,
+            0,
+            0
+        ],
+        "client": "genai",
+        "output_file": {
+            "remote_file_id": "files/batch-av9a13xi8iawtowpvkv8wm7lzdfx2vd9may5",
+            "local_file_path": "temp/flores_swh/output/batches_av9a13xi8iawtowpvkv8wm7lzdfx2vd9may5.jsonl"
+        },
+        "error_file": null
+    },
+    "batches/7eekk74pvi3b9hcgxq3koliqteftjdz8vhd0": {
+        "task_id": "flores_spa",
+        "batch_type": "judgment",
+        "status": "retrieved",
+        "progress": [
+            2200,
+            0,
+            0
+        ],
+        "client": "genai",
+        "output_file": {
+            "remote_file_id": "files/batch-7eekk74pvi3b9hcgxq3koliqteftjdz8vhd0",
+            "local_file_path": "temp/flores_spa/output/batches_7eekk74pvi3b9hcgxq3koliqteftjdz8vhd0.jsonl"
+        },
+        "error_file": null
+    },
+    "batches/xs9uk5iownif5gk5japehnbcgfz6x33xzvow": {
+        "task_id": "flores_ace",
+        "batch_type": "judgment",
+        "status": "retrieved",
+        "progress": [
+            2200,
+            0,
+            0
+        ],
+        "client": "genai",
+        "output_file": {
+            "remote_file_id": "files/batch-xs9uk5iownif5gk5japehnbcgfz6x33xzvow",
+            "local_file_path": "temp/flores_ace/output/batches_xs9uk5iownif5gk5japehnbcgfz6x33xzvow.jsonl"
+        },
+        "error_file": null
     }
 }
