@@ -157,25 +157,44 @@ class Evaluator:
         persona_templates: dict[str, str],
     ):
         if columns_full(task_df, list(persona_templates)):
-            return task_df
+            return task_df, 0
         persona = self.persona_registry.get_base_persona_string()
 
         personas = {}
+        failure_count = 0
         for persona_name, prompt_template in persona_templates.items():
             client_kwargs = {
                 "task_type": task_info.field, "persona_string": persona}
-            persona = self.communication_handler.get_api_response(
-                prompt_template, "openai", **client_kwargs)
+            try:
+                persona_response = self.communication_handler.get_api_response(
+                    prompt_template, "openai", **client_kwargs)
+            except Exception as e:
+                failure_count += 1
+                log.error("Static persona request failed: %s", e, exc_info=True)
+                personas[persona_name] = None
+                continue
+
+            if persona_response == "No response":
+                failure_count += 1
+                personas[persona_name] = None
+                continue
+
+            persona = persona_response
 
             personas[persona_name] = persona
         task_df = task_df.assign(**personas)
-        return task_df
+        if failure_count > 0:
+            print(
+                f"Static persona generation for task {task_info.task_id} had "
+                f"{failure_count} failed requests."
+            )
+        return task_df, failure_count
 
     def _generate_static_personas(
         self,
         task_info: TaskInfo,
         task_df: pd.DataFrame
-    ) -> pd.DataFrame:
+    ) -> tuple[pd.DataFrame, int]:
         persona_templates = self.persona_registry.get_static_templates()
         return self._static_persona_helper(task_info, task_df, persona_templates)
 
@@ -183,7 +202,7 @@ class Evaluator:
         self,
         task_info: TaskInfo,
         task_df: pd.DataFrame,
-    ) -> pd.DataFrame:
+    ) -> tuple[pd.DataFrame, int]:
         persona_templates = self.persona_registry.get_teacher_static_templates()
         return self._static_persona_helper(task_info, task_df, persona_templates)
 
@@ -225,8 +244,8 @@ class Evaluator:
         task_df = self.dataset_handler.get_task_df_from_info(task_info)
 
         task_df = self._generate_empty_personas(task_df)
-        task_df = self._generate_static_personas(task_info, task_df)
-        task_df = self._generate_teacher_personas(task_info, task_df)
+        task_df, _ = self._generate_static_personas(task_info, task_df)
+        task_df, _ = self._generate_teacher_personas(task_info, task_df)
         self.dataset_handler.merge_and_write(task_info.dataset_id, task_df)
 
         result = self._generate_dynamic_personas(task_info, task_df)
@@ -242,8 +261,8 @@ class Evaluator:
         for tid, task_info in self.task_iterator(desc="Processing"):
             task_df = self.dataset_handler.get_task_df_from_info(task_info)
             task_df = self._generate_empty_personas(task_df)
-            task_df = self._generate_static_personas(task_info, task_df)
-            task_df = self._generate_teacher_personas(task_info, task_df)
+            task_df, _ = self._generate_static_personas(task_info, task_df)
+            task_df, _ = self._generate_teacher_personas(task_info, task_df)
             self.dataset_handler.merge_and_write(tid, task_df)
         self._save()
 
@@ -293,6 +312,7 @@ class Evaluator:
         prompt_template = TRANSLATION_JUDGE_TEMPLATE
 
         # Iterate over each row in the dataframe and send judgments for each persona
+        failure_count = 0
         with tqdm(total=len(task_df) * len(persona_configs), desc=f"Processing {task_id}") as pbar:
             with logging_redirect_tqdm(loggers=[log]):
                 for idx, row in task_df.iterrows():
@@ -322,19 +342,34 @@ class Evaluator:
                             "translation_1": translations[0],
                             "translation_2": translations[1]
                         }
-                        judgment = self.communication_handler.get_api_response(
-                            prompt_template, "genai", **client_kwargs)
-                        task_df.loc[idx, judgment_column] = judgment
+                        try:
+                            judgment = self.communication_handler.get_api_response(
+                                prompt_template, "genai", **client_kwargs)
+                        except Exception as e:
+                            failure_count += 1
+                            log.error("Judgment request failed: %s", e, exc_info=True)
+                            pbar.update(1)
+                            continue
+
+                        if judgment == "No response":
+                            failure_count += 1
+                        else:
+                            task_df.loc[idx, judgment_column] = judgment
                         self.dataset_handler.merge_and_write(task_info.dataset_id, task_df)
                         pbar.update(1)
-        task_info.update_status(skip=True)
+        if failure_count > 0:
+            print(
+                f"Judgment generation for task {task_id} had "
+                f"{failure_count} failed requests."
+            )
+        else:
+            task_info.update_status(skip=True)
         self._save()
 
     def generate_all_judgments(self):
         """Generate all judgments"""
         judgment_tasks = self.get_judgment_pending_tasks()
         for tid in judgment_tasks:
-            print(f"Processing {tid}")
             self._generate_judgments_sync(tid)
 
     def send_judgment_requests(
