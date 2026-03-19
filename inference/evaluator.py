@@ -293,36 +293,40 @@ class Evaluator:
         prompt_template = TRANSLATION_JUDGE_TEMPLATE
 
         # Iterate over each row in the dataframe and send judgments for each persona
-        for idx, row in tqdm(task_df.iterrows()):
-            row_dict = row.to_dict()
+        with tqdm(total=len(task_df) * len(persona_configs), desc=f"Processing {task_id}") as pbar:
+            with logging_redirect_tqdm(loggers=[log]):
+                for idx, row in task_df.iterrows():
+                    row_dict = row.to_dict()
 
-            for config in persona_configs:
-                judgment_column = config.judgment_column
+                    for config in persona_configs:
+                        judgment_column = config.judgment_column
 
-                if (
-                    config.name == reference_config.name or
-                    judgment_column in row_dict and row_dict[judgment_column] is not None
-                ):
-                    continue
+                        if (
+                            config.name == reference_config.name or
+                            judgment_column in row_dict and row_dict[judgment_column] is not None
+                        ):
+                            pbar.update(1)
+                            continue
 
-                static_id = row_dict[STATIC_ID_COLUMN]
-                sample_number = int(static_id.split("_")[-1])
-                translations = [
-                    self._remove_think_block(row_dict[reference_config.answer_column]),
-                    self._remove_think_block(row_dict[config.answer_column])
-                ]
-                if sample_number % 2 == 0:
-                    translations.reverse()
+                        static_id = row_dict[STATIC_ID_COLUMN]
+                        sample_number = int(static_id.split("_")[-1])
+                        translations = [
+                            self._remove_think_block(row_dict[reference_config.answer_column]),
+                            self._remove_think_block(row_dict[config.answer_column])
+                        ]
+                        if sample_number % 2 == 0:
+                            translations.reverse()
 
-                client_kwargs = {
-                    "reference": row_dict[QUESTION_COLUMN],
-                    "translation_1": translations[0],
-                    "translation_2": translations[1]
-                }
-                judgment = self.communication_handler.get_api_response(
-                    prompt_template, "genai", **client_kwargs)
-                task_df.loc[idx, judgment_column] = judgment
-                self.dataset_handler.merge_and_write(task_info.dataset_id, task_df)
+                        client_kwargs = {
+                            "reference": row_dict[QUESTION_COLUMN],
+                            "translation_1": translations[0],
+                            "translation_2": translations[1]
+                        }
+                        judgment = self.communication_handler.get_api_response(
+                            prompt_template, "genai", **client_kwargs)
+                        task_df.loc[idx, judgment_column] = judgment
+                        self.dataset_handler.merge_and_write(task_info.dataset_id, task_df)
+                        pbar.update(1)
         task_info.update_status(skip=True)
         self._save()
 
