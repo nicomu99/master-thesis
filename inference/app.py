@@ -26,6 +26,7 @@ class App:
             "ps": ("Generate static personas for all tasks", self.generate_static_personas),
             "t": ("Send task requests", self.generate_answers),
             "j": ("Send judgment requests", self.generate_judgment_evaluation),
+            "js": ("Generate judgments synchronously for all tasks", self.generate_judgments),
             "s": ("Check batch statuses", self.check_batch_statuses),
             "f": ("Fetch batch responses", self.evaluator.fetch_batch_responses),
             "c": ("Check task statuses", self.check_task_statuses),
@@ -128,6 +129,10 @@ class App:
             request_count = self.evaluator.send_judgment_requests(tid)
             total_request_count += request_count
         print(f"{total_request_count} requests sent.")
+
+    def generate_judgments(self):
+        """Generate LLM-as-a-judge judgments for all tasks."""
+        self.evaluator.generate_all_judgments()
 
     def quit_program(self):
         """Quits the program."""

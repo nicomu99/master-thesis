@@ -1,5 +1,6 @@
 from typing import Iterable
 
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -10,7 +11,7 @@ from .dataset_handler import DatasetHandler
 from .communication_handler import CommunicationHandler
 from .persona_registry import PersonaRegistry
 from .utils import columns_full, load_dataclass_dict, save_dataclass_dict, load_task_config, QuestionType
-from .utils import TaskInfo, BatchInfo
+from .utils import TaskInfo, BatchInfo, TRANSLATION_JUDGE_TEMPLATE, STATIC_ID_COLUMN, QUESTION_COLUMN
 
 from .utils import logging
 
@@ -271,6 +272,66 @@ class Evaluator:
         task_info.update_status(skip=result == 0)
         self._save()
         return result
+
+    @staticmethod
+    def _remove_think_block(text: str) -> str:
+        return re.sub(r"<think>.*?</think>\s*", "", text, flags=re.DOTALL).strip()
+
+    def _generate_judgments_sync(
+        self,
+        task_id: str,
+    ):
+        """Generate judgments synchronously one-by-one.
+
+        Args:
+            task_id (str): String identifier of the task.
+        """
+        task_info = self.task_infos[task_id]
+        task_df = self.dataset_handler.get_task_df_from_info(task_info)
+        persona_configs = self.persona_registry.get_configs()
+        reference_config = self.persona_registry.get_reference_config()
+        prompt_template = TRANSLATION_JUDGE_TEMPLATE
+
+        # Iterate over each row in the dataframe and send judgments for each persona
+        for idx, row in tqdm(task_df.iterrows()):
+            row_dict = row.to_dict()
+
+            for config in persona_configs:
+                judgment_column = config.judgment_column
+
+                if (
+                    config.name == reference_config.name or
+                    judgment_column in row_dict and row_dict[judgment_column] is not None
+                ):
+                    continue
+
+                static_id = row_dict[STATIC_ID_COLUMN]
+                sample_number = int(static_id.split("_")[-1])
+                translations = [
+                    self._remove_think_block(row_dict[reference_config.answer_column]),
+                    self._remove_think_block(row_dict[config.answer_column])
+                ]
+                if sample_number % 2 == 0:
+                    translations.reverse()
+
+                client_kwargs = {
+                    "reference": row_dict[QUESTION_COLUMN],
+                    "translation_1": translations[0],
+                    "translation_2": translations[1]
+                }
+                judgment = self.communication_handler.get_api_response(
+                    prompt_template, "genai", **client_kwargs)
+                task_df.loc[idx, judgment_column] = judgment
+                self.dataset_handler.merge_and_write(task_info.dataset_id, task_df)
+        task_info.update_status(skip=True)
+        self._save()
+
+    def generate_all_judgments(self):
+        """Generate all judgments"""
+        judgment_tasks = self.get_judgment_pending_tasks()
+        for tid in judgment_tasks:
+            print(f"Processing {tid}")
+            self._generate_judgments_sync(tid)
 
     def send_judgment_requests(
         self,
