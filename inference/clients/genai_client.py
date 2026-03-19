@@ -28,7 +28,6 @@ class GenAIClient(LLMClient):
 
     def get_api_response(self, template: str, **kwargs) -> str:
         prompt = template.format(**kwargs)
-        print(prompt)
         response = self.client.models.generate_content(
             model=self.model, contents=prompt)
         if response.text is None:
