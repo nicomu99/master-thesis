@@ -2,6 +2,7 @@ from typing import cast, Literal
 from collections import defaultdict
 from collections.abc import Callable
 
+import io
 import json
 import string
 from pathlib import Path
@@ -11,7 +12,7 @@ import pandas as pd
 from .clients import LLMClient
 from .persona_registry import PersonaConfig
 
-from .utils import TaskInfo, QuestionType, BatchFile
+from .utils import TaskInfo, QuestionType, BatchFile, BatchInfo
 from .utils import TEMP_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, GROUND_TRUTH_COLUMN, TRANSLATION_JUDGE_TEMPLATE
 from .utils import logging
 
@@ -223,22 +224,26 @@ class BatchRequestHandler:
         return request_file, request_count
 
     @staticmethod
-    def read_response_stream(batch_file: BatchFile, download_fn: Callable[[str], bytes]):
-        """Downloads an API response and saves it to a file.
+    def read_response_stream(
+        batch_info: BatchInfo,
+        batch_file: BatchFile,
+        write_fn: Callable[[BatchInfo, io.TextIOBase], None],
+    ) -> None:
+        """Retrieve an API batch response and save it to a local file.
 
         Args:
-            batch_file (BatchFile): Batch file information.
-            download_fn (Callable[[str], bytes]): Callable that downloads the stream from the API.
+            batch_info (BatchInfo): Metadata required to retrieve the batch results.
+            batch_file (BatchFile): Local/remote file information for the batch output.
+            write_fn (Callable[[BatchInfo, io.TextIOBase], None]): Callable that writes
+                the batch response to the given file object in JSONL format.
         """
         local_file_path = batch_file.local_file_path
-        remote_file_id = batch_file.remote_file_id
         if local_file_path.exists() and local_file_path.stat().st_size > 0:
             log.debug("File already fetched.")
             return
 
-        response_stream = download_fn(remote_file_id)
-        with local_file_path.open("wb") as f:
-            f.write(response_stream)
+        with local_file_path.open("w", encoding="utf-8") as f:
+            write_fn(batch_info, f)
 
     @staticmethod
     def read_response_file(file_name: Path, read_line_fn: Callable[[str], tuple[str, str]]) -> pd.DataFrame:

@@ -5,7 +5,7 @@ from pathlib import Path
 from openai import OpenAI
 
 from inference.utils import logging
-from .llm_client import LLMClient
+from .llm_client import LLMClient, BatchInfo
 
 
 log = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class OpenAIClient(LLMClient):
         self.model = model
         self.client = OpenAI()
 
-    def get_api_response(self, template: str, **kwargs) -> str:
+    def _get_api_response(self, template: str, **kwargs) -> str:
         prompt = template.format(**kwargs)
         response = self.client.responses.create(
             model=self.model, input=prompt)
@@ -77,11 +77,9 @@ class OpenAIClient(LLMClient):
 
         return response_line["custom_id"], completion
 
-    def get_batch_progress(self, batch_id: str) -> tuple[str, int, int, str | None, str | None]:
+    def get_batch_progress(self, batch_id: str) -> tuple[str, int, int]:
         remote_batch = self.client.batches.retrieve(batch_id)
         status = remote_batch.status
-        output_file_id = remote_batch.output_file_id
-        error_file_id = remote_batch.error_file_id
 
         completed, failed = 0, 0
         if remote_batch.request_counts is not None:
@@ -89,21 +87,27 @@ class OpenAIClient(LLMClient):
             completed = progress.completed
             failed = progress.failed
 
-        if remote_batch.errors is None:
-            return status, completed, failed, output_file_id, error_file_id
+        if remote_batch.errors is not None:
+            errors = remote_batch.errors
+            if errors.data is None:
+                log.warning("Batch for task %s failed with no error message.", batch_id)
+            else:
+                for error in errors.data:
+                    log.warning(
+                        "Batch for task failed: %s %s",
+                        error.code, error.message)
 
-        errors = remote_batch.errors
-        if errors.data is None:
-            log.warning("Batch for task %s failed with no error message.", batch_id)
-            return status, completed, failed, output_file_id, error_file_id
+        return status, completed, failed
 
-        errors = errors.data
-        for error in errors:
-            log.warning(
-                "Batch for task failed: %s %s",
-                error.code, error.message)
-        return status, completed, failed, output_file_id, error_file_id
+    def get_batch_files(self, batch_id: str) -> tuple[str | None, str | None]:
+        remote_batch = self.client.batches.retrieve(batch_id)
+        return remote_batch.output_file_id, remote_batch.error_file_id
 
     def fetch_response(self, remote_file_id: str) -> bytes:
         response = self.client.files.content(remote_file_id)
         return response.read()
+
+    def write_response_to(self, batch_info: BatchInfo, file: io.TextIOBase) -> None:
+        remote_file_id = batch_info.get_output_file().remote_file_id
+        response = self.client.files.content(remote_file_id)
+        file.write(response.read().decode("utf-8"))

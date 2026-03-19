@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
 import io
+import time
 
 from pathlib import Path
+
+from inference.utils import BatchInfo
 
 
 class LLMClient(ABC):
@@ -11,8 +14,9 @@ class LLMClient(ABC):
     implementations depend on the API. Each subclass implements all abstract methods.
     Each subclass must implement all abstract methods to ensure consistent behavior across APIs.
     """
+    max_retries: int = 3
+    retry_backoff_seconds: float = 1.0
 
-    @abstractmethod
     def get_api_response(self, template: str, **kwargs) -> str:
         """Return a single, synchronous output from an LLM API.
 
@@ -26,6 +30,22 @@ class LLMClient(ABC):
         Returns:
             str: The generated text returned by the API.
         """
+        last_error: Exception | None = None
+        for attempt in range(self.max_retries + 1):
+            try:
+                return self._get_api_response(template, **kwargs)
+            except (ConnectionError, TimeoutError) as e:
+                last_error = e
+                if attempt >= self.max_retries:
+                    break
+                time.sleep(self.retry_backoff_seconds * (2 ** attempt))
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("Failed to retrieve API response.")
+
+    @abstractmethod
+    def _get_api_response(self, template: str, **kwargs) -> str:
+        """Implementation hook for :meth:`get_api_response`."""
 
     @abstractmethod
     def write_prompt(self, file: io.TextIOBase, custom_id: str, prompt: str, instruction: str | None = None) -> None:
@@ -65,7 +85,7 @@ class LLMClient(ABC):
         """
 
     @abstractmethod
-    def get_batch_progress(self, batch_id: str) -> tuple[str, int, int, str | None, str | None]:
+    def get_batch_progress(self, batch_id: str) -> tuple[str, int, int]:
         """Sends a synchronous request to the LLM API to retrieve the current progress of the batch.
 
         Args:
@@ -75,9 +95,22 @@ class LLMClient(ABC):
             str: Remote batch status.
             int: Completed requests.
             int: Failed requests.
-            str | None: Output file id.
-            str | None: Error file id.
         """
+
+    @abstractmethod
+    def get_batch_files(self, batch_id: str) -> tuple[str | None, str | None]:
+        """Retrieve remote output/error file identifiers for a batch, if available.
+
+        Args:
+            batch_id (str): Remote identifier of the batch.
+
+        Returns:
+            tuple[str | None, str | None]: Output file id and error file id (if present).
+        """
+
+    def requires_output_file(self) -> bool:
+        """Indicates whether this client needs a remote output file to write responses."""
+        return True
 
     @abstractmethod
     def fetch_response(self, remote_file_id: str) -> bytes:
@@ -88,4 +121,17 @@ class LLMClient(ABC):
 
         Returns:
             bytes: Response stream.
+        """
+
+    @abstractmethod
+    def write_response_to(self, batch_info: BatchInfo, file: io.TextIOBase) -> None:
+        """Write batch results to a file in JSONL format.
+
+        Args:
+            batch_info (BatchInfo): Metadata required to retrieve the batch results.
+            file (io.TextIOBase): Open file-like object in text mode.
+
+        Raises:
+            RuntimeError: If the batch results cannot be retrieved or written.
+            KeyError: If the response format does not match the expected structure.
         """

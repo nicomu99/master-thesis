@@ -5,7 +5,7 @@ from pathlib import Path
 from google import genai
 from google.genai import types
 
-from inference.utils import logging
+from inference.utils import logging, BatchInfo
 
 from .llm_client import LLMClient
 
@@ -26,7 +26,7 @@ class GenAIClient(LLMClient):
         self.model = "gemini-2.5-flash-lite"
         self.client = genai.Client()
 
-    def get_api_response(self, template: str, **kwargs) -> str:
+    def _get_api_response(self, template: str, **kwargs) -> str:
         prompt = template.format(**kwargs)
         response = self.client.models.generate_content(
             model=self.model, contents=prompt)
@@ -87,23 +87,36 @@ class GenAIClient(LLMClient):
         }
         return status_transitions[remote_status]
 
-    def get_batch_progress(self, batch_id: str) -> tuple[str, int, int, str | None, str | None]:
+    def get_batch_progress(self, batch_id: str) -> tuple[str, int, int]:
         batch_job = self.client.batches.get(name=batch_id)
         if batch_job is None or batch_job.state is None:
             raise ConnectionError(f"Unexpected error occurred during upload of {batch_id}")
 
         new_status = self._status_transition(batch_job.state.name)
         completed, failed = 0, 0
-        remote_file_id = None
-        if batch_job.dest and batch_job.dest.file_name:
-            remote_file_id = batch_job.dest.file_name
 
         if new_status == "failed":
             log.warning(
                 "Batch for task failed: %s",
                 batch_job.error)
 
-        return new_status, completed, failed, remote_file_id, None
+        return new_status, completed, failed
+
+    def get_batch_files(self, batch_id: str) -> tuple[str | None, str | None]:
+        batch_job = self.client.batches.get(name=batch_id)
+        if batch_job is None:
+            raise ConnectionError(f"Unexpected error occurred during upload of {batch_id}")
+
+        remote_file_id = None
+        if batch_job.dest and batch_job.dest.file_name:
+            remote_file_id = batch_job.dest.file_name
+
+        return remote_file_id, None
 
     def fetch_response(self, remote_file_id: str) -> bytes:
         return self.client.files.download(file=remote_file_id)
+
+    def write_response_to(self, batch_info: BatchInfo, file: io.TextIOBase) -> None:
+        output_file_id = batch_info.get_output_file().remote_file_id
+        content_bytes = self.client.files.download(file=output_file_id)
+        file.write(content_bytes.decode("utf-8"))

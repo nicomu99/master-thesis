@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 from openai import APIConnectionError
 
-from .clients import LLMClient, OpenAIClient, GenAIClient
+from .clients import LLMClient, OpenAIClient, GenAIClient, ClaudeClient
 from .persona_registry import PersonaConfig
 from .utils import TaskInfo, BatchInfo, QuestionType, BatchType
 from .batch_request_handler import BatchRequestHandler
@@ -27,7 +27,8 @@ class CommunicationHandler:
     ):
         self.clients = {
             "openai": OpenAIClient(openai_model),
-            "genai": GenAIClient()
+            "genai": GenAIClient(),
+            "claude": ClaudeClient(),
         }
 
         self.request_handler = BatchRequestHandler()
@@ -52,14 +53,14 @@ class CommunicationHandler:
     def get_api_response(
         self,
         template: str,
-        llm_name: Literal["openai", "genai"] = "openai",
+        llm_name: Literal["openai", "genai", "claude"] = "openai",
         **kwargs: Any
     ) -> str:
         """Helper function for getting output from an LLM API.
 
         Args:
             template: A string template with placeholders.
-            llm_name (Literal["openai", "genai"]): String identifier of the LLM client. Defaults to "openai".
+            llm_name (Literal["openai", "genai", "claude"]): String identifier of the LLM client. Defaults to "openai".
             **kwargs: Keyword arguments to be inserted into ``template``. Must match the placeholders.
 
         Returns:
@@ -77,7 +78,7 @@ class CommunicationHandler:
         task_info: TaskInfo,
         task_df: pd.DataFrame,
         persona_configs: list[PersonaConfig],
-        llm_name: Literal["openai", "genai"] = "openai"
+        llm_name: Literal["openai", "genai", "claude"] = "openai"
     ) -> int | bool:
         """Sends a persona batch request to the LLM API.
 
@@ -85,7 +86,7 @@ class CommunicationHandler:
             task_info (TaskConfig): Configuration parameters of the task.
             task_df (pd.DataFrame): Dataframe containing task samples.
             persona_configs (list[PersonaConfig]): List of persona configurations.
-            llm_name (Literal["openai", "genai"]): String identifier of the LLM client. Defaults to "openai".
+            llm_name (Literal["openai", "genai", "claude"]): String identifier of the LLM client. Defaults to "openai".
 
         Returns:
             int: Number of sent requests.
@@ -104,7 +105,7 @@ class CommunicationHandler:
         task_df: pd.DataFrame,
         question_type: QuestionType,
         persona_configs: list[PersonaConfig],
-        llm_name: Literal["openai", "genai"] = "openai"
+        llm_name: Literal["openai", "genai", "claude"] = "openai"
     ) -> int | bool:
         """Sends a task question answering request to the LLM API.
 
@@ -113,7 +114,7 @@ class CommunicationHandler:
             task_df (pd.DataFrame): Dataframe containing task samples.
             question_type (QuestionType): The type of questions of the task samples.
             persona_configs (list[PersonaConfig]): The persona configurations to use for generating answers.
-            llm_name (Literal["openai", "genai"]): String identifier of the LLM client. Defaults to "openai".
+            llm_name (Literal["openai", "genai", "claude"]): String identifier of the LLM client. Defaults to "openai".
 
         Returns:
             int: Number of sent requests.
@@ -134,7 +135,7 @@ class CommunicationHandler:
         task_df: pd.DataFrame,
         persona_configs: list[PersonaConfig],
         reference_config: PersonaConfig,
-        llm_name: Literal["openai", "genai"] = "openai"
+        llm_name: Literal["openai", "genai", "claude"] = "openai"
     ) -> int | bool:
         """Sends a LLM-as-a-judge request to the LLM API.
 
@@ -143,7 +144,7 @@ class CommunicationHandler:
             task_df (pd.DataFrame): Dataframe containing samples associated with this task.
             persona_configs (list[PersonaConfig]): Persona configuration list.
             reference_config (PersonaConfig): The persona type used as a baseline for comparison.
-            llm_name (Literal["openai", "genai"]): String identifier of the LLM client. Defaults to "openai".
+            llm_name (Literal["openai", "genai", "claude"]): String identifier of the LLM client. Defaults to "openai".
 
         Returns:
             int: Number of sent requests.
@@ -173,8 +174,9 @@ class CommunicationHandler:
             batch_id = batch_info.batch_id
             try:
                 client = self._get_client(batch_info.client)
-                status_output = client.get_batch_progress(batch_id)
-                batch_info.update_batch(status_output)
+                status, completed, failed = client.get_batch_progress(batch_id)
+                batch_info.update_status(status)
+                batch_info.update_progress_message(completed, failed)
             except (APIConnectionError, ConnectionError, ValueError) as e:
                 log.error("Error: %s", e, exc_info=True)
         self.save()
@@ -198,27 +200,42 @@ class CommunicationHandler:
         retrieved_batches = []
         for batch_info in completed_batches:
             tid = batch_info.task_id
-            if batch_info.task_id not in task_ids:
+            if tid not in task_ids:
                 log.warning("Skipping batch for inactive task %s", tid)
                 continue
 
             try:
                 client = self._get_client(batch_info.client)
-                if batch_info.has_output():
+
+                if not batch_info.has_output() or not batch_info.has_error():
+                    output_file_id, error_file_id = client.get_batch_files(batch_info.batch_id)
+                    if output_file_id and not batch_info.has_output():
+                        batch_info.init_output_file(output_file_id)
+                    if error_file_id and not batch_info.has_error():
+                        batch_info.init_error_file(error_file_id)
+
+                if batch_info.has_output() or not client.requires_output_file():
+                    if not batch_info.has_output():
+                        batch_info.init_output_file(batch_info.batch_id)
                     output_file = batch_info.get_output_file()
                     self.request_handler.read_response_stream(
-                        output_file, client.fetch_response)
+                        batch_info=batch_info,
+                        batch_file=output_file,
+                        write_fn=client.write_response_to)
 
                 if batch_info.has_error():
                     error_file = batch_info.get_error_file()
                     self.request_handler.read_response_stream(
-                        error_file, client.fetch_response)
+                        batch_info=batch_info,
+                        batch_file=error_file,
+                        write_fn=client.write_response_to)
+
                     error_messages = self.request_handler.read_error_file(error_file.local_file_path)
                     for message in error_messages:
                         log.error("Task %s failed: %s", tid, message)
 
                 retrieved_batches.append(batch_info)
-            except (ValueError, APIConnectionError) as e:
+            except (ValueError, APIConnectionError, ConnectionError) as e:
                 log.error("Error: %s", e, exc_info=True)
 
         self.save()
@@ -253,7 +270,7 @@ class CommunicationHandler:
         batch_type: BatchType,
         create_fn: Callable[..., tuple[Path, int]],
         *create_args,
-        llm_name: Literal["openai", "genai"] = "openai",
+        llm_name: Literal["openai", "genai", "claude"] = "openai",
     ) -> int | bool:
         """Generic helper to send any type of batch to the LLM API."""
         try:

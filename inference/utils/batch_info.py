@@ -37,12 +37,17 @@ class BatchInfo:
     error_file: BatchFile | None = None
 
     _STR_TRANSITIONS = {
+        "queued": BatchStatus.VALIDATING,
+        "starting": BatchStatus.VALIDATING,
         "validating": BatchStatus.VALIDATING,
         "in_progress": BatchStatus.IN_PROGRESS,
+        "canceling": BatchStatus.IN_PROGRESS,
         "finalizing": BatchStatus.IN_PROGRESS,
         "expired": BatchStatus.ERROR,
         "failed": BatchStatus.FAILED,
         "cancelled": BatchStatus.RETRIEVED,
+        "canceled": BatchStatus.RETRIEVED,
+        "ended": BatchStatus.COMPLETED,
         "completed": BatchStatus.COMPLETED
     }
 
