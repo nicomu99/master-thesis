@@ -313,6 +313,8 @@ class Evaluator:
 
         # Iterate over each row in the dataframe and send judgments for each persona
         failure_count = 0
+        success_count = 0
+        skipped_count = 0
         with tqdm(total=len(task_df) * len(persona_configs), desc=f"Processing {task_id}") as pbar:
             with logging_redirect_tqdm(loggers=[log]):
                 for idx, row in task_df.iterrows():
@@ -325,6 +327,9 @@ class Evaluator:
                             config.name == reference_config.name or
                             judgment_column in row_dict and row_dict[judgment_column] is not None
                         ):
+                            skipped_count += 1
+                            pbar.set_postfix(done=success_count, failed=failure_count, skipped=skipped_count)
+                            pbar.refresh()
                             pbar.update(1)
                             continue
 
@@ -345,9 +350,10 @@ class Evaluator:
                         try:
                             judgment = self.communication_handler.get_api_response(
                                 prompt_template, "genai", **client_kwargs)
-                        except Exception as e:
+                        except Exception as _:
                             failure_count += 1
-                            log.error("Judgment request failed: %s", e, exc_info=True)
+                            pbar.set_postfix(done=success_count, failed=failure_count, skipped=skipped_count)
+                            pbar.refresh()
                             pbar.update(1)
                             continue
 
@@ -355,7 +361,10 @@ class Evaluator:
                             failure_count += 1
                         else:
                             task_df.loc[idx, judgment_column] = judgment
+                            success_count += 1
                         self.dataset_handler.merge_and_write(task_info.dataset_id, task_df)
+                        pbar.set_postfix(done=success_count, failed=failure_count, skipped=skipped_count)
+                        pbar.refresh()
                         pbar.update(1)
         if failure_count > 0:
             print(
