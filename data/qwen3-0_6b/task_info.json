@@ -80,35 +80,35 @@
         "dataset_id": "flores",
         "field": "German to English translation",
         "need_judgment": true,
-        "status": "judgment_pending",
+        "status": "finished",
         "category_name": "deu"
     },
     "flores_cmn": {
         "dataset_id": "flores",
         "field": "Chinese to English translation",
         "need_judgment": true,
-        "status": "judgment_pending",
+        "status": "finished",
         "category_name": "cmn"
     },
     "flores_swh": {
         "dataset_id": "flores",
         "field": "Swahili to English translation",
         "need_judgment": true,
-        "status": "judgment_pending",
+        "status": "finished",
         "category_name": "swh"
     },
     "flores_spa": {
         "dataset_id": "flores",
         "field": "Spanish to English translation",
         "need_judgment": true,
-        "status": "judgment_pending",
+        "status": "finished",
         "category_name": "spa"
     },
     "flores_ace": {
         "dataset_id": "flores",
         "field": "Arab to English translation",
         "need_judgment": true,
-        "status": "judgment_pending",
+        "status": "finished",
         "category_name": "ace"
     },
     "IfBench_all": {
