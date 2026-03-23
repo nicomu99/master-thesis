@@ -13,7 +13,7 @@ from .utils import logging
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.WARN)
 
 
 class DatasetHandler:
