@@ -215,11 +215,14 @@ def prepare_df(
         file_name = file_name.replace("_persona-eval_results_loose", "").split("_")
         model, persona = file_name[0], "_".join(file_name[1:])
         with file.open("r", encoding="utf-8") as f:
+            count = 0
             for line in f:
                 obj = json.loads(line)
+                data["static_id"].append(f"IFBench_{count}")
                 data["model"].append(model)
                 data["persona"].append(persona)
                 data["score"].append(int(obj["follow_all_instructions"]))
+                count += 1
 
     output_path = Path(output_folder)
     output_path.mkdir(exist_ok=True, parents=True)
