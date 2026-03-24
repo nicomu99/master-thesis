@@ -29,7 +29,7 @@ class Evaluator:
         include_datasets: Iterable[str] | None = None,
         exclude_datasets: Iterable[str] | None = None,
     ):
-        self.dataset_path = Path("data")
+        self.dataset_path = Path("data/inference")
         if dataset_path is not None:
             self.dataset_path /= Path(dataset_path)
         self.dataset_handler = DatasetHandler(
