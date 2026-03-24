@@ -15,7 +15,7 @@ from inference.utils import QUESTION_COLUMN, DATA_PATH
 from inference.utils import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 
 def prepare_input(
@@ -80,12 +80,12 @@ def prepare_input(
                     }
                     f.write(json.dumps(entry, ensure_ascii=False) + "\n")
             input_written = True
-            print(f"Wrote {input_path}")
+            log.info("Wrote %s", input_path)
         for persona_cfg in persona_configs:
             persona_name = persona_cfg.name
             answer_column = persona_cfg.answer_column
             if answer_column not in df.columns:
-                print(f"Skipping missing persona column: {persona_name}")
+                log.warning("Skipping missing persona column: %s", persona_name)
                 continue
 
             output_path = output_folder / f"{model_folder_name}_{persona_name}.jsonl"
@@ -99,8 +99,8 @@ def prepare_input(
                     }
                     f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
-            print(f"Wrote {output_path}")
-    logging.info("Input preparation finished")
+            log.info("Wrote %s", output_path)
+    log.info("Input preparation finished")
 
 
 def run_ifbench(
@@ -110,7 +110,9 @@ def run_ifbench(
     output_root: str = "temp/ifbench/raw",
     df_output_root: str = "data/evaluation",
 ):
+    log.info("Starting IFBench evaluation run")
     load_dotenv()
+
     eval_root = Path(os.getenv(eval_root_env, "")).expanduser()
     if not eval_root.exists():
         raise RuntimeError(
@@ -125,6 +127,7 @@ def run_ifbench(
     benchmark_file = responses_root / "ifbench_input.jsonl"
     if not benchmark_file.exists():
         raise RuntimeError(f"Expected IFBench input file at {benchmark_file}.")
+    log.info("Using IFBench input file at %s", benchmark_file)
 
     for response_file in responses_root.glob("*.jsonl"):
         if response_file == benchmark_file:
@@ -136,11 +139,13 @@ def run_ifbench(
                 f"--input_response_data={response_file.resolve()}",
                 f"--output_dir={output_root.resolve()}",
             ]
+            log.info("Running IFBench eval on %s", response_file.name)
             subprocess.run(cmd, cwd=eval_root)
         except Exception as e:
             log.error(e)
 
     prepare_df(input_folder=str(output_root), output_folder=df_output_root)
+    log.info("IFBench evaluation finished")
 
 
 def prepare_df(
@@ -188,7 +193,9 @@ def prepare_df(
     output_path = Path(output_folder)
     output_path.mkdir(exist_ok=True, parents=True)
     df = pd.DataFrame(data)
-    df.to_csv(output_path / "ifbench.csv")
+    csv_path = output_path / "ifbench.csv"
+    df.to_csv(csv_path)
+    log.info("Wrote %s", csv_path)
 
 
 def main():
