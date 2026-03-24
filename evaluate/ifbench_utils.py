@@ -15,7 +15,7 @@ from inference.utils import QUESTION_COLUMN, DATA_PATH
 from inference.utils import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.WARN)
+log.setLevel(logging.DEBUG)
 
 
 def prepare_input(
@@ -108,6 +108,7 @@ def run_ifbench(
     dataset_name: str = "IFBench",
     responses_root: str = "temp/ifbench",
     output_root: str = "temp/ifbench/raw",
+    df_output_root: str = "data/evaluation",
 ):
     load_dotenv()
     eval_root = Path(os.getenv(eval_root_env, "")).expanduser()
@@ -139,9 +140,11 @@ def run_ifbench(
         except Exception as e:
             log.error(e)
 
+    prepare_df(input_folder=str(output_root), output_folder=df_output_root)
+
 
 def prepare_df(
-    input_folder: str = "temp/ifbench/raw",
+    input_folder: str | Path = "temp/ifbench/raw",
     output_folder: str = "data/evaluation"
 ):
     """Convert raw IFBench evaluation outputs into a consolidated CSV file.
@@ -154,7 +157,7 @@ def prepare_df(
     The DataFrame is saved as "ifbench.csv" in the specified output folder.
 
     Args:
-        input_folder (str, optional): Path to the folder containing raw IFBench
+        input_folder (str | Path): Path to the folder containing raw IFBench
             JSONL output files. Defaults to "temp/ifbench/raw".
         output_folder (str, optional): Path to the folder where the resulting
             CSV file will be saved. Defaults to "data/evaluation".
@@ -214,6 +217,11 @@ def main():
         default="temp/ifbench/raw",
         help="Folder where IFBench evaluation outputs will be written. Defaults to %(default)s."
     )
+    parser.add_argument(
+        "--df-output-root",
+        default="data/evaluation",
+        help="Folder where the consolidated IFBench csv will be written. Defaults to %(default)s."
+    )
 
     args = parser.parse_args()
     run_ifbench(
@@ -221,6 +229,7 @@ def main():
         args.dataset_name,
         args.responses_root,
         args.output_root,
+        args.df_output_root,
     )
 
 
