@@ -10,7 +10,7 @@ from inference.utils import QUESTION_COLUMN, DATA_PATH
 
 
 def prepare_input(
-    output_folder: str = "temp/ifbench_out",
+    output_folder: str = "temp/ifbench",
     dataset_name: str = "IFBench"
 ):
     """Generate JSONL files for the official IFBench evaluation pipeline.
@@ -85,7 +85,7 @@ def main():
     )
     parser_prepare_input.add_argument(
         "-o", "--output-folder",
-        default="temp/ifbench_out",
+        default="temp/ifbench",
         help="Directory where generated JSONL files will be written. Defaults to %(default)s."
     )
     parser_prepare_input.add_argument(
