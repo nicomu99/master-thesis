@@ -1,6 +1,6 @@
 from .batch_file import BatchFile
 from .batch_info import BatchInfo
-from .constants import TEMP_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, GROUND_TRUTH_COLUMN
+from .constants import TEMP_PATH, DATA_PATH, STATIC_ID_COLUMN, QUESTION_COLUMN, GROUND_TRUTH_COLUMN
 from .dataframe_helpers import columns_full
 from .dataset_config import DatasetConfig
 from .enums import BatchType
@@ -38,6 +38,7 @@ __all__ = [
     "BatchFile",
     "BatchInfo",
     "TEMP_PATH",
+    "DATA_PATH",
     "STATIC_ID_COLUMN",
     "QUESTION_COLUMN",
     "GROUND_TRUTH_COLUMN",

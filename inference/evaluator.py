@@ -12,6 +12,7 @@ from .communication_handler import CommunicationHandler
 from .persona_registry import PersonaRegistry
 from .utils import columns_full, load_dataclass_dict, save_dataclass_dict, load_task_config, QuestionType
 from .utils import TaskInfo, BatchInfo, TRANSLATION_JUDGE_TEMPLATE, STATIC_ID_COLUMN, QUESTION_COLUMN
+from .utils import DATA_PATH
 
 from .utils import logging
 
@@ -29,7 +30,7 @@ class Evaluator:
         include_datasets: Iterable[str] | None = None,
         exclude_datasets: Iterable[str] | None = None,
     ):
-        self.dataset_path = Path("data/inference")
+        self.dataset_path = DATA_PATH
         if dataset_path is not None:
             self.dataset_path /= Path(dataset_path)
         self.dataset_handler = DatasetHandler(

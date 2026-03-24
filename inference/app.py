@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from datasets import disable_progress_bar, disable_progress_bars
 
 from .evaluator import Evaluator
-from .utils import TEMP_PATH
+from .utils import TEMP_PATH, DATA_PATH
 from .utils import logging
 
 log = logging.getLogger(__name__)
@@ -223,6 +223,7 @@ class App:
 
 if __name__ == "__main__":
     TEMP_PATH.mkdir(exist_ok=True, parents=True)
+    DATA_PATH.mkdir(exist_ok=True, parents=True)
     load_dotenv()
     disable_progress_bar()
     disable_progress_bars()
