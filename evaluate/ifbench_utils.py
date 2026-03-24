@@ -72,6 +72,10 @@ def prepare_input(
                         instruction_id_list = instruction_id_list.tolist()
                     if hasattr(kwargs, "tolist"):
                         kwargs = kwargs.tolist()
+                    for param in kwargs:
+                        for k, v in param.items():
+                            if isinstance(v, float):
+                                param[k] = int(v)
                     entry = {
                         "key": getattr(row, "key"),
                         "prompt": getattr(row, QUESTION_COLUMN).strip(),
@@ -99,7 +103,7 @@ def prepare_input(
                     }
                     f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
-            log.info("Wrote %s", output_path)
+            log.debug("Wrote %s", output_path)
     log.info("Input preparation finished")
 
 
@@ -112,8 +116,13 @@ def run_ifbench(
 ):
     log.info("Starting IFBench evaluation run")
     load_dotenv()
-
-    eval_root = Path(os.getenv(eval_root_env, "")).expanduser()
+    value = os.getenv(eval_root_env)
+    if value is None:
+        raise RuntimeError(
+            f"Environment variable {eval_root_env} was not found or is empty. Please set it to the "
+            "IFBench evaluation script root."
+        )
+    eval_root = Path(value).expanduser()
     if not eval_root.exists():
         raise RuntimeError(
             f"Could not locate IFBench evaluation script. Set {eval_root_env} to its root folder."
