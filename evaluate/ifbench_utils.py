@@ -1,6 +1,8 @@
 """Utility functions to prepare for the IFBench evaluation script, and to read its output in a structured way."""
 import json
+import os
 import argparse
+import subprocess
 from collections import defaultdict
 
 import pandas as pd
@@ -9,6 +11,11 @@ from dotenv import load_dotenv
 
 from inference.evaluator import Evaluator
 from inference.utils import QUESTION_COLUMN, DATA_PATH
+
+from inference.utils import logging
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.WARN)
 
 
 def prepare_input(
@@ -29,6 +36,7 @@ def prepare_input(
     Raises:
         RuntimeError: If the directory referenced by `DATA_PATH` does not exist.
     """
+    log.info("Starting with input preparation")
     load_dotenv()
 
     data_folder = DATA_PATH
@@ -37,6 +45,9 @@ def prepare_input(
 
     output_folder = Path(output_folder)
     output_folder.mkdir(exist_ok=True)
+
+    input_path = output_folder / "ifbench_input.jsonl"
+    input_written = False
     for model_folder in data_folder.iterdir():
         model_folder_name = model_folder.name
         if not model_folder.is_dir():
@@ -50,6 +61,25 @@ def prepare_input(
 
         df["key"] = pd.to_numeric(df["key"])
         df = df.sort_values("key").reset_index(drop=True)
+
+        if not input_written:
+            with input_path.open("w", encoding="utf-8") as f:
+                for row in df.itertuples(index=False):
+                    instruction_id_list = getattr(row, "instruction_id_list")
+                    kwargs = getattr(row, "kwargs")
+                    if hasattr(instruction_id_list, "tolist"):
+                        instruction_id_list = instruction_id_list.tolist()
+                    if hasattr(kwargs, "tolist"):
+                        kwargs = kwargs.tolist()
+                    entry = {
+                        "key": getattr(row, "key"),
+                        "prompt": getattr(row, QUESTION_COLUMN).strip(),
+                        "instruction_id_list": instruction_id_list,
+                        "kwargs": kwargs,
+                    }
+                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            input_written = True
+            print(f"Wrote {input_path}")
         for persona_cfg in persona_configs:
             persona_name = persona_cfg.name
             answer_column = persona_cfg.answer_column
@@ -69,6 +99,38 @@ def prepare_input(
                     f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
             print(f"Wrote {output_path}")
+    logging.info("Input preparation finished")
+
+
+def run_ifbench(
+    eval_root_env: str = "IFBENCH_EVAL_ROOT",
+    benchmark_file: str = "data/IFBench_test.jsonl",
+    responses_root: str = "temp/ifbench",
+    output_root: str = "temp/ifbench/raw",
+):
+    load_dotenv()
+    eval_root = Path(os.getenv(eval_root_env, "")).expanduser()
+    if not eval_root.exists():
+        raise RuntimeError(
+            f"Could not locate IFBench evaluation script. Set {eval_root_env} to its root folder."
+        )
+
+    benchmark_file = Path(benchmark_file)
+    responses_root = Path(responses_root)
+    output_root = Path(output_root)
+    output_root.mkdir(exist_ok=True, parents=True)
+
+    for response_file in responses_root.glob("*.jsonl"):
+        try:
+            cmd = [
+                "python3", "-m", "run_eval",
+                f"--input_data={benchmark_file.resolve()}",
+                f"--input_response_data={response_file.resolve()}",
+                f"--output_dir={output_root.resolve()}",
+            ]
+            subprocess.run(cmd, cwd=eval_root)
+        except Exception as e:
+            log.error(e)
 
 
 def prepare_df(
@@ -143,6 +205,32 @@ def main():
         )
     )
 
+    # run_ifbench() arguments
+    parser_run_ifbench = subparsers.add_parser(
+        "run_ifbench",
+        help="Run the IFBench evaluation script."
+    )
+    parser_run_ifbench.add_argument(
+        "--eval-root-env",
+        default="IFBENCH_EVAL_ROOT",
+        help="Name of the env var pointing to the IFBench evaluation script root. Defaults to %(default)s."
+    )
+    parser_run_ifbench.add_argument(
+        "--benchmark-file",
+        default="data/IFBench_test.jsonl",
+        help="Path to the IFBench benchmark JSONL file. Defaults to %(default)s."
+    )
+    parser_run_ifbench.add_argument(
+        "--responses-root",
+        default="temp/ifbench",
+        help="Folder containing model response JSONL files. Defaults to %(default)s."
+    )
+    parser_run_ifbench.add_argument(
+        "--output-root",
+        default="temp/ifbench/raw",
+        help="Folder where IFBench evaluation outputs will be written. Defaults to %(default)s."
+    )
+
     # prepare_df() arguments
     parser_prepare_df = subparsers.add_parser(
         "prepare_df",
@@ -162,6 +250,13 @@ def main():
     args = parser.parse_args()
     if args.command == "prepare_input":
         prepare_input(args.output_folder, args.dataset_name)
+    elif args.command == "run_ifbench":
+        run_ifbench(
+            args.eval_root_env,
+            args.benchmark_file,
+            args.responses_root,
+            args.output_root,
+        )
     elif args.command == "prepare_df":
         prepare_df(args.input_folder, args.output_folder)
 
