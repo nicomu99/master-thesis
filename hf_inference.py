@@ -86,13 +86,13 @@ def prepare_prompt(
 
 
 def main(
-    # dataset_id: str,
+    dataset_path: str,
     model_string: str,
 ):
     """Main inference pipeline.
 
     Args:
-        # dataset_id (str): Dataset identifier of the dataset to use.
+        dataset_path (str): Dataset identifier of the dataset to use.
         model_string (str): Model identifier. Must be the same as the repository
             name on HF.
     """
@@ -111,10 +111,6 @@ def main(
         dtype=torch.bfloat16,
     )
     pipe.tokenizer.pad_token_id = pipe.tokenizer.eos_token_id
-
-    dataset_path = model_string.split("/")[-1]
-    dataset_path = dataset_path.replace(".", "_")
-    dataset_path = dataset_path.lower()
 
     evaluator = Evaluator(dataset_path)
     persona_registry = evaluator.get_persona_registry()
@@ -199,11 +195,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description="Inference script for HF open weight models.")
-    # parser.add_argument(
-    #     "--dataset",
-    #     help="The dataset to use for inference.",
-    #     type=str,
-    #     default=None)
+    parser.add_argument(
+        "--dataset",
+        help="The dataset to use for inference.",
+        type=str,
+        default=None)
     parser.add_argument(
         "--model",
         help="The model used for inference.",
@@ -211,4 +207,4 @@ if __name__ == "__main__":
         default="meta-llama/Llama-3.2-3B-Instruct")
     args = parser.parse_args()
 
-    main(args.model)  # args.dataset, args.model)
+    main(args.dataset, args.model)
