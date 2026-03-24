@@ -114,6 +114,28 @@ def run_ifbench(
     output_root: str = "temp/ifbench/raw",
     df_output_root: str = "data/evaluation",
 ):
+    """Run the IFBench evaluation pipeline
+
+    This function generates the required IFBench input file, evaluates all
+    response JSONL files in the given folder using the official script, and
+    consolidates the results into a single CSV in long-format.
+
+    Args:
+        eval_root_env (str): Environment variable pointing to the IFBench
+            evaluation script root. Defaults to "IFBENCH_EVAL_ROOT".
+        dataset_name (str): Name of the dataset to load through the evaluator.
+            Defaults to "IFBench".
+        responses_root (str): Folder containing model response JSONL files.
+            Defaults to "temp/ifbench".
+        output_root (str): Folder where the IFBench evaluation outputs will be
+            written. Defaults to "temp/ifbench/raw".
+        df_output_root (str): Folder where the consolidated CSV will be written.
+            Defaults to "data/evaluation".
+
+    Raises:
+        RuntimeError: If the IFBench evaluation script root is not configured,
+            or if the generated input file is missing.
+    """
     log.info("Starting IFBench evaluation run")
     load_dotenv()
     value = os.getenv(eval_root_env)
