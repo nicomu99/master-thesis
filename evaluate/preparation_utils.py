@@ -5,7 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from inference.evaluator import Evaluator
-from inference.utils import QUESTION_COLUMN, DATA_PATH
+from inference.utils import DATA_PATH
 
 from .extract_answers import extract_answers
 
@@ -46,17 +46,28 @@ def prepare_df(
         _, df = evaluator.get_data(dataset_name)
 
         persona_registry = evaluator.get_persona_registry()
-        answer_columns = persona_registry.get_answer_columns()
-        extracted_columns = [col.replace("_answer", "") for col in answer_columns]
+        id_vars = ["static_id", "model"]
+        if dataset_name == "flores":
+            scoring_columns = persona_registry.get_judgment_columns()
+            extracted_columns = [col.replace("_judgment", "") for col in scoring_columns]
+            id_vars.append("iso_639_3")
+        elif dataset_name == "mmlu-pro":
+            scoring_columns = persona_registry.get_answer_columns()
+            extracted_columns = [col.replace("_answer", "") for col in scoring_columns]
+            id_vars.append("category")
+        else:
+            scoring_columns = persona_registry.get_answer_columns()
+            extracted_columns = [col.replace("_answer", "") for col in scoring_columns]
+            id_vars.append("Subject")
 
-        df = extract_answers(df, answer_columns, "mmlu")
+        df = extract_answers(df, scoring_columns, dataset_name)
         df["model"] = model_folder_name
         for col in extracted_columns:
             df[col] = (df["answer"] == df[col]).astype(int)
 
         df = pd.melt(
             df,
-            id_vars=["static_id", "model", "category"],
+            id_vars=id_vars,
             value_vars=extracted_columns,
             var_name="persona",
             value_name="score"
@@ -66,7 +77,7 @@ def prepare_df(
     output_path = Path(output_folder)
     output_path.mkdir(exist_ok=True, parents=True)
     result = pd.concat(data, ignore_index=True)
-    csv_path = output_path / "mmlu-pro.csv"
+    csv_path = output_path / f"{dataset_name}.csv"
     result.to_csv(csv_path)
     log.info("Dataframe preparation finished, created %s", csv_path)
 
@@ -79,8 +90,8 @@ def main():
         "--dataset-name",
         default="mmlu-pro",
         help=(
-            "Name of the dataset to load via the evaluator. Make sure this name is equal to the one given to the "
-            "MMLU-Pro dataset in the config_dataset.json file. Defaults to %(default)s."
+            "Name of the dataset to load via the evaluator. Should be  "
+            "MMLU-Pro, Flores+ or MATH dataset in the config_dataset.json file. Defaults to %(default)s."
         )
     )
     parser.add_argument(
