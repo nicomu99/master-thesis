@@ -14,25 +14,25 @@ def extract_answers(
         dataframe (pd.DataFrame): Dataframe to extract answers from.
         columns (list[str]): Columns to extract answers from.
         extraction_fn (str): String identifier of the extraction function to use.
-            Must be 'mmlu', 'flores' or 'math'.
+            Must be 'mmlu', 'flores' or 'MATH'.
 
     Returns:
         pd.DataFrame: A dataframe with extracted answers.
     """
     _extraction_fns = {
         "mmlu-pro": extract_answer_mmlu,
-        "math": extract_answer_math,
+        "MATH": extract_answer_math,
         "flores": extract_answer_flores
     }
     if extraction_fn not in _extraction_fns:
         raise ValueError(
-            "Extraction function unknown. Must be 'mmlu', 'math' or 'flores'."
+            "Extraction function unknown. Must be 'mmlu', 'MATH' or 'flores'."
         )
     _extraction_fn = _extraction_fns[extraction_fn]
 
     dataframe = dataframe.assign(
         **{
-            f"{column.replace("_answer", "")}": dataframe.apply(
+            f"{column.replace("_answer", "").replace("_judgment", "")}": dataframe.apply(
                 lambda row: _extraction_fn(row, column), axis=1)
             for column in columns
         }
@@ -133,15 +133,10 @@ def extract_answer_flores(
     completion = sample[column]
     sample_id = sample["static_id"]
     sample_number = int(sample_id.split("_")[-1])
-    try:
-        match_single = re.match(r"The better translation is:\s*([12])\b(.*)", completion, re.IGNORECASE | re.DOTALL)
-    except Exception:
-        print(column)
-        print(completion)
-        print(sample_id)
-        print(sample_number)
-        print(sample)
-        raise RuntimeError()
+    if completion is None:
+        return -1
+
+    match_single = re.match(r"The better translation is:\s*([12])\b(.*)", completion, re.IGNORECASE | re.DOTALL)
     if match_single:
         if (
             sample_number % 2 == 0 and int(match_single.group(1)) == 2 or
