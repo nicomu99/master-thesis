@@ -211,7 +211,7 @@ def prepare_input_alpaca(dataset_name: str = "alpaca") -> None:
             with out_path.open("w", encoding="utf-8") as f:
                 json.dump(records, f, ensure_ascii=False, indent=2)
 
-            log.info("Wrote %s", out_path)
+            log.debug("Wrote %s", out_path)
 
 
 def prepare_df_alpaca(
@@ -232,7 +232,7 @@ def prepare_df_alpaca(
     Raises:
         ValueError: If the input folder does not exist.
     """
-    input_folder = Path("temp/alpaca_out/weighted_alpaca_eval_gpt4_turbo/annotations_snapshots")
+    input_folder = Path("temp/alpaca_out/weighted_alpaca_eval_gpt4_turbo/annotations")
     if not input_folder.exists():
         raise ValueError("Input folder could not be found. Please make sure it exists.")
 
@@ -255,7 +255,7 @@ def prepare_df_alpaca(
     output_path = Path(output_folder)
     output_path.mkdir(exist_ok=True, parents=True)
     df = pd.DataFrame(data)
-    csv_path = output_path / "alpaca_eval.csv"
+    csv_path = output_path / "alpaca.csv"
     df.to_csv(csv_path, index=False)
     log.info("Wrote %s", csv_path)
 
@@ -283,6 +283,11 @@ def run_alpaca_eval(
     annotations_dir.mkdir(exist_ok=True, parents=True)
 
     for model_output in outputs_root.glob("*.json"):
+        annotation_path = annotations_dir / f"{model_output.stem}.json"
+        if annotation_path.exists():
+            log.info("Skipping Eval on %s", model_output.name)
+            continue
+
         cmd = [
             "alpaca_eval",
             "evaluate",
@@ -294,7 +299,6 @@ def run_alpaca_eval(
 
         annotation_file = eval_output_dir / "annotations.json"
         if annotation_file.exists():
-            annotation_path = annotations_dir / f"{model_output.stem}.json"
             shutil.copy2(annotation_file, annotation_path)
             log.debug("Snapshotted %s", annotation_path)
         else:
@@ -373,7 +377,7 @@ def prepare_df(
     dataset_name: str = "mmlu-pro",
     output_folder: str = "data/evaluation",
 ) -> None:
-    """
+    """Prepare evaluation DataFrame for standard datasets and write it to CSV.
 
     Args:
         dataset_name (str): Name of the dataset to load through the evaluator. Defaults to "mmlu-pro".
