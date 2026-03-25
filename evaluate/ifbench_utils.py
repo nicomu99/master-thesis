@@ -18,10 +18,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-def prepare_input(
-    output_folder: str | Path = "temp/ifbench",
-    dataset_name: str = "IFBench"
-):
+def prepare_input(dataset_name: str = "IFBench"):
     """Generate JSONL files for the official IFBench evaluation pipeline.
 
     This function reads completions from the directory specified by
@@ -29,8 +26,6 @@ def prepare_input(
     JSONL file per persona configuration in the format the pipeline assumes.
 
     Args:
-        output_folder (str |Path): Directory where the generated JSONL files will be stored.
-            The directory is created if it does not already exist. Defaults to "temp/ifbench".
         dataset_name (str): Name of the dataset to load through the evaluator. Defaults to "IFBench".
 
     Raises:
@@ -43,7 +38,7 @@ def prepare_input(
     if not data_folder.exists():
         raise RuntimeError("Data folder does not exist. Please make sure that inference has finished.")
 
-    output_folder = Path(output_folder)
+    output_folder = Path("temp/ifbench")
     output_folder.mkdir(exist_ok=True)
 
     input_path = output_folder / "ifbench_input.jsonl"
@@ -110,8 +105,6 @@ def prepare_input(
 def run_ifbench(
     eval_root_env: str = "IFBENCH_EVAL_ROOT",
     dataset_name: str = "IFBench",
-    responses_root: str = "temp/ifbench",
-    output_root: str = "temp/ifbench/raw",
     df_output_root: str = "data/evaluation",
 ):
     """Run the IFBench evaluation pipeline
@@ -125,10 +118,6 @@ def run_ifbench(
             evaluation script root. Defaults to "IFBENCH_EVAL_ROOT".
         dataset_name (str): Name of the dataset to load through the evaluator.
             Defaults to "IFBench".
-        responses_root (str): Folder containing model response JSONL files.
-            Defaults to "temp/ifbench".
-        output_root (str): Folder where the IFBench evaluation outputs will be
-            written. Defaults to "temp/ifbench/raw".
         df_output_root (str): Folder where the consolidated CSV will be written.
             Defaults to "data/evaluation".
 
@@ -150,11 +139,11 @@ def run_ifbench(
             f"Could not locate IFBench evaluation script. Set {eval_root_env} to its root folder."
         )
 
-    responses_root = Path(responses_root)
-    output_root = Path(output_root)
+    responses_root = Path("temp/ifbench")
+    output_root = Path("temp/ifbench/raw")
     output_root.mkdir(exist_ok=True, parents=True)
 
-    prepare_input(output_folder=responses_root, dataset_name=dataset_name)
+    prepare_input(dataset_name=dataset_name)
     benchmark_file = responses_root / "ifbench_input.jsonl"
     if not benchmark_file.exists():
         raise RuntimeError(f"Expected IFBench input file at {benchmark_file}.")
@@ -249,16 +238,6 @@ def main():
         )
     )
     parser.add_argument(
-        "--responses-root",
-        default="temp/ifbench",
-        help="Folder containing model response JSONL files. Defaults to %(default)s."
-    )
-    parser.add_argument(
-        "--output-root",
-        default="temp/ifbench/raw",
-        help="Folder where IFBench evaluation outputs will be written. Defaults to %(default)s."
-    )
-    parser.add_argument(
         "--df-output-root",
         default="data/evaluation",
         help="Folder where the consolidated IFBench csv will be written. Defaults to %(default)s."
@@ -266,11 +245,9 @@ def main():
 
     args = parser.parse_args()
     run_ifbench(
-        args.eval_root_env,
-        args.dataset_name,
-        args.responses_root,
-        args.output_root,
-        args.df_output_root,
+        eval_root_env=args.eval_root_env,
+        dataset_name=args.dataset_name,
+        df_output_root=args.df_output_root,
     )
 
 
