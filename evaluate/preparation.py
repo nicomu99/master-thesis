@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import shutil
 import subprocess
 from collections import defaultdict
 from pathlib import Path
@@ -19,7 +20,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-def prepare_input(dataset_name: str = "IFBench") -> None:
+def prepare_input_ifbench(dataset_name: str = "IFBench") -> None:
     """Generate JSONL files for the official IFBench evaluation pipeline.
 
     This function reads completions from the directory specified by
@@ -103,7 +104,7 @@ def prepare_input(dataset_name: str = "IFBench") -> None:
     log.info("Input preparation finished")
 
 
-def prepare_ifbench_df(
+def prepare_df_ifbench(
     input_folder: str | Path = "temp/ifbench/raw",
     output_folder: str = "data/evaluation",
 ) -> None:
@@ -139,14 +140,12 @@ def prepare_ifbench_df(
         file_name = file_name.replace("_persona-eval_results_loose", "").split("_")
         model, persona = file_name[0], "_".join(file_name[1:])
         with file.open("r", encoding="utf-8") as f:
-            count = 0
-            for line in f:
+            for idx, line in enumerate(f):
                 obj = json.loads(line)
-                data["static_id"].append(f"IFBench_{count}")
+                data["static_id"].append(f"IFBench_{idx}")
                 data["model"].append(model)
                 data["persona"].append(persona)
                 data["score"].append(int(obj["follow_all_instructions"]))
-                count += 1
 
     output_path = Path(output_folder)
     output_path.mkdir(exist_ok=True, parents=True)
@@ -154,6 +153,82 @@ def prepare_ifbench_df(
     csv_path = output_path / "ifbench.csv"
     df.to_csv(csv_path)
     log.info("Wrote %s", csv_path)
+
+
+def prepare_df_alpaca(
+    output_folder: str = "data/evaluation",
+) -> None:
+    """Convert Alpaca Eval annotations into a consolidated CSV file.
+
+    This function reads Alpaca Eval annotation snapshots, extracts model names,
+    personas, and preference scores, and aggregates them into a single pandas
+    DataFrame in long format.
+
+    The DataFrame is saved as "alpaca_eval.csv" in the specified output folder.
+
+    Args:
+        output_folder (str, optional): Path to the folder where the resulting
+            CSV file will be saved. Defaults to "data/evaluation".
+
+    Raises:
+        ValueError: If the input folder does not exist.
+    """
+    input_folder = Path("temp/alpaca_out/weighted_alpaca_eval_gpt4_turbo/annotations_snapshots")
+    if not input_folder.exists():
+        raise ValueError("Input folder could not be found. Please make sure it exists.")
+
+    data = defaultdict(list)
+    for file in input_folder.iterdir():
+        if not file.suffix == ".json":
+            log.warning("Unknown file found: %s", str(file))
+            continue
+
+        file_name = file.stem.split("_")
+        model, persona = file_name[0], "_".join(file_name[1:])
+        with file.open("r", encoding="utf-8") as f:
+            lines = json.load(f)
+            for idx, line in enumerate(lines):
+                data["static_id"].append(f"alpaca_{idx}")
+                data["model"].append(model)
+                data["persona"].append(persona)
+                data["score"].append(float(line["preference"]))
+
+    output_path = Path(output_folder)
+    output_path.mkdir(exist_ok=True, parents=True)
+    df = pd.DataFrame(data)
+    csv_path = output_path / "alpaca_eval.csv"
+    df.to_csv(csv_path, index=False)
+    log.info("Wrote %s", csv_path)
+
+
+def run_alpaca_eval(
+    df_output_root: str = "data/evaluation",
+) -> None:
+    """Run Alpaca Eval on all model outputs and consolidate results."""
+    outputs_root = Path("temp/alpaca_out")
+    eval_output_dir = outputs_root / "weighted_alpaca_eval_gpt4_turbo"
+    annotations_dir = eval_output_dir / "annotations"
+    annotations_dir.mkdir(exist_ok=True, parents=True)
+
+    for model_output in outputs_root.glob("*.json"):
+        cmd = [
+            "alpaca_eval",
+            "evaluate",
+            "--model_outputs",
+            str(model_output),
+        ]
+        log.info("Running Alpaca Eval on %s", model_output.name)
+        subprocess.run(cmd)
+
+        annotation_file = eval_output_dir / "annotations.json"
+        if annotation_file.exists():
+            annotation_path = annotations_dir / f"{model_output.stem}.json"
+            shutil.copy2(annotation_file, annotation_path)
+            log.debug("Snapshotted %s", annotation_path)
+        else:
+            log.warning("No annotations found for %s", model_output.name)
+
+    prepare_df_alpaca(output_folder=df_output_root)
 
 
 def run_ifbench(
@@ -197,7 +272,7 @@ def run_ifbench(
     output_root = Path("temp/ifbench/raw")
     output_root.mkdir(exist_ok=True, parents=True)
 
-    prepare_input(dataset_name=dataset_name)
+    prepare_input_ifbench(dataset_name=dataset_name)
     benchmark_file = responses_root / "ifbench_input.jsonl"
     if not benchmark_file.exists():
         raise RuntimeError(f"Expected IFBench input file at {benchmark_file}.")
@@ -218,7 +293,7 @@ def run_ifbench(
         except Exception as e:
             log.error(e)
 
-    prepare_ifbench_df(input_folder=str(output_root), output_folder=df_output_root)
+    prepare_df_ifbench(input_folder=str(output_root), output_folder=df_output_root)
     log.info("IFBench evaluation finished")
 
 
@@ -335,6 +410,16 @@ def main() -> None:
         help="Folder where the consolidated IFBench csv will be written. Defaults to %(default)s.",
     )
 
+    alpaca_parser = subparsers.add_parser(
+        "alpaca",
+        help="Run Alpaca Eval and consolidate preferences.",
+    )
+    alpaca_parser.add_argument(
+        "--df-output-root",
+        default="data/evaluation",
+        help="Folder where the consolidated Alpaca Eval csv will be written. Defaults to %(default)s.",
+    )
+
     args = parser.parse_args()
     if args.command == "all":
         prepare_df(dataset_name=args.dataset_name, output_folder=args.df_output_root)
@@ -344,6 +429,8 @@ def main() -> None:
             dataset_name=args.dataset_name,
             df_output_root=args.df_output_root,
         )
+    elif args.command == "alpaca":
+        run_alpaca_eval(df_output_root=args.df_output_root)
     else:
         parser.error(f"Unknown command: {args.command}")
 
