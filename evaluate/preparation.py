@@ -153,6 +153,65 @@ def prepare_df_ifbench(
     csv_path = output_path / "ifbench.csv"
     df.to_csv(csv_path)
     log.info("Wrote %s", csv_path)
+    
+
+def prepare_input_alpaca(dataset_name: str = "alpaca") -> None:
+    """Generate JSON files for the official AlpacaEval evaluation pipeline.
+
+    This function reads completions from the directory specified by
+    `DATA_PATH`, loads the dataset for each model subdirectory, and writes one
+    JSON file per persona configuration in the format the pipeline assumes.
+
+    Args:
+        dataset_name (str): Name of the dataset to load through the evaluator. Defaults to "alpaca".
+
+    Raises:
+        RuntimeError: If the directory referenced by `DATA_PATH` does not exist.
+    """
+    load_dotenv()
+    data_folder = DATA_PATH
+    if not data_folder.exists():
+        raise RuntimeError("Data folder does not exist. Please make sure that inference has finished.")
+
+    output_folder = Path("temp/alpaca_out")
+    output_folder.mkdir(exist_ok=True)
+
+    for model_folder in data_folder.iterdir():
+        model_folder_name = model_folder.name
+        if not model_folder.is_dir():
+            continue
+
+        evaluator = Evaluator(dataset_path=model_folder_name)
+        _, df = evaluator.get_data(dataset_name)
+
+        persona_registry = evaluator.get_persona_registry()
+        persona_cols = persona_registry.get_answer_columns()
+
+        for persona_col in persona_cols:
+            if persona_col not in df.columns:
+                log.warning("Skipping missing persona column: %s", persona_col)
+                continue
+
+            records = []
+            model_persona_identifier = f"{model_folder_name}_{persona_col}"
+            for _, row in df.iterrows():
+                output_text = row[persona_col]
+                if output_text is None:
+                    continue
+
+                records.append(
+                    {
+                        "instruction": row["question"],
+                        "output": output_text,
+                        "generator": model_persona_identifier,
+                    }
+                )
+
+            out_path = output_folder / f"{model_persona_identifier}.json"
+            with out_path.open("w", encoding="utf-8") as f:
+                json.dump(records, f, ensure_ascii=False, indent=2)
+
+            log.info("Wrote %s", out_path)
 
 
 def prepare_df_alpaca(
@@ -202,9 +261,22 @@ def prepare_df_alpaca(
 
 
 def run_alpaca_eval(
+    dataset_name: str = "alpaca",
     df_output_root: str = "data/evaluation",
 ) -> None:
-    """Run Alpaca Eval on all model outputs and consolidate results."""
+    """Run the AlpacaEval evaluation pipeline
+
+    This function generates the required input file, evaluates all
+    response JSON files in the given folder using the official script, and
+    consolidates the results into a single CSV in long-format.
+
+    Args:
+        dataset_name (str): Name of the dataset to load through the evaluator.
+            Defaults to "alpaca".
+        df_output_root (str): Folder where the consolidated CSV will be written.
+            Defaults to "data/evaluation".
+    """
+    prepare_input_alpaca(dataset_name=dataset_name)
     outputs_root = Path("temp/alpaca_out")
     eval_output_dir = outputs_root / "weighted_alpaca_eval_gpt4_turbo"
     annotations_dir = eval_output_dir / "annotations"
@@ -415,6 +487,14 @@ def main() -> None:
         help="Run Alpaca Eval and consolidate preferences.",
     )
     alpaca_parser.add_argument(
+        "--dataset-name",
+        default="alpaca",
+        help=(
+            "Name of the dataset to load via the evaluator. Should be the same as the corresponding"
+            "dataset name in the config_dataset.json file. Defaults to %(default)s."
+        ),
+    )
+    alpaca_parser.add_argument(
         "--df-output-root",
         default="data/evaluation",
         help="Folder where the consolidated Alpaca Eval csv will be written. Defaults to %(default)s.",
@@ -430,7 +510,10 @@ def main() -> None:
             df_output_root=args.df_output_root,
         )
     elif args.command == "alpaca":
-        run_alpaca_eval(df_output_root=args.df_output_root)
+        run_alpaca_eval(
+            dataset_name=args.dataset_name,
+            df_output_root=args.df_output_root,
+        )
     else:
         parser.error(f"Unknown command: {args.command}")
 
