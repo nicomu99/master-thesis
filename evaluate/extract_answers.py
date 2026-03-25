@@ -20,7 +20,7 @@ def extract_answers(
         pd.DataFrame: A dataframe with extracted answers.
     """
     _extraction_fns = {
-        "mmlu": extract_answer_mmlu,
+        "mmlu-pro": extract_answer_mmlu,
         "math": extract_answer_math,
         "flores": extract_answer_flores
     }
