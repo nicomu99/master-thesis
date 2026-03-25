@@ -4,6 +4,10 @@ from dotenv import load_dotenv
 
 from inference.evaluator import Evaluator
 from inference.utils import DATA_PATH
+from inference.utils import logging
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 
 def prepare_jsonl(dataset_name: str = "alpaca"):
@@ -28,10 +32,11 @@ def prepare_jsonl(dataset_name: str = "alpaca"):
 
         for persona_col in persona_cols:
             if persona_col not in df.columns:
-                print(f"Skipping missing persona column: {persona_col}")
+                log.warning("Skipping missing persona column: %s", persona_col)
                 continue
 
             records = []
+            model_persona_identifier = f"{model_folder_name}_{persona_col}"
             for _, row in df.iterrows():
                 output_text = row[persona_col]
                 if output_text is None:
@@ -41,14 +46,15 @@ def prepare_jsonl(dataset_name: str = "alpaca"):
                     {
                         "instruction": row["question"],
                         "output": output_text,
+                        "generator": model_persona_identifier
                     }
                 )
 
-            out_path = output_folder / f"{model_folder_name}_{persona_col}.json"
+            out_path = output_folder / f"{model_persona_identifier}.json"
             with out_path.open("w", encoding="utf-8") as f:
                 json.dump(records, f, ensure_ascii=False, indent=2)
 
-            print(f"Wrote {out_path}")
+            log.debug("Wrote %s", out_path)
 
 
 if __name__ == "__main__":
