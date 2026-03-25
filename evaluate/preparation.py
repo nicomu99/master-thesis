@@ -288,12 +288,14 @@ def prepare_df(
     output_path = Path(output_folder)
     output_path.mkdir(exist_ok=True, parents=True)
     result = pd.concat(data, ignore_index=True)
+    result = result[result["score"] >= 0]
     csv_path = output_path / f"{dataset_name}.csv"
     result.to_csv(csv_path)
     log.info("Dataframe preparation finished, created %s", csv_path)
 
 
 def main() -> None:
+    """Main entry point."""
     parser = argparse.ArgumentParser(prog="python3 -m evaluate.preparation")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
