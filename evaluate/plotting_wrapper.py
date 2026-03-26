@@ -87,10 +87,6 @@ class PlottingWrapper:
         if legend:
             ax.legend(title="Persona types")
 
-    @staticmethod
-    def calculate_accuracy(plot_series: pd.Series):
-        return plot_series.groupby(level=0).mean()
-
     def plot_abs_accuracy(
         self,
         ax: Axes,
@@ -110,9 +106,10 @@ class PlottingWrapper:
             y_label (str, optional): y-axis label. Defaults to "Accuracy".
             legend (bool, optional): If True, a legend is added to the plot. Defaults to True.
         """
+        plot_series = plot_series.groupby(level=0).mean()
         self._plot_bar(
             ax,
-            self.calculate_accuracy(plot_series),
+            plot_series,
             bar_label=bar_label_template,
             title=title,
             y_label=y_label,
@@ -138,7 +135,7 @@ class PlottingWrapper:
             y_label (str, optional): y-axis label. Defaults to "Accuracy Gain".
             legend (bool, optional): If True, a legend is added to the plot. Defaults to False.
         """
-        values = self.calculate_accuracy(plot_series)
+        values = plot_series.groupby(level=0).mean()
         baseline = values.get(baseline_label)
         if baseline is None or pd.isna(baseline):
             log.warning("Baseline persona %s missing in plot data", baseline_label)
@@ -163,6 +160,21 @@ class PlottingWrapper:
         baseline_col_1: str = "no",
         baseline_col_2: str = "helpful",
     ):
+        """Create per-model accuracy figures from a long-format CSV.
+
+        The CSV is expected at `data/evaluation/{dataset_name}.csv` with columns
+        "persona", "model", "category", and "score". For each model, this
+        creates one figure with one row per category and three columns: absolute
+        accuracy and relative accuracy vs two baselines.
+
+        Args:
+            dataset_name (str): Base filename (without extension) to load.
+            category_col (str, optional): Column name for categories. Defaults to "category".
+            baseline_col_1 (str, optional): Persona baseline for the first relative plot.
+                Defaults to "no".
+            baseline_col_2 (str, optional): Persona baseline for the second relative plot.
+                Defaults to "helpful".
+        """
         df = pd.read_csv(f"data/evaluation/{dataset_name}.csv", index_col=0)
         for model, model_df in df.groupby("model"):
             num_categories = len(model_df["category"].unique())
