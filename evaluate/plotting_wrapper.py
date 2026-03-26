@@ -1,8 +1,9 @@
 """This module contains a class for creating plots."""
 from typing import Any, Callable
+from pathlib import Path
 
-import matplotlib.pyplot as plt
 import pandas as pd
+import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 
 from inference.utils import logging
@@ -14,8 +15,13 @@ log.setLevel(logging.INFO)
 class PlottingWrapper:
     """Utility wrapper for evaluate functions."""
 
-    def __init__(self, personas: list[str]):
-        self.color_map = self.create_persona_colormap(personas)
+    def __init__(self):
+        self.personas = [
+            "no", "helpful", "base", "static_short", "static_medium", "static_long", "dynamic_short",
+            "dynamic_medium", "dynamic_long", "beginner_teacher", "intermediate_teacher", "expert_teacher"
+        ]   # hardcoded to preserve ordering
+
+        self.color_map = self.create_persona_colormap(self.personas)
         self.judgment_colors = ["red", "grey", "green"]
         self.judgment_labels = ["No Persona win", "Equal", "Persona win"]
 
@@ -38,26 +44,24 @@ class PlottingWrapper:
     def _plot_bar(
         self,
         ax: Axes,
-        plot_series: pd.Series,
+        plot_values: pd.Series,
         bar_label: str,
         title: str | None,
         y_label: str = "Accuracy",
         legend: bool = False,
         value_transform: Callable[[pd.Series], pd.Series] | None = None,
     ):
-        plot_values = plot_series.groupby(level=0).mean()
-        if value_transform is not None:
-            plot_values = value_transform(plot_values)
-
         bars = []
-        for column, value in plot_values.items():
-            column: str
+        for persona in self.personas:
+            if persona not in plot_values.index:
+                continue
+            value = plot_values[persona]
             label = " ".join(
-                [c.capitalize() for c in column.replace("_answer_option", "").split("_")]
+                [c.capitalize() for c in persona.split("_")]
             )
             if label == "No":
                 label = "No Persona"
-            plot_bar = ax.bar(column, value, label=label, color=self.color_map[column])
+            plot_bar = ax.bar(persona, value, label=label, color=self.color_map[persona])
             bars.append([plot_bar, value])
 
         # Add text labels
@@ -84,6 +88,7 @@ class PlottingWrapper:
         ax.spines[["right", "top"]].set_visible(False)
         if legend:
             ax.legend(title="Persona types")
+
 
     def plot_abs_accuracy(
         self,
@@ -119,7 +124,6 @@ class PlottingWrapper:
         plot_series: pd.Series,
         baseline_label: str = "no",
         bar_label_template: str = "{val:+.3f}",
-        title: str = "Title",
         y_label: str = "$\Delta$ Accuracy",
         legend: bool = False,
     ):
@@ -130,7 +134,6 @@ class PlottingWrapper:
             plot_series (pd.Series): Series of binary outcomes indexed by persona.
             baseline_label (str): Persona to use as baseline. Defaults to "no".
             bar_label_template (_type_, optional): Template to use for the bar label. Defaults to "{val:+.3f}".
-            title (str, optional): Title of the plot. Defaults to "Title".
             y_label (str, optional): y-axis label. Defaults to "Accuracy Gain".
             legend (bool, optional): If True, a legend is added to the plot. Defaults to False.
         """
@@ -142,6 +145,7 @@ class PlottingWrapper:
             return values - baseline
         value_transform = _delta
 
+        title = f"Gain vs. {baseline_label.capitalize()} Persona"
         self._plot_bar(
             ax,
             plot_series,
@@ -151,6 +155,36 @@ class PlottingWrapper:
             legend=legend,
             value_transform=value_transform,
         )
+
+    def create_accuracy_plots(
+        self,
+        dataset_name: str,
+        category_col: str = "category",
+        baseline_col_1: str = "no",
+        baseline_col_2: str = "helpful",
+    ):
+        df = pd.read_csv(f"data/evaluation/{dataset_name}.csv", index_col=0)
+        for model, model_df in df.groupby("model"):
+            num_categories = len(model_df["category"].unique())
+            fig, axes = plt.subplots(
+                nrows=num_categories, ncols=3,
+                figsize=(15, num_categories * 4),
+                constrained_layout=True
+            )
+
+            for idx, (category, cat_df) in enumerate(model_df.groupby(category_col)):
+                series = cat_df.set_index("persona")["score"]
+
+                axis = axes[idx]
+                self.plot_abs_accuracy(axis[0], series, title=f"Absolute Accuracy for Task {category}")
+                self.plot_rel_accuracy(axis[1], series, baseline_col_1)
+                self.plot_rel_accuracy(axis[2], series, baseline_col_2)
+
+            fig.suptitle(f"Cumulative Accuracy and Relative Gains for {dataset_name}", y=1.02)
+            save_path = Path(f"plots/{dataset_name}/")
+            save_path.mkdir(parents=True, exist_ok=True)
+            fig.savefig(save_path / f"{model}", dpi=300)
+            plt.close(fig)
 
     def plot_stacked_barchart(
         self,
