@@ -223,11 +223,72 @@ class PlottingWrapper:
             fig.savefig(save_path / f"{model}_per_category", dpi=300)
             plt.close(fig)
 
+    def create_stacked_barchart_plots(
+        self,
+        dataset_name: str,
+        category_col: str | None = None,
+    ):
+        """Create per-model stacked bar chart figures from a long-format CSV.
+
+        The CSV is expected at `data/evaluation/{dataset_name}.csv` with columns
+        "persona", "model", "category", and "score". For each model, this
+        creates one overall stacked bar chart and, if `category_col` is set,
+        one figure with one row per category.
+
+        Args:
+            dataset_name (str): Base filename (without extension) to load.
+            category_col (str, optional): Column name for categories. Defaults to None.
+        """
+        df = pd.read_csv(f"data/evaluation/{dataset_name}.csv", index_col=0)
+        if dataset_name == "alpaca":
+            df["score"] = (df["score"] >= 1.5).astype(int)
+
+        for model, model_df in df.groupby("model"):
+            overall_series = model_df.set_index("persona")["score"]
+            fig_overall, ax_overall = plt.subplots(figsize=(6, 4))
+            self.plot_stacked_barchart(
+                ax_overall,
+                overall_series,
+                title="Win Rates (All Categories)",
+            )
+            fig_overall.suptitle(f"Win Rates for {dataset_name}")
+            fig_overall.tight_layout()
+
+            save_path = Path(f"plots/{dataset_name}/")
+            save_path.mkdir(parents=True, exist_ok=True)
+            fig_overall.savefig(save_path / f"{model}_stacked_overall", dpi=300)
+            plt.close(fig_overall)
+
+            if category_col is None:
+                continue
+
+            categories = list(model_df[category_col].unique())
+            if not categories:
+                continue
+            fig, axes = plt.subplots(
+                nrows=len(categories), ncols=1,
+                figsize=(6, len(categories) * 4),
+            )
+            if len(categories) == 1:
+                axes = [axes]
+
+            for idx, (category, cat_df) in enumerate(model_df.groupby(category_col)):
+                series = cat_df.set_index("persona")["score"]
+                self.plot_stacked_barchart(
+                    axes[idx],
+                    series,
+                    title=f"Win Rates for Task {category}",
+                )
+
+            fig.suptitle(f"Win Rates for {dataset_name}", y=0.99)
+            fig.tight_layout()
+            fig.savefig(save_path / f"{model}_stacked_per_category", dpi=300)
+            plt.close(fig)
+
     def plot_stacked_barchart(
         self,
         ax: Axes,
-        plot_dict: dict[str, list[int]],
-        cols: list[str],
+        plot_series: pd.Series,
         y_label: str = "Win Rate",
         title: str | None = None,
     ) -> None:
@@ -235,31 +296,49 @@ class PlottingWrapper:
 
         Args:
             ax (Axes): Axis object on which the plot will be created.
-            plot_dict (dict[str, list[int]]): Dictionary containing plot values.
-            cols (list[str]): The columns to plot.
+            plot_series (pd.Series): Series of outcome codes indexed by persona.
             y_label (str, optional): y-axis label. Defaults to "Percentage".
             title (str, optional): Axis title. Defaults to None.
         """
-        assert_cols = [col for col in cols if col in plot_dict]
-        for col_idx, col in enumerate(assert_cols):
+        grouped = plot_series.groupby(level=0)
+        bar_idx = 0
+        for persona in self.personas:
+            if persona not in grouped.groups:
+                continue
+            series = grouped.get_group(persona)
+            counts = series.value_counts(dropna=True)
+            total = counts.sum()
+            if total == 0:
+                continue
+
+            counts = counts.reindex([0, 1, 2], fill_value=0)
+            if counts[2] > 0:
+                loss = counts[0] / total
+                tie = counts[1] / total
+                win = counts[2] / total
+                values = [loss, tie, win]
+            else:
+                loss = counts[0] / total
+                win = counts[1] / total
+                values = [loss, 0.0, win]
+
             bottom = 0
-            for val_idx, val in enumerate(plot_dict[col]):
-                x_label = " ".join(
-                    [c.capitalize() for c in col.replace("_judgment", "").split("_")]
-                )
-                if x_label == "no":
-                    x_label = "empty"
+            x_label = " ".join([c.capitalize() for c in persona.split("_")])
+            if x_label == "No":
+                x_label = "No Persona"
+            for val_idx, val in enumerate(values):
                 ax.bar(
                     x_label, val, bottom=bottom,
-                    label=self.judgment_labels[val_idx] if col_idx == 0 else "",
+                    label=self.judgment_labels[val_idx] if bar_idx == 0 else "",
                     color=self.judgment_colors[val_idx])
 
                 # add bar label
                 if val > 0.05:
                     ax.text(
-                        col_idx, bottom + val / 2, f"{val * 100:.1f}%",
+                        bar_idx, bottom + val / 2, f"{val * 100:.1f}%",
                         ha="center", va="center", color="white", fontsize=9)
                 bottom += val
+            bar_idx += 1
 
         ax.set_ylabel(y_label, fontsize=12)
         ax.set_ylim(0, 1)
