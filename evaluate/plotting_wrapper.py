@@ -1,8 +1,14 @@
 """This module contains a class for creating plots."""
-from typing import Any
+from typing import Any, Callable
 
 import matplotlib.pyplot as plt
+import pandas as pd
 from matplotlib.axes import Axes
+
+from inference.utils import logging
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 
 class PlottingWrapper:
@@ -32,14 +38,20 @@ class PlottingWrapper:
     def _plot_bar(
         self,
         ax: Axes,
-        plot_dict: dict[str, Any],
+        plot_series: pd.Series,
         bar_label: str,
         title: str | None,
         y_label: str = "Accuracy",
-        legend: bool = False
+        legend: bool = False,
+        value_transform: Callable[[pd.Series], pd.Series] | None = None,
     ):
+        plot_values = plot_series.groupby(level=0).mean()
+        if value_transform is not None:
+            plot_values = value_transform(plot_values)
+
         bars = []
-        for column, value in plot_dict.items():
+        for column, value in plot_values.items():
+            column: str
             label = " ".join(
                 [c.capitalize() for c in column.replace("_answer_option", "").split("_")]
             )
@@ -76,7 +88,7 @@ class PlottingWrapper:
     def plot_abs_accuracy(
         self,
         ax: Axes,
-        plot_dict: dict[str, Any],
+        plot_series: pd.Series,
         bar_label_template: str = "{val:.3f}",
         title: str | None = None,
         y_label: str = "Accuracy",
@@ -86,7 +98,7 @@ class PlottingWrapper:
 
         Args:
             ax (Axes): Axes object on which the plot will be created.
-            plot_dict (dict[str, Any]): Dictionary with values to plot. The keys are used as labels.
+            plot_series (pd.Series): Series of binary outcomes indexed by persona.
             bar_label_template (str, optional): Template to use for the bar label. Defaults to "{val:.3f}".
             title (str, optional): Title of the plot. Defaults to "Accuracy".
             y_label (str, optional): y-axis label. Defaults to "Accuracy".
@@ -94,7 +106,7 @@ class PlottingWrapper:
         """
         self._plot_bar(
             ax,
-            plot_dict,
+            plot_series,
             bar_label=bar_label_template,
             title=title,
             y_label=y_label,
@@ -104,29 +116,40 @@ class PlottingWrapper:
     def plot_rel_accuracy(
         self,
         ax: Axes,
-        plot_dict: dict[str, Any],
+        plot_series: pd.Series,
+        baseline_label: str = "no",
         bar_label_template: str = "{val:+.3f}",
         title: str = "Title",
         y_label: str = "$\Delta$ Accuracy",
-        legend: bool = False
+        legend: bool = False,
     ):
         """Plots a bar plot with relative accuracy differences.
 
         Args:
             ax (Axes): Axes object on which the plot will be created.
-            plot_dict (dict[str, Any]): Dictionary with values to plot. The keys are used as labels.
+            plot_series (pd.Series): Series of binary outcomes indexed by persona.
+            baseline_label (str): Persona to use as baseline. Defaults to "no".
             bar_label_template (_type_, optional): Template to use for the bar label. Defaults to "{val:+.3f}".
             title (str, optional): Title of the plot. Defaults to "Title".
             y_label (str, optional): y-axis label. Defaults to "Accuracy Gain".
             legend (bool, optional): If True, a legend is added to the plot. Defaults to False.
         """
+        def _delta(values: pd.Series) -> pd.Series:
+            baseline = values.get(baseline_label)
+            if baseline is None or pd.isna(baseline):
+                log.warning("Baseline persona %s missing in plot data", baseline_label)
+                baseline = 0.0
+            return values - baseline
+        value_transform = _delta
+
         self._plot_bar(
             ax,
-            plot_dict,
+            plot_series,
             bar_label=bar_label_template,
             title=title,
             y_label=y_label,
-            legend=legend
+            legend=legend,
+            value_transform=value_transform,
         )
 
     def plot_stacked_barchart(
