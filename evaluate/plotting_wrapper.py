@@ -80,7 +80,7 @@ class PlottingWrapper:
         ax.set_ylabel(y_label, fontsize=12)
         ax.set_xlabel("Persona Type", fontsize=12)
         if title is not None:
-            ax.set_title(title, fontsize=12, loc="left")
+            ax.set_title(title, fontsize=12, loc="left", y=1.05)
         ax.set_xticks([])
         ax.set_xticklabels([])
         ax.spines[["right", "top"]].set_visible(False)
@@ -121,7 +121,7 @@ class PlottingWrapper:
         ax: Axes,
         plot_series: pd.Series,
         baseline_label: str = "no",
-        bar_label_template: str = "{val:+.3f}",
+        bar_label_template: str = "{val:+.2f}",
         y_label: str = "$\Delta$ Accuracy",
         legend: bool = False,
     ):
@@ -156,7 +156,7 @@ class PlottingWrapper:
     def create_accuracy_plots(
         self,
         dataset_name: str,
-        category_col: str = "category",
+        category_col: str | None = None,
         baseline_col_1: str = "no",
         baseline_col_2: str = "helpful",
     ):
@@ -165,37 +165,62 @@ class PlottingWrapper:
         The CSV is expected at `data/evaluation/{dataset_name}.csv` with columns
         "persona", "model", "category", and "score". For each model, this
         creates one figure with one row per category and three columns: absolute
-        accuracy and relative accuracy vs two baselines.
+        accuracy and relative accuracy vs two baselines. It also creates an
+        additional per-model figure aggregated across all categories.
 
         Args:
             dataset_name (str): Base filename (without extension) to load.
-            category_col (str, optional): Column name for categories. Defaults to "category".
+            category_col (str, optional): Column name for categories. Defaults to None.
             baseline_col_1 (str, optional): Persona baseline for the first relative plot.
                 Defaults to "no".
             baseline_col_2 (str, optional): Persona baseline for the second relative plot.
                 Defaults to "helpful".
         """
         df = pd.read_csv(f"data/evaluation/{dataset_name}.csv", index_col=0)
+        if dataset_name == "alpaca":
+            df["score"] = df["score"] >= 1.5
+
         for model, model_df in df.groupby("model"):
-            num_categories = len(model_df["category"].unique())
+            overall_series = model_df.set_index("persona")["score"]
+            fig_overall, axes_overall = plt.subplots(
+                nrows=1, ncols=3, figsize=(15, 4)
+            )
+            self.plot_abs_accuracy(
+                axes_overall[0], overall_series,
+                title=f"Absolute Accuracy",
+            )
+            self.plot_rel_accuracy(axes_overall[1], overall_series, baseline_col_1)
+            self.plot_rel_accuracy(axes_overall[2], overall_series, baseline_col_2)
+            fig_overall.suptitle(
+                f"Cumulative Accuracy and Relative Gains for {dataset_name}",
+            )
+            fig_overall.tight_layout()
+
+            save_path = Path(f"plots/{dataset_name}/")
+            save_path.mkdir(parents=True, exist_ok=True)
+            fig_overall.savefig(save_path / f"{model}_overall", dpi=300)
+            plt.close(fig_overall)
+            if category_col is None:
+                continue
+
+            num_categories = len(model_df[category_col].unique())
             fig, axes = plt.subplots(
                 nrows=num_categories, ncols=3,
-                figsize=(15, num_categories * 4),
-                constrained_layout=True
+                figsize=(15, num_categories * 4)
             )
 
             for idx, (category, cat_df) in enumerate(model_df.groupby(category_col)):
                 series = cat_df.set_index("persona")["score"]
 
                 axis = axes[idx]
-                self.plot_abs_accuracy(axis[0], series, title=f"Absolute Accuracy for Task {category}")
+                legend = idx == 0
+                self.plot_abs_accuracy(axis[0], series, title=f"Absolute Accuracy for Task {category}", legend=legend)
                 self.plot_rel_accuracy(axis[1], series, baseline_col_1)
                 self.plot_rel_accuracy(axis[2], series, baseline_col_2)
 
-            fig.suptitle(f"Cumulative Accuracy and Relative Gains for {dataset_name}", y=1.02)
-            save_path = Path(f"plots/{dataset_name}/")
-            save_path.mkdir(parents=True, exist_ok=True)
-            fig.savefig(save_path / f"{model}", dpi=300)
+            fig.suptitle(f"Accuracy and Relative Gains for {dataset_name}", y=0.99)
+            fig.tight_layout()
+            fig.savefig(save_path / f"{model}_per_category", dpi=300)
             plt.close(fig)
 
     def plot_stacked_barchart(
