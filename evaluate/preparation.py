@@ -185,17 +185,19 @@ def prepare_input_alpaca(dataset_name: str = "alpaca") -> None:
         _, df = evaluator.get_data(dataset_name)
 
         persona_registry = evaluator.get_persona_registry()
-        persona_cols = persona_registry.get_answer_columns()
+        persona_configs = persona_registry.get_configs()
 
-        for persona_col in persona_cols:
-            if persona_col not in df.columns:
-                log.warning("Skipping missing persona column: %s", persona_col)
+        for persona_cfg in persona_configs:
+            persona_name = persona_cfg.name
+            answer_column = persona_cfg.answer_column
+            if answer_column not in df.columns:
+                log.warning("Skipping missing persona column: %s", answer_column)
                 continue
 
             records = []
-            model_persona_identifier = f"{model_folder_name}_{persona_col}"
+            model_persona_identifier = f"{model_folder_name}_{persona_name}"
             for _, row in df.iterrows():
-                output_text = row[persona_col]
+                output_text = row[answer_column]
                 if output_text is None:
                     continue
 
