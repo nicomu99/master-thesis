@@ -1,5 +1,4 @@
 """This module contains a class for creating plots."""
-from typing import Any, Callable
 from pathlib import Path
 
 import pandas as pd
@@ -28,14 +27,14 @@ class PlottingWrapper:
     @staticmethod
     def create_persona_colormap(
         columns: list[str]
-    ) -> dict[str, Any]:
+    ) -> dict:
         """Create a static color map to use across plots.
 
         Args:
             columns (list[str]): List of columns to create the color map for.
 
         Returns:
-            dict[str, Any]: Dictionary containing color values.
+            dict: Dictionary containing color values.
         """
         cmap = plt.get_cmap("Dark2")
         colors = {col: cmap(i % 8) for i, col in enumerate(columns)}
@@ -49,7 +48,6 @@ class PlottingWrapper:
         title: str | None,
         y_label: str = "Accuracy",
         legend: bool = False,
-        value_transform: Callable[[pd.Series], pd.Series] | None = None,
     ):
         bars = []
         for persona in self.personas:
@@ -89,6 +87,9 @@ class PlottingWrapper:
         if legend:
             ax.legend(title="Persona types")
 
+    @staticmethod
+    def calculate_accuracy(plot_series: pd.Series):
+        return plot_series.groupby(level=0).mean()
 
     def plot_abs_accuracy(
         self,
@@ -111,7 +112,7 @@ class PlottingWrapper:
         """
         self._plot_bar(
             ax,
-            plot_series,
+            self.calculate_accuracy(plot_series),
             bar_label=bar_label_template,
             title=title,
             y_label=y_label,
@@ -137,13 +138,13 @@ class PlottingWrapper:
             y_label (str, optional): y-axis label. Defaults to "Accuracy Gain".
             legend (bool, optional): If True, a legend is added to the plot. Defaults to False.
         """
-        def _delta(values: pd.Series) -> pd.Series:
-            baseline = values.get(baseline_label)
-            if baseline is None or pd.isna(baseline):
-                log.warning("Baseline persona %s missing in plot data", baseline_label)
-                baseline = 0.0
-            return values - baseline
-        value_transform = _delta
+        values = self.calculate_accuracy(plot_series)
+        baseline = values.get(baseline_label)
+        if baseline is None or pd.isna(baseline):
+            log.warning("Baseline persona %s missing in plot data", baseline_label)
+            baseline = 0.0
+        plot_series = values - baseline
+        plot_series = plot_series.drop(baseline_label)
 
         title = f"Gain vs. {baseline_label.capitalize()} Persona"
         self._plot_bar(
@@ -153,7 +154,6 @@ class PlottingWrapper:
             title=title,
             y_label=y_label,
             legend=legend,
-            value_transform=value_transform,
         )
 
     def create_accuracy_plots(
