@@ -2,6 +2,7 @@
 from typing import Any
 
 import pandas as pd
+import scipy.stats as stats
 import statsmodels.formula.api as smf
 from statsmodels.stats.proportion import binom_test
 
@@ -231,10 +232,10 @@ def test_flores(
 
 
 def test_static_vs_dynamic(
-        df: pd.DataFrame,
-        category_id: str,
-        category_col: str = "category",
-        dataset_preprocess: str = "none"
+    df: pd.DataFrame,
+    category_id: str,
+    category_col: str = "category",
+    dataset_preprocess: str = "none"
 ):
     """Runs a test comparing the static vs. dynamic predictors.
 
@@ -266,4 +267,22 @@ def test_static_vs_dynamic(
 
     del results["Group Var"]
     del results["Intercept"]
+    return results
+
+
+def test_vs_baseline(
+    df: pd.DataFrame,
+    baseline_col: str,
+    persona_cols: list[str]
+):
+    results = []
+
+    for col in persona_cols:
+        stat, p = stats.wilcoxon(df[baseline_col], df[col])
+        results.append({
+            "persona": col,
+            "statistic": stat,
+            "p_value": p
+        })
+
     return results
