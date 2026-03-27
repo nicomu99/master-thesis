@@ -4,7 +4,6 @@ from typing import Any
 import pandas as pd
 import scipy.stats as stats
 import statsmodels.formula.api as smf
-from statsmodels.genmod.bayes_mixed_glm import BinomialBayesMixedGLM
 from statsmodels.miscmodels.ordinal_model import OrderedModel
 from statsmodels.stats.proportion import binom_test
 
@@ -94,28 +93,28 @@ def test_binary(
     Returns:
         The fitted model.
     """
-    print(df.columns)
-    model = BinomialBayesMixedGLM.from_formula(
-        "score ~ C(persona)",
-        {
-            "model_re": "0 + C(model)",
-        },
-        df
-    )
+    model = smf.logit("score ~ C(persona, Treatment(reference='no')) + C(model)", data=df)
+    return model.fit()
 
-    # Fit with variational Bayes
-    return model.fit_vb()
-
-def test_ordinary(
+def test_ordinal(
     df: pd.DataFrame
 ):
     model = OrderedModel.from_formula(
-        "score ~ C(persona) + C(model)",
+        "score ~ C(persona)",
         data=df,
+        groups=df["model"],
         distr="logit"
     )
 
     return model.fit(method="bfgs")
+
+def test_nominal(
+    df: pd.DataFrame
+):
+    model = smf.mixedlm("score ~ C(persona, Treatment(reference='no'))", data=df, groups=df["model"])
+    # model = smf.logit("score ~ C(persona) + C(model)", data=df)
+    return model.fit()
+
 
 
 def run_test_categorical(
