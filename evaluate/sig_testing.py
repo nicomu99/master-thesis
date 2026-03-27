@@ -5,6 +5,7 @@ import pandas as pd
 import scipy.stats as stats
 import statsmodels.formula.api as smf
 from statsmodels.genmod.bayes_mixed_glm import BinomialBayesMixedGLM
+from statsmodels.miscmodels.ordinal_model import OrderedModel
 from statsmodels.stats.proportion import binom_test
 
 
@@ -82,7 +83,7 @@ def lin_test(
     return lin_model.fit()
 
 
-def lin_test_numerical(
+def test_binary(
         df: pd.DataFrame
 ) -> Any:
     """Fit a linear mixed effects model with the reference as treatment variable and grouped by the question id.
@@ -104,6 +105,17 @@ def lin_test_numerical(
 
     # Fit with variational Bayes
     return model.fit_vb()
+
+def test_ordinary(
+    df: pd.DataFrame
+):
+    model = OrderedModel.from_formula(
+        "score ~ C(persona) + C(model)",
+        data=df,
+        distr="logit"
+    )
+
+    return model.fit(method="bfgs")
 
 
 def run_test_categorical(
@@ -155,7 +167,7 @@ def _length_test(
         df = df[df["correct"] != 1].copy()
         df["correct"] = (df["correct"] == 2).astype(int)
 
-    results = lin_test_numerical(df)
+    results = test_binary(df)
     results = results.pvalues
 
     # remove intercept

@@ -6,7 +6,7 @@ import warnings
 
 import pandas as pd
 
-from evaluate import lin_test_numerical
+from evaluate import test_binary
 
 
 _SUBSET_COLUMN_BY_DATASET = {
@@ -27,7 +27,7 @@ def _collect_results(
     subset_value: str | None,
 ) -> pd.DataFrame:
     try:
-        results = lin_test_numerical(df)
+        results = test_binary(df)
     except Exception as exc:  # noqa: BLE001 - want a resilient pipeline
         warnings.warn(
             f"lin_test_numerical failed for {dataset} "

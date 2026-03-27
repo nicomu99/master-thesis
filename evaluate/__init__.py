@@ -15,8 +15,10 @@ from .sig_testing import run_test_dynamic
 from .sig_testing import test_flores
 from .sig_testing import test_static_vs_dynamic
 from .sig_testing import test_vs_baseline
-from .sig_testing import lin_test_numerical
+from .sig_testing import test_binary
+from .sig_testing import test_ordinary
 from .testing_pipeline import run_evaluation_lin_tests
+
 __all__ = [
     "compute_accuracy_df",
     "compute_accuracy_difference",
@@ -34,6 +36,6 @@ __all__ = [
     "test_static_vs_dynamic",
     "test_flores",
     "test_vs_baseline",
-    "lin_test_numerical",
+    "test_binary",
     "run_evaluation_lin_tests"
 ]
