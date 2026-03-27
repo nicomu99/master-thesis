@@ -4,6 +4,7 @@ from typing import Any
 import pandas as pd
 import scipy.stats as stats
 import statsmodels.formula.api as smf
+from statsmodels.genmod.bayes_mixed_glm import BinomialBayesMixedGLM
 from statsmodels.stats.proportion import binom_test
 
 
@@ -92,9 +93,17 @@ def lin_test_numerical(
     Returns:
         The fitted model.
     """
-    model = smf.mixedlm(
-        "correct ~ persona", data=df, groups=df["static_id"])
-    return model.fit()
+    print(df.columns)
+    model = BinomialBayesMixedGLM.from_formula(
+        "score ~ C(persona)",
+        {
+            "model_re": "0 + C(model)",
+        },
+        df
+    )
+
+    # Fit with variational Bayes
+    return model.fit_vb()
 
 
 def run_test_categorical(
