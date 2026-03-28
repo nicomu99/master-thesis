@@ -1,0 +1,393 @@
+dataset,subset_column,subset_value,term,coef,stderr,pvalue
+MATH,,,Intercept,-4.299099586786448,0.12929679125253968,2.0511751819939057e-242
+MATH,,,"C(persona, Treatment(reference='no'))[T.base]",0.035388548820346526,0.08021524788282053,0.6590900390601246
+MATH,,,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",-0.14353532595705432,0.0807956988078559,0.07564694045038838
+MATH,,,"C(persona, Treatment(reference='no'))[T.dynamic_long]",0.22544579244225055,0.07973904984766518,0.0046943106042803984
+MATH,,,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",0.17836863116152332,0.07984503591625038,0.025487341282408853
+MATH,,,"C(persona, Treatment(reference='no'))[T.dynamic_short]",0.15314721734336428,0.07990491681346565,0.055286454901203756
+MATH,,,"C(persona, Treatment(reference='no'))[T.expert_teacher]",0.2066475843891877,0.07978048567440132,0.009591959098601372
+MATH,,,"C(persona, Treatment(reference='no'))[T.helpful]",0.05781431985455244,0.08015206887635927,0.4707201023160489
+MATH,,,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",0.1531472173433616,0.0799049168134656,0.055286454901207906
+MATH,,,"C(persona, Treatment(reference='no'))[T.static_long]",0.11516036235701235,0.07999936068684944,0.15000437063074015
+MATH,,,"C(persona, Treatment(reference='no'))[T.static_medium]",0.07059713935428612,0.08011694113777862,0.3782224751028085
+MATH,,,"C(persona, Treatment(reference='no'))[T.static_short]",-0.02909410608465125,0.08040832410111093,0.7174794237510514
+MATH,,,C(model)[T.gemma-3-4b-it],2.9744565187088368,0.12187636179190565,1.4941602538416884e-131
+MATH,,,C(model)[T.gpt-4-1-nano],4.340181887271935,0.12048360513470482,3.650596975639748e-284
+MATH,,,C(model)[T.gpt-5-nano],5.091385346342376,0.12114950816485077,0.0
+MATH,,,C(model)[T.llama-3-2-1b-instruct],-0.4173044915484522,0.18527399821248,0.02429927609539359
+MATH,,,C(model)[T.llama-3-2-3b-instruct],1.1752442809797914,0.13504163316281456,3.2371066037514537e-18
+MATH,,,C(model)[T.qwen3-0-6b],0.8079043588810573,0.14162601909792386,1.1669122257733727e-08
+MATH,,,C(model)[T.qwen3-4b],0.12878264014412358,0.16069991483821355,0.4229082960122328
+MATH,subject,Precalculus,Intercept,-5.7957192056958355,0.7305883522948265,2.1400453184434826e-15
+MATH,subject,Precalculus,"C(persona, Treatment(reference='no'))[T.base]",-0.10814979557912595,0.26861006121646314,0.687222281088882
+MATH,subject,Precalculus,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",-0.3013165468291381,0.27527243652239775,0.2736866011130866
+MATH,subject,Precalculus,"C(persona, Treatment(reference='no'))[T.dynamic_long]",0.10348766428901557,0.2627428594727276,0.6936738329814192
+MATH,subject,Precalculus,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",-0.1081497955791258,0.26861006121646314,0.6872222810888824
+MATH,subject,Precalculus,"C(persona, Treatment(reference='no'))[T.dynamic_short]",-0.10814979557912574,0.2686100612164631,0.6872222810888824
+MATH,subject,Precalculus,"C(persona, Treatment(reference='no'))[T.expert_teacher]",0.1702542203887075,0.2611733680990166,0.5144772905979162
+MATH,subject,Precalculus,"C(persona, Treatment(reference='no'))[T.helpful]",-0.10814979557912542,0.268610061216463,0.6872222810888833
+MATH,subject,Precalculus,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",-0.10814979557912578,0.2686100612164631,0.6872222810888823
+MATH,subject,Precalculus,"C(persona, Treatment(reference='no'))[T.static_long]",0.17025422038870758,0.2611733680990166,0.514477290597916
+MATH,subject,Precalculus,"C(persona, Treatment(reference='no'))[T.static_medium]",-0.03549145811706564,0.26643619259278384,0.8940288076458319
+MATH,subject,Precalculus,"C(persona, Treatment(reference='no'))[T.static_short]",0.10348766428901567,0.2627428594727275,0.6936738329814188
+MATH,subject,Precalculus,C(model)[T.gemma-3-4b-it],2.6413936451022586,0.7349384927424623,0.000325597806858252
+MATH,subject,Precalculus,C(model)[T.gpt-4-1-nano],4.836159763247346,0.7134929331209363,1.2172722616499069e-11
+MATH,subject,Precalculus,C(model)[T.gpt-5-nano],5.316458689942311,0.7126825639318372,8.666378737874607e-14
+MATH,subject,Precalculus,C(model)[T.llama-3-2-1b-instruct],-13.812247427544916,704.8841910174502,0.9843664052929
+MATH,subject,Precalculus,C(model)[T.llama-3-2-3b-instruct],2.100937498062016,0.7520447721224309,0.005211950481338504
+MATH,subject,Precalculus,C(model)[T.qwen3-0-6b],4.767653152328654e-07,1.0015185381264418,0.9999996201730975
+MATH,subject,Precalculus,C(model)[T.qwen3-4b],-0.6946651630047608,1.225984158815921,0.5709734819311443
+MATH,subject,Intermediate Algebra,Intercept,-5.9959476605540045,0.5926039108866036,4.598614409744014e-24
+MATH,subject,Intermediate Algebra,"C(persona, Treatment(reference='no'))[T.base]",-0.11112634508353034,0.19249908645974137,0.5637486643589602
+MATH,subject,Intermediate Algebra,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",-0.11112634508353049,0.19249908645974137,0.5637486643589597
+MATH,subject,Intermediate Algebra,"C(persona, Treatment(reference='no'))[T.dynamic_long]",0.018351396509603123,0.19158066533909646,0.9236878381886087
+MATH,subject,Intermediate Algebra,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",-0.05533467281871037,0.1920758402986351,0.7732796644109006
+MATH,subject,Intermediate Algebra,"C(persona, Treatment(reference='no'))[T.dynamic_short]",0.0913319941541536,0.19115817392746412,0.632805152320119
+MATH,subject,Intermediate Algebra,"C(persona, Treatment(reference='no'))[T.expert_teacher]",0.18171005706661122,0.19072288697713677,0.34071987147677596
+MATH,subject,Intermediate Algebra,"C(persona, Treatment(reference='no'))[T.helpful]",0.12758800985130483,0.190972220197818,0.5040715348081716
+MATH,subject,Intermediate Algebra,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",0.0731475685008024,0.19125733376646087,0.7021229515364903
+MATH,subject,Intermediate Algebra,"C(persona, Treatment(reference='no'))[T.static_long]",0.05492364610406079,0.19136073830317094,0.7740998593730187
+MATH,subject,Intermediate Algebra,"C(persona, Treatment(reference='no'))[T.static_medium]",0.27129698958770004,0.19038079491952772,0.15415058601683304
+MATH,subject,Intermediate Algebra,"C(persona, Treatment(reference='no'))[T.static_short]",-0.1863135758286392,0.1931388238923601,0.33471441523356893
+MATH,subject,Intermediate Algebra,C(model)[T.gemma-3-4b-it],3.312084386588752,0.5900253666602225,1.9831931242938346e-08
+MATH,subject,Intermediate Algebra,C(model)[T.gpt-4-1-nano],5.5247469034017875,0.581242777728657,1.9993461698467744e-21
+MATH,subject,Intermediate Algebra,C(model)[T.gpt-5-nano],6.574241046025081,0.5813988663227084,1.2030023442029723e-29
+MATH,subject,Intermediate Algebra,C(model)[T.llama-3-2-1b-instruct],0.512577667653292,0.7314953030535174,0.48347412088941666
+MATH,subject,Intermediate Algebra,C(model)[T.llama-3-2-3b-instruct],1.475127148901245,0.6418835219419916,0.021554801623453867
+MATH,subject,Intermediate Algebra,C(model)[T.qwen3-0-6b],1.8049727951759176,0.625020585485202,0.0038787079673885476
+MATH,subject,Intermediate Algebra,C(model)[T.qwen3-4b],5.38969227619181e-15,0.8175678724779534,0.9999999999999948
+MATH,subject,Algebra,Intercept,-4.243530213000591,0.22250445555522025,4.342642970723362e-81
+MATH,subject,Algebra,"C(persona, Treatment(reference='no'))[T.base]",0.07596148921360793,0.14732695880657884,0.6061351889402682
+MATH,subject,Algebra,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",0.03261872437098756,0.14746586420407742,0.8249405360668399
+MATH,subject,Algebra,"C(persona, Treatment(reference='no'))[T.dynamic_long]",0.43763195168631436,0.14630877463236255,0.0027792607092829236
+MATH,subject,Algebra,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",0.45852803747451426,0.14625538279985284,0.0017178437928832336
+MATH,subject,Algebra,"C(persona, Treatment(reference='no'))[T.dynamic_short]",0.3852044947350902,0.14644468638555178,0.00852906383439667
+MATH,subject,Algebra,"C(persona, Treatment(reference='no'))[T.expert_teacher]",0.3430717106739913,0.14655615291808932,0.019237877148859973
+MATH,subject,Algebra,"C(persona, Treatment(reference='no'))[T.helpful]",0.05431125830726251,0.14739575115305867,0.7125210611122148
+MATH,subject,Algebra,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",0.374687125994423,0.14647231354704024,0.01052534665614723
+MATH,subject,Algebra,"C(persona, Treatment(reference='no'))[T.static_long]",0.12990340506180895,0.14716036068765087,0.3773801865528905
+MATH,subject,Algebra,"C(persona, Treatment(reference='no'))[T.static_medium]",0.08677081454239591,0.14729303871829744,0.5557919827174591
+MATH,subject,Algebra,"C(persona, Treatment(reference='no'))[T.static_short]",0.010883616035418235,0.14753736134713472,0.9411945586581841
+MATH,subject,Algebra,C(model)[T.gemma-3-4b-it],3.281600700053097,0.20564790843049108,2.531589344744246e-57
+MATH,subject,Algebra,C(model)[T.gpt-4-1-nano],4.8261037727576,0.20579391133045294,1.2866857623262902e-121
+MATH,subject,Algebra,C(model)[T.gpt-5-nano],5.668828623799849,0.2100353101460013,1.942699263324924e-160
+MATH,subject,Algebra,C(model)[T.llama-3-2-1b-instruct],-0.1698716037695282,0.2921041698560596,0.5608734657068821
+MATH,subject,Algebra,C(model)[T.llama-3-2-3b-instruct],1.7432071858884697,0.21732058436420357,1.0457860197283304e-15
+MATH,subject,Algebra,C(model)[T.qwen3-0-6b],1.201726297080835,0.22792158719186728,1.3454653148548311e-07
+MATH,subject,Algebra,C(model)[T.qwen3-4b],0.07551953285718385,0.2749316015418111,0.7835584075284547
+MATH,subject,Number Theory,Intercept,-4.894507096653253,0.4125264893444218,1.8052726705743777e-32
+MATH,subject,Number Theory,"C(persona, Treatment(reference='no'))[T.base]",0.10844386667691326,0.23287711133356526,0.6414517837900924
+MATH,subject,Number Theory,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",-0.18977386758116874,0.23292447874472044,0.41521874848764373
+MATH,subject,Number Theory,"C(persona, Treatment(reference='no'))[T.dynamic_long]",0.3798233157936622,0.23318014265236045,0.10333765743904333
+MATH,subject,Number Theory,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",0.32551233136597896,0.23310028839779112,0.16257975854246842
+MATH,subject,Number Theory,"C(persona, Treatment(reference='no'))[T.dynamic_short]",0.24407819426293545,0.2329969964835743,0.29484165049380107
+MATH,subject,Number Theory,"C(persona, Treatment(reference='no'))[T.expert_teacher]",0.5156580903299028,0.23341195023897646,0.027159419394093207
+MATH,subject,Number Theory,"C(persona, Treatment(reference='no'))[T.helpful]",0.21694258860176038,0.23296744395304658,0.3517427813638315
+MATH,subject,Number Theory,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",0.325512331365979,0.2331002883977911,0.16257975854246842
+MATH,subject,Number Theory,"C(persona, Treatment(reference='no'))[T.static_long]",0.4069845412104941,0.23322302992991784,0.08097714143765737
+MATH,subject,Number Theory,"C(persona, Treatment(reference='no'))[T.static_medium]",0.32551233136597874,0.23310028839779107,0.16257975854246864
+MATH,subject,Number Theory,"C(persona, Treatment(reference='no'))[T.static_short]",-0.027106380102305545,0.2328377048822035,0.9073216782933189
+MATH,subject,Number Theory,C(model)[T.gemma-3-4b-it],3.6236707819242566,0.38897568155052487,1.208871332636005e-20
+MATH,subject,Number Theory,C(model)[T.gpt-4-1-nano],5.411463640501685,0.3880493414235615,3.3604229996443307e-44
+MATH,subject,Number Theory,C(model)[T.gpt-5-nano],6.55228294007315,0.39512200517406154,9.259243648783707e-62
+MATH,subject,Number Theory,C(model)[T.llama-3-2-1b-instruct],-0.5638194109093414,0.6290147615092491,0.3700641400079506
+MATH,subject,Number Theory,C(model)[T.llama-3-2-3b-instruct],1.0682324210636185,0.4423683157882204,0.01574371390292927
+MATH,subject,Number Theory,C(model)[T.qwen3-0-6b],1.0682324210636183,0.44236831578822,0.015743713902929193
+MATH,subject,Number Theory,C(model)[T.qwen3-4b],-1.2597598020980365,0.8035271679350954,0.11693074692151059
+MATH,subject,Prealgebra,Intercept,-3.265793330410432,0.20376512106370617,8.24594694727147e-58
+MATH,subject,Prealgebra,"C(persona, Treatment(reference='no'))[T.base]",0.12331638110759491,0.1655732150597019,0.4564019448008253
+MATH,subject,Prealgebra,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",-0.3709496445200887,0.16927800913537114,0.02842550081379807
+MATH,subject,Prealgebra,"C(persona, Treatment(reference='no'))[T.dynamic_long]",0.1639789310301072,0.16537446928831287,0.3214115540294207
+MATH,subject,Prealgebra,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",0.0960905267317384,0.16571388687088065,0.5620103657106678
+MATH,subject,Prealgebra,"C(persona, Treatment(reference='no'))[T.dynamic_short]",0.013807533944311478,0.16617824702625297,0.9337810135947465
+MATH,subject,Prealgebra,"C(persona, Treatment(reference='no'))[T.expert_teacher]",-0.013835781325688957,0.16634814906791548,0.9337134710869106
+MATH,subject,Prealgebra,"C(persona, Treatment(reference='no'))[T.helpful]",0.013807533944311402,0.16617824702625297,0.9337810135947469
+MATH,subject,Prealgebra,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",-3.1694769606201805e-15,0.16626220763710925,0.9999999999999848
+MATH,subject,Prealgebra,"C(persona, Treatment(reference='no'))[T.static_long]",0.013807533944311192,0.166178247026253,0.9337810135947479
+MATH,subject,Prealgebra,"C(persona, Treatment(reference='no'))[T.static_medium]",-0.1680742375143736,0.16743660033081792,0.3154710564331299
+MATH,subject,Prealgebra,"C(persona, Treatment(reference='no'))[T.static_short]",-0.027700398874552133,0.1664361122760861,0.867816501823217
+MATH,subject,Prealgebra,C(model)[T.gemma-3-4b-it],2.7436581113860026,0.18229851787574852,3.433666983334611e-51
+MATH,subject,Prealgebra,C(model)[T.gpt-4-1-nano],3.4134479207182364,0.18156771458076754,7.571355721388969e-79
+MATH,subject,Prealgebra,C(model)[T.gpt-5-nano],4.063313415849972,0.183347994889821,8.035656484299826e-109
+MATH,subject,Prealgebra,C(model)[T.llama-3-2-1b-instruct],-0.7122362515218295,0.29232598826835804,0.01483241660895488
+MATH,subject,Prealgebra,C(model)[T.llama-3-2-3b-instruct],0.2558830792096363,0.227308332669327,0.2602886322555641
+MATH,subject,Prealgebra,C(model)[T.qwen3-0-6b],0.10965122226141093,0.23435686105149747,0.639869387075934
+MATH,subject,Prealgebra,C(model)[T.qwen3-4b],0.34360075869723583,0.22346037236673863,0.12413759017442669
+alpaca,,,Intercept,1.330855541349297,0.03483769446075192,0.0
+alpaca,,,"C(persona, Treatment(reference='no'))[T.base]",0.04634570773521189,0.008674786477301926,9.163483262865905e-08
+alpaca,,,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",-0.09471518635148742,0.008674786477301915,9.40920489469292e-28
+alpaca,,,"C(persona, Treatment(reference='no'))[T.dynamic_long]",0.09827746120481166,0.00867478647730194,9.417505964403593e-30
+alpaca,,,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",0.05695416920336189,0.008674786477301955,5.1864227395987424e-11
+alpaca,,,"C(persona, Treatment(reference='no'))[T.dynamic_short]",0.11684467189918654,0.008674786477301922,2.365964407994759e-41
+alpaca,,,"C(persona, Treatment(reference='no'))[T.expert_teacher]",0.044755014612061945,0.008674786477301947,2.479986876305905e-07
+alpaca,,,"C(persona, Treatment(reference='no'))[T.helpful]",0.016754571655187057,0.008674786477301926,0.05343233663800415
+alpaca,,,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",0.013033962083262076,0.008674786477301926,0.13296518989421605
+alpaca,,,"C(persona, Treatment(reference='no'))[T.static_long]",-0.014730672696937784,0.008674786477301941,0.08948850282505931
+alpaca,,,"C(persona, Treatment(reference='no'))[T.static_medium]",-0.03524339627038768,0.008674786477301941,4.8500178250517956e-05
+alpaca,,,"C(persona, Treatment(reference='no'))[T.static_short]",-0.013390889047987796,0.008674786477301938,0.12267161116170242
+flores,,,"C(persona, Treatment(reference='base'))[T.beginner_teacher]",-0.8502720939436956,0.03222460433944864,1.9940031653609257e-153
+flores,,,"C(persona, Treatment(reference='base'))[T.dynamic_long]",0.35658570367896963,0.031054288694763475,1.6125031181985204e-30
+flores,,,"C(persona, Treatment(reference='base'))[T.dynamic_medium]",0.3439139595761494,0.03102550916571194,1.4855409483072534e-28
+flores,,,"C(persona, Treatment(reference='base'))[T.dynamic_short]",0.36143593843682253,0.031033710696522915,2.3891267416130856e-31
+flores,,,"C(persona, Treatment(reference='base'))[T.expert_teacher]",0.12854750061531886,0.030937015673290536,3.2509443262746796e-05
+flores,,,"C(persona, Treatment(reference='base'))[T.helpful]",-0.06938772320632185,0.03001105335434564,0.020773702926100698
+flores,,,"C(persona, Treatment(reference='base'))[T.intermediate_teacher]",-0.3141749219308901,0.031046858687465546,4.532835648099372e-24
+flores,,,"C(persona, Treatment(reference='base'))[T.static_long]",0.08936097609025868,0.03076026286517507,0.0036716108685216236
+flores,,,"C(persona, Treatment(reference='base'))[T.static_medium]",0.10349611961790266,0.030691587683195475,0.0007458838481959737
+flores,,,"C(persona, Treatment(reference='base'))[T.static_short]",0.10207370293687901,0.030592469181344464,0.0008482118030455761
+flores,,,C(model)[T.gemma-3-4b-it],0.017099704280786512,0.026923840295415932,0.5253541546727714
+flores,,,C(model)[T.gpt-4-1-nano],0.08008578623485342,0.026709162405382406,0.0027136673967921134
+flores,,,C(model)[T.gpt-5-nano],0.28202903766068044,0.026712166512628317,4.661261688488804e-26
+flores,,,C(model)[T.llama-3-2-1b-instruct],0.34134086994797425,0.02696080815930355,9.770957925082895e-37
+flores,,,C(model)[T.llama-3-2-3b-instruct],0.17937026674665593,0.026807962579301552,2.217530151387753e-11
+flores,,,C(model)[T.qwen3-0-6b],0.1101850615420975,0.026808978084349927,3.9564878822109854e-05
+flores,,,C(model)[T.qwen3-4b],0.06983736521687278,0.026595767253258393,0.008642459374255984
+flores,,,0.0/1.0,-0.002909115410655043,0.028056217420781356,0.9174163180533639
+flores,,,1.0/2.0,-1.5261999277265892,0.01431986623860993,0.0
+flores,iso_639_3,ace,"C(persona, Treatment(reference='base'))[T.beginner_teacher]",-0.12258047492147274,0.07052914923924793,0.08220878130882298
+flores,iso_639_3,ace,"C(persona, Treatment(reference='base'))[T.dynamic_long]",0.45560715619736253,0.070708853857262,1.1680744533538992e-10
+flores,iso_639_3,ace,"C(persona, Treatment(reference='base'))[T.dynamic_medium]",0.4423247559601023,0.07072753580199845,4.002614158847117e-10
+flores,iso_639_3,ace,"C(persona, Treatment(reference='base'))[T.dynamic_short]",0.4762726827461891,0.07065641749829593,1.5764119360551972e-11
+flores,iso_639_3,ace,"C(persona, Treatment(reference='base'))[T.expert_teacher]",0.27155008431271177,0.07039022426900254,0.0001144210014874419
+flores,iso_639_3,ace,"C(persona, Treatment(reference='base'))[T.helpful]",0.055729828386435365,0.07002932673537376,0.4261442227523511
+flores,iso_639_3,ace,"C(persona, Treatment(reference='base'))[T.intermediate_teacher]",0.2597092998518096,0.0703163455941801,0.00022123953625209587
+flores,iso_639_3,ace,"C(persona, Treatment(reference='base'))[T.static_long]",0.31334661847284856,0.07044501297655828,8.663230347953988e-06
+flores,iso_639_3,ace,"C(persona, Treatment(reference='base'))[T.static_medium]",0.359830721860186,0.07037122439994817,3.165422228050862e-07
+flores,iso_639_3,ace,"C(persona, Treatment(reference='base'))[T.static_short]",0.31024921238596864,0.07021522129537529,9.936695484954083e-06
+flores,iso_639_3,ace,C(model)[T.gemma-3-4b-it],-0.04253610947386594,0.06038773637664538,0.48119413981950654
+flores,iso_639_3,ace,C(model)[T.gpt-4-1-nano],-0.06856580534315646,0.06037816969569228,0.25612154124906394
+flores,iso_639_3,ace,C(model)[T.gpt-5-nano],0.010852587223234181,0.060483550476605315,0.8575997685746656
+flores,iso_639_3,ace,C(model)[T.llama-3-2-1b-instruct],-0.29168415689470995,0.06011365896939616,1.2209262809501203e-06
+flores,iso_639_3,ace,C(model)[T.llama-3-2-3b-instruct],-0.13689752292063054,0.060322517832015324,0.023242399770687167
+flores,iso_639_3,ace,C(model)[T.qwen3-0-6b],-0.4230102939686211,0.059947332903497595,1.7091386599228295e-12
+flores,iso_639_3,ace,C(model)[T.qwen3-4b],-0.3070474953784336,0.059737353370787075,2.747996899561866e-07
+flores,iso_639_3,ace,0.0/1.0,-0.06246516813932349,0.06362955504460535,0.3262474024661617
+flores,iso_639_3,ace,1.0/2.0,-2.4800648566451122,0.05204275202267502,0.0
+flores,iso_639_3,cmn,"C(persona, Treatment(reference='base'))[T.beginner_teacher]",-1.0866502219072964,0.0746795181450061,5.768460256566463e-48
+flores,iso_639_3,cmn,"C(persona, Treatment(reference='base'))[T.dynamic_long]",0.3552499902829471,0.06962822634636873,3.359098447423928e-07
+flores,iso_639_3,cmn,"C(persona, Treatment(reference='base'))[T.dynamic_medium]",0.34616704155282646,0.06953438176682737,6.412598398053901e-07
+flores,iso_639_3,cmn,"C(persona, Treatment(reference='base'))[T.dynamic_short]",0.37969064929148805,0.06965739673799605,5.0135191553012105e-08
+flores,iso_639_3,cmn,"C(persona, Treatment(reference='base'))[T.expert_teacher]",0.1503879082340082,0.06942458564471399,0.030295499171611572
+flores,iso_639_3,cmn,"C(persona, Treatment(reference='base'))[T.helpful]",-0.01866149490369202,0.06733033029822601,0.7816547370559856
+flores,iso_639_3,cmn,"C(persona, Treatment(reference='base'))[T.intermediate_teacher]",-0.41063718997647924,0.07011686545699991,4.728141867679371e-09
+flores,iso_639_3,cmn,"C(persona, Treatment(reference='base'))[T.static_long]",0.07807523051568767,0.06884785093581493,0.2567837790328199
+flores,iso_639_3,cmn,"C(persona, Treatment(reference='base'))[T.static_medium]",0.0980835818183555,0.06883284273197987,0.15417072012591668
+flores,iso_639_3,cmn,"C(persona, Treatment(reference='base'))[T.static_short]",0.09683468611242213,0.06876930406234447,0.15909875280178443
+flores,iso_639_3,cmn,C(model)[T.gemma-3-4b-it],-0.017570840513029717,0.0608262550877784,0.7726813626753934
+flores,iso_639_3,cmn,C(model)[T.gpt-4-1-nano],0.2601486697466033,0.060328450330801996,1.6163416449707985e-05
+flores,iso_639_3,cmn,C(model)[T.gpt-5-nano],0.4651412885391306,0.0604608511451508,1.4342815726613305e-14
+flores,iso_639_3,cmn,C(model)[T.llama-3-2-1b-instruct],0.46757168727487947,0.060578084330261815,1.1771057295654467e-14
+flores,iso_639_3,cmn,C(model)[T.llama-3-2-3b-instruct],0.27214849736066943,0.06041242399767716,6.642196944529113e-06
+flores,iso_639_3,cmn,C(model)[T.qwen3-0-6b],0.21966116101776087,0.06058648588681293,0.0002883134464496544
+flores,iso_639_3,cmn,C(model)[T.qwen3-4b],0.2704491894290047,0.06001230124072461,6.588626869070804e-06
+flores,iso_639_3,cmn,0.0/1.0,0.1604342401266301,0.06320895276502089,0.011143800887907226
+flores,iso_639_3,cmn,1.0/2.0,-1.602842675494144,0.03353145611105261,0.0
+flores,iso_639_3,deu,"C(persona, Treatment(reference='base'))[T.beginner_teacher]",-1.2941904503020454,0.0746892078150488,2.9084219381229112e-67
+flores,iso_639_3,deu,"C(persona, Treatment(reference='base'))[T.dynamic_long]",0.24884799216707465,0.06906799798319448,0.0003146357296683133
+flores,iso_639_3,deu,"C(persona, Treatment(reference='base'))[T.dynamic_medium]",0.29337500596313865,0.06911204208833559,2.186726045075774e-05
+flores,iso_639_3,deu,"C(persona, Treatment(reference='base'))[T.dynamic_short]",0.2560436594151206,0.06891542890560137,0.00020293751530632155
+flores,iso_639_3,deu,"C(persona, Treatment(reference='base'))[T.expert_teacher]",0.00545582572340967,0.06901276443311673,0.9369886269282339
+flores,iso_639_3,deu,"C(persona, Treatment(reference='base'))[T.helpful]",-0.09270319959287314,0.06603724311379924,0.16037788305205636
+flores,iso_639_3,deu,"C(persona, Treatment(reference='base'))[T.intermediate_teacher]",-0.7244729074727195,0.07033867535424085,7.062235786117361e-25
+flores,iso_639_3,deu,"C(persona, Treatment(reference='base'))[T.static_long]",-0.015642338478602084,0.06839682396481349,0.8191022670980828
+flores,iso_639_3,deu,"C(persona, Treatment(reference='base'))[T.static_medium]",-0.05666099697967963,0.06830100116852808,0.406777510403169
+flores,iso_639_3,deu,"C(persona, Treatment(reference='base'))[T.static_short]",0.05896722305119799,0.06818512001893885,0.3871426838155182
+flores,iso_639_3,deu,C(model)[T.gemma-3-4b-it],-0.18970604026619814,0.06105177021976098,0.0018880600248644796
+flores,iso_639_3,deu,C(model)[T.gpt-4-1-nano],0.034818787865548366,0.05981895056770868,0.5605198545235935
+flores,iso_639_3,deu,C(model)[T.gpt-5-nano],0.31755493744264945,0.059664972000366724,1.0246287158992714e-07
+flores,iso_639_3,deu,C(model)[T.llama-3-2-1b-instruct],0.8960215759644649,0.06225779464589686,5.799169924439569e-47
+flores,iso_639_3,deu,C(model)[T.llama-3-2-3b-instruct],0.0898487664991877,0.06022666217306502,0.13574012493362184
+flores,iso_639_3,deu,C(model)[T.qwen3-0-6b],0.41759249227235895,0.06072024111097165,6.0989265731208195e-12
+flores,iso_639_3,deu,C(model)[T.qwen3-4b],0.12360869805883544,0.059457371957463034,0.03762226386933665
+flores,iso_639_3,deu,0.0/1.0,-0.08105323886174369,0.06278524329818537,0.1967175416591065
+flores,iso_639_3,deu,1.0/2.0,-1.1200204774643796,0.02631685279156907,0.0
+flores,iso_639_3,spa,"C(persona, Treatment(reference='base'))[T.beginner_teacher]",-1.1686562272829828,0.07367838431653957,1.1689894179269973e-56
+flores,iso_639_3,spa,"C(persona, Treatment(reference='base'))[T.dynamic_long]",0.31968769854480844,0.06846711510430925,3.0235244602684185e-06
+flores,iso_639_3,spa,"C(persona, Treatment(reference='base'))[T.dynamic_medium]",0.2802496814480022,0.0683888489065781,4.1694118035162615e-05
+flores,iso_639_3,spa,"C(persona, Treatment(reference='base'))[T.dynamic_short]",0.3015068975601215,0.06837825060887241,1.0365853427756014e-05
+flores,iso_639_3,spa,"C(persona, Treatment(reference='base'))[T.expert_teacher]",0.10833084385152685,0.06848397719213013,0.11368560292970609
+flores,iso_639_3,spa,"C(persona, Treatment(reference='base'))[T.helpful]",-0.057359047725884724,0.06567833214778543,0.3824816575825606
+flores,iso_639_3,spa,"C(persona, Treatment(reference='base'))[T.intermediate_teacher]",-0.4938830531641119,0.0691372461955079,9.097305164720945e-13
+flores,iso_639_3,spa,"C(persona, Treatment(reference='base'))[T.static_long]",0.14622317808152055,0.0680147627049359,0.0315651732897563
+flores,iso_639_3,spa,"C(persona, Treatment(reference='base'))[T.static_medium]",0.08630809898513052,0.06758773696924908,0.2016097751172513
+flores,iso_639_3,spa,"C(persona, Treatment(reference='base'))[T.static_short]",0.06026274164418164,0.06688457476352713,0.3675903882630228
+flores,iso_639_3,spa,C(model)[T.gemma-3-4b-it],-0.08503241775896216,0.060340914539017645,0.1587760329143162
+flores,iso_639_3,spa,C(model)[T.gpt-4-1-nano],0.15869672057088363,0.059243772435510024,0.0073906987085217936
+flores,iso_639_3,spa,C(model)[T.gpt-5-nano],0.3778611028927317,0.05952845891966271,2.1874143328622073e-10
+flores,iso_639_3,spa,C(model)[T.llama-3-2-1b-instruct],0.5147443117988736,0.06042527553089911,1.613653366272115e-17
+flores,iso_639_3,spa,C(model)[T.llama-3-2-3b-instruct],0.22204128169699106,0.05991057119860808,0.0002103821653937532
+flores,iso_639_3,spa,C(model)[T.qwen3-0-6b],0.22186951858025122,0.05978820969149286,0.00020650387774214543
+flores,iso_639_3,spa,C(model)[T.qwen3-4b],0.0526711460285294,0.05888304656512879,0.371052060377018
+flores,iso_639_3,spa,0.0/1.0,-0.04631137311971973,0.06216741098979844,0.4563042779105828
+flores,iso_639_3,spa,1.0/2.0,-1.0539698439946001,0.02515239470973182,0.0
+flores,iso_639_3,swh,"C(persona, Treatment(reference='base'))[T.beginner_teacher]",-0.7282392582154045,0.07163068464492706,2.795453765084117e-24
+flores,iso_639_3,swh,"C(persona, Treatment(reference='base'))[T.dynamic_long]",0.42405729865252284,0.07093089171175807,2.252608092441658e-09
+flores,iso_639_3,swh,"C(persona, Treatment(reference='base'))[T.dynamic_medium]",0.37691829413790434,0.07068570483836349,9.696967309279028e-08
+flores,iso_639_3,swh,"C(persona, Treatment(reference='base'))[T.dynamic_short]",0.411528183242309,0.07094994896744748,6.621199698007774e-09
+flores,iso_639_3,swh,"C(persona, Treatment(reference='base'))[T.expert_teacher]",0.1155201530927988,0.0700787488995489,0.09926375875074626
+flores,iso_639_3,swh,"C(persona, Treatment(reference='base'))[T.helpful]",-0.2409776723877185,0.06828018669674184,0.00041674331502899434
+flores,iso_639_3,swh,"C(persona, Treatment(reference='base'))[T.intermediate_teacher]",-0.25027048250702766,0.06996311613357385,0.00034732437869681423
+flores,iso_639_3,swh,"C(persona, Treatment(reference='base'))[T.static_long]",-0.06416518129816073,0.0697441402224502,0.3575684712157675
+flores,iso_639_3,swh,"C(persona, Treatment(reference='base'))[T.static_medium]",0.03793728424355175,0.06956806753009508,0.5855292436533811
+flores,iso_639_3,swh,"C(persona, Treatment(reference='base'))[T.static_short]",-0.0066359589281060815,0.06953185748865028,0.923967191045989
+flores,iso_639_3,swh,C(model)[T.gemma-3-4b-it],0.41463693964920434,0.06083544338760351,9.379720062858447e-12
+flores,iso_639_3,swh,C(model)[T.gpt-4-1-nano],0.03544202283429032,0.06024592699689746,0.556338253211679
+flores,iso_639_3,swh,C(model)[T.gpt-5-nano],0.2636017491213192,0.05984904571710866,1.0605570520043324e-05
+flores,iso_639_3,swh,C(model)[T.llama-3-2-1b-instruct],0.18957452932309274,0.060384585169347756,0.0016926392546519624
+flores,iso_639_3,swh,C(model)[T.llama-3-2-3b-instruct],0.4639171725131275,0.060390302096279116,1.5664668547544248e-14
+flores,iso_639_3,swh,C(model)[T.qwen3-0-6b],0.1483522671476722,0.06020164689365883,0.01372980248302572
+flores,iso_639_3,swh,C(model)[T.qwen3-4b],0.23274044001341992,0.060641321032005854,0.00012404839494251137
+flores,iso_639_3,swh,0.0/1.0,0.02946784687869186,0.06346442820617341,0.6424180051061543
+flores,iso_639_3,swh,1.0/2.0,-1.9266968610632846,0.03951388828135003,0.0
+ifbench,,,Intercept,-1.493689134597812,0.0633227592016433,5.057513331861547e-123
+ifbench,,,"C(persona, Treatment(reference='no'))[T.base]",0.0695620959607213,0.0681078236479012,0.30708746119957087
+ifbench,,,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",-0.016518758593258662,0.0687001875242676,0.8099836940062596
+ifbench,,,"C(persona, Treatment(reference='no'))[T.dynamic_long]",-0.018887856636262763,0.0687172203163483,0.7834210995791868
+ifbench,,,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",-0.03553760398854675,0.06883804228764927,0.6056801713518122
+ifbench,,,"C(persona, Treatment(reference='no'))[T.dynamic_short]",0.0695620959607211,0.06810782364790152,0.3070874611995743
+ifbench,,,"C(persona, Treatment(reference='no'))[T.expert_teacher]",-0.03553760398854722,0.06883804228764934,0.6056801713518079
+ifbench,,,"C(persona, Treatment(reference='no'))[T.helpful]",0.06727426506129187,0.06812290654245659,0.3233767614416626
+ifbench,,,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",-0.028387760076010855,0.06878591806384696,0.6798284308226578
+ifbench,,,"C(persona, Treatment(reference='no'))[T.static_long]",-0.07889843087552564,0.06916195494903503,0.2539623526420177
+ifbench,,,"C(persona, Treatment(reference='no'))[T.static_medium]",-0.02363308979498773,0.06875145544842523,0.7310367450680124
+ifbench,,,"C(persona, Treatment(reference='no'))[T.static_short]",0.04197033027459905,0.06829211644843991,0.538838303385878
+ifbench,,,C(model)[T.gemma-3-4b-it],0.23295183529632155,0.05888356198443717,7.616933983619142e-05
+ifbench,,,C(model)[T.gpt-4-1-nano],0.6423854873958192,0.056378485057713645,4.471206157925328e-30
+ifbench,,,C(model)[T.gpt-5-nano],2.0793254687670633,0.0553539273394608,8.265098361625587e-309
+ifbench,,,C(model)[T.llama-3-2-1b-instruct],0.1838739715964088,0.059268030255511014,0.0019194925842467942
+ifbench,,,C(model)[T.llama-3-2-3b-instruct],0.4749641450905376,0.057259127756107385,1.0859030479329793e-16
+ifbench,,,C(model)[T.qwen3-0-6b],-0.19755438745571963,0.0629757556624818,0.0017069128608716855
+ifbench,,,C(model)[T.qwen3-4b],0.133373133279135,0.059684296817288235,0.025440754534405
+mmlu-pro,,,Intercept,-2.0482657400159674,0.038257104809834845,0.0
+mmlu-pro,,,"C(persona, Treatment(reference='no'))[T.base]",0.021991828676023284,0.041944938495477584,0.6000682816831562
+mmlu-pro,,,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",0.05599104308745696,0.04183207982279177,0.18074281236779022
+mmlu-pro,,,"C(persona, Treatment(reference='no'))[T.dynamic_long]",0.10588494229636351,0.041671747099051595,0.011055843166130385
+mmlu-pro,,,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",0.07500875567297907,0.04177022633607229,0.07253477457308735
+mmlu-pro,,,"C(persona, Treatment(reference='no'))[T.dynamic_short]",0.0870517178028957,0.04173152965910759,0.036979172373417815
+mmlu-pro,,,"C(persona, Treatment(reference='no'))[T.expert_teacher]",0.08962643097522004,0.04172330398739978,0.031704666906404284
+mmlu-pro,,,"C(persona, Treatment(reference='no'))[T.helpful]",0.10246895091679177,0.04168252421845074,0.013958903075916951
+mmlu-pro,,,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",0.15165091798480906,0.04153018876269883,0.0002606291621611277
+mmlu-pro,,,"C(persona, Treatment(reference='no'))[T.static_long]",0.10503128523505988,0.04167443755116873,0.011726124474695026
+mmlu-pro,,,"C(persona, Treatment(reference='no'))[T.static_medium]",0.048177836018834186,0.041857756460458674,0.24973657649328607
+mmlu-pro,,,"C(persona, Treatment(reference='no'))[T.static_short]",0.06291984706871193,0.04180943870422459,0.1323447282643367
+mmlu-pro,,,C(model)[T.gemma-3-4b-it],-2.5229468071058485,0.0837099706562001,1.488453976101326e-199
+mmlu-pro,,,C(model)[T.gpt-4-1-nano],0.6977562532679328,0.03247385553075679,2.0729809760581922e-102
+mmlu-pro,,,C(model)[T.gpt-5-nano],3.309075360247865,0.03269992131915336,0.0
+mmlu-pro,,,C(model)[T.llama-3-2-1b-instruct],-1.3612905939601232,0.05230564000030472,2.5356544616796404e-149
+mmlu-pro,,,C(model)[T.llama-3-2-3b-instruct],0.9960551309705143,0.03157919425773153,2.3451883397879916e-218
+mmlu-pro,,,C(model)[T.qwen3-0-6b],-1.0605724119345006,0.047235507721094736,1.1998781640261596e-111
+mmlu-pro,,,C(model)[T.qwen3-4b],1.5212097486528993,0.030659865872430168,0.0
+mmlu-pro,category,chemistry,Intercept,-2.122765410535243,0.09600895243770567,2.528330414292331e-108
+mmlu-pro,category,chemistry,"C(persona, Treatment(reference='no'))[T.base]",0.03283468930817083,0.1046200329500288,0.7536372034042287
+mmlu-pro,category,chemistry,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",0.010987261621462028,0.10482038347144071,0.9165187228433771
+mmlu-pro,category,chemistry,"C(persona, Treatment(reference='no'))[T.dynamic_long]",0.08673285198500305,0.10413809912708659,0.4049215530629845
+mmlu-pro,category,chemistry,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",0.0813882721179945,0.10418510105549068,0.43469124526808567
+mmlu-pro,category,chemistry,"C(persona, Treatment(reference='no'))[T.dynamic_short]",0.016464919785993754,0.10476988100326272,0.8751241280206262
+mmlu-pro,category,chemistry,"C(persona, Treatment(reference='no'))[T.expert_teacher]",0.03827039959470086,0.10457063207220306,0.7143825707788021
+mmlu-pro,category,chemistry,"C(persona, Treatment(reference='no'))[T.helpful]",0.13439697456061253,0.10372662596134931,0.1950842266282552
+mmlu-pro,category,chemistry,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",0.129139185602916,0.10377133420836691,0.21333062758967947
+mmlu-pro,category,chemistry,"C(persona, Treatment(reference='no'))[T.static_long]",0.10801316184998344,0.10395267797203267,0.29877641969179525
+mmlu-pro,category,chemistry,"C(persona, Treatment(reference='no'))[T.static_medium]",0.11330900137747689,0.1039069629281747,0.2754994856452898
+mmlu-pro,category,chemistry,"C(persona, Treatment(reference='no'))[T.static_short]",0.07603378456500895,0.10423236422596174,0.4657177215433572
+mmlu-pro,category,chemistry,C(model)[T.gemma-3-4b-it],-2.316662279435463,0.1946540359401245,1.1632995047804438e-32
+mmlu-pro,category,chemistry,C(model)[T.gpt-4-1-nano],0.8472787783481658,0.08052745223621605,6.868666525378908e-26
+mmlu-pro,category,chemistry,C(model)[T.gpt-5-nano],3.6669385275860558,0.08451533191070003,0.0
+mmlu-pro,category,chemistry,C(model)[T.llama-3-2-1b-instruct],-0.8655636205041053,0.11271269640830826,1.5986044901854535e-14
+mmlu-pro,category,chemistry,C(model)[T.llama-3-2-3b-instruct],0.9345582513771243,0.07987357223390462,1.267510984113407e-31
+mmlu-pro,category,chemistry,C(model)[T.qwen3-0-6b],-1.2395515586771733,0.1272594328952008,2.0285224792130026e-22
+mmlu-pro,category,chemistry,C(model)[T.qwen3-4b],1.5213126844462395,0.07695862722471226,5.623746548300211e-87
+mmlu-pro,category,economics,Intercept,-1.556796128662905,0.08401467516879703,1.1817715920265618e-76
+mmlu-pro,category,economics,"C(persona, Treatment(reference='no'))[T.base]",0.023018755054197336,0.09595645974390153,0.8104174729954348
+mmlu-pro,category,economics,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",-0.023112759692953434,0.09615220740771993,0.8100381638455512
+mmlu-pro,category,economics,"C(persona, Treatment(reference='no'))[T.dynamic_long]",0.03678613053004708,0.09590041296660377,0.7012847404885512
+mmlu-pro,category,economics,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",0.02301875505419686,0.0959564597439015,0.8104174729954385
+mmlu-pro,category,economics,"C(persona, Treatment(reference='no'))[T.dynamic_short]",-0.013856180929038366,0.0961119412693672,0.8853685110222975
+mmlu-pro,category,economics,"C(persona, Treatment(reference='no'))[T.expert_teacher]",0.0642250976812267,0.09579192475596547,0.5025616446779746
+mmlu-pro,category,economics,"C(persona, Treatment(reference='no'))[T.helpful]",0.09154044542796162,0.09568814183648336,0.3387419138257496
+mmlu-pro,category,economics,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",0.10968436600474604,0.09562150928921603,0.25135355005601534
+mmlu-pro,category,economics,"C(persona, Treatment(reference='no'))[T.static_long]",0.16830385173873155,0.09541864229091127,0.07775780242166871
+mmlu-pro,category,economics,"C(persona, Treatment(reference='no'))[T.static_medium]",0.03220060687370264,0.0959189603379335,0.7370922948155725
+mmlu-pro,category,economics,"C(persona, Treatment(reference='no'))[T.static_short]",0.06422509768122621,0.09579192475596544,0.5025616446779776
+mmlu-pro,category,economics,C(model)[T.gemma-3-4b-it],-2.5701103909883543,0.1680298017010172,8.18501380081826e-53
+mmlu-pro,category,economics,C(model)[T.gpt-4-1-nano],0.4512953063081464,0.07061977612551823,1.653499168047381e-10
+mmlu-pro,category,economics,C(model)[T.gpt-5-nano],2.9569611409122776,0.07426040783442091,0.0
+mmlu-pro,category,economics,C(model)[T.llama-3-2-1b-instruct],-1.8728313688816327,0.1260925708119401,6.669389854494666e-50
+mmlu-pro,category,economics,C(model)[T.llama-3-2-3b-instruct],1.375177921629981,0.06696701925969892,1.0448696660787237e-93
+mmlu-pro,category,economics,C(model)[T.qwen3-0-6b],-1.3046905980741725,0.10297992140823721,8.741500135453409e-37
+mmlu-pro,category,economics,C(model)[T.qwen3-4b],1.6524818053268557,0.06697708377767254,2.1190247127970335e-134
+mmlu-pro,category,math,Intercept,-2.521451640371744,0.10648150137389681,5.8351900784807125e-124
+mmlu-pro,category,math,"C(persona, Treatment(reference='no'))[T.base]",0.06702389989763319,0.11039865791341794,0.5437792925570716
+mmlu-pro,category,math,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",0.09105637681520819,0.11019971175549945,0.40864239931030577
+mmlu-pro,category,math,"C(persona, Treatment(reference='no'))[T.dynamic_long]",0.06702389989763395,0.11039865791341794,0.543779292557067
+mmlu-pro,category,math,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",0.1089650675294788,0.1100531430401039,0.32211880145460414
+mmlu-pro,category,math,"C(persona, Treatment(reference='no'))[T.dynamic_short]",0.15037473736284798,0.10971976869804445,0.1705200878587888
+mmlu-pro,category,math,"C(persona, Treatment(reference='no'))[T.expert_teacher]",0.1089650675294789,0.1100531430401039,0.3221188014546038
+mmlu-pro,category,math,"C(persona, Treatment(reference='no'))[T.helpful]",0.10300641758755472,0.11010175004036202,0.34950153502467984
+mmlu-pro,category,math,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",0.1854586705742032,0.1094433967261707,0.09015845528693084
+mmlu-pro,category,math,"C(persona, Treatment(reference='no'))[T.static_long]",0.060987897446352454,0.11044903090752155,0.5808240955322901
+mmlu-pro,category,math,"C(persona, Treatment(reference='no'))[T.static_medium]",0.012290184291541816,0.11086136358898835,0.9117266964153231
+mmlu-pro,category,math,"C(persona, Treatment(reference='no'))[T.static_short]",0.048882068180520426,0.11055054881419894,0.6583666382386772
+mmlu-pro,category,math,C(model)[T.gemma-3-4b-it],-1.7766574639916768,0.18609380902054995,1.3336881444827114e-21
+mmlu-pro,category,math,C(model)[T.gpt-4-1-nano],1.0376379847831871,0.0908924209734296,3.47434966863268e-30
+mmlu-pro,category,math,C(model)[T.gpt-5-nano],4.831303749318791,0.10521434569410952,0.0
+mmlu-pro,category,math,C(model)[T.llama-3-2-1b-instruct],-2.1173599777044596,0.21461057753915241,5.841648610252765e-23
+mmlu-pro,category,math,C(model)[T.llama-3-2-3b-instruct],1.1070777388382433,0.09030838852723767,1.5060683028044939e-34
+mmlu-pro,category,math,C(model)[T.qwen3-0-6b],0.20668202198203464,0.10193102068352733,0.04259439105546304
+mmlu-pro,category,math,C(model)[T.qwen3-4b],2.6723354512887982,0.08560057098339864,5.9470337258599886e-214
+mmlu-pro,category,physics,Intercept,-2.188836317613292,0.09858984786548898,3.326434147460937e-109
+mmlu-pro,category,physics,"C(persona, Treatment(reference='no'))[T.base]",0.035515390003772525,0.1088072825124827,0.7441169194306578
+mmlu-pro,category,physics,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",0.04139078786280324,0.1087506372960659,0.7034980660476402
+mmlu-pro,category,physics,"C(persona, Treatment(reference='no'))[T.dynamic_long]",0.17884429741495367,0.1074812380672283,0.09612076441521629
+mmlu-pro,category,physics,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",0.04139078786280287,0.10875063729606589,0.7034980660476426
+mmlu-pro,category,physics,"C(persona, Treatment(reference='no'))[T.dynamic_short]",0.1844301323874667,0.10743194615743798,0.08603108972990123
+mmlu-pro,category,physics,"C(persona, Treatment(reference='no'))[T.expert_teacher]",0.1955695011186597,0.10733418930147953,0.06844564447946287
+mmlu-pro,category,physics,"C(persona, Treatment(reference='no'))[T.helpful]",0.17324761689560175,0.10753080740259327,0.10714833658790603
+mmlu-pro,category,physics,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",0.20666619113324236,0.10723752627821688,0.05395699796450044
+mmlu-pro,category,physics,"C(persona, Treatment(reference='no'))[T.static_long]",0.16764003162009558,0.10758065550056654,0.11916854470237558
+mmlu-pro,category,physics,"C(persona, Treatment(reference='no'))[T.static_medium]",0.11667113977712501,0.10804205681478526,0.28020104746423535
+mmlu-pro,category,physics,"C(persona, Treatment(reference='no'))[T.static_short]",0.0647695736215761,0.10852715657868305,0.5506374320375007
+mmlu-pro,category,physics,C(model)[T.gemma-3-4b-it],-2.484764445250951,0.21121593624971674,5.976340144767477e-32
+mmlu-pro,category,physics,C(model)[T.gpt-4-1-nano],0.7173398199100784,0.08212127838150618,2.433819033713689e-18
+mmlu-pro,category,physics,C(model)[T.gpt-5-nano],3.766198304172119,0.08585316108963921,0.0
+mmlu-pro,category,physics,C(model)[T.llama-3-2-1b-instruct],-1.378622994543153,0.1346644782527518,1.3471881351696427e-24
+mmlu-pro,category,physics,C(model)[T.llama-3-2-3b-instruct],0.7923333769410522,0.08146139650953367,2.324788444998268e-22
+mmlu-pro,category,physics,C(model)[T.qwen3-0-6b],-1.1644566760613588,0.12495268978985538,1.172422728482555e-20
+mmlu-pro,category,physics,C(model)[T.qwen3-4b],1.5690621022409776,0.07723734459673556,9.511424164940295e-92
+mmlu-pro,category,philosophy,Intercept,-2.132140904199748,0.09541616177172245,1.3294869412504571e-110
+mmlu-pro,category,philosophy,"C(persona, Treatment(reference='no'))[T.base]",-0.1507962466058651,0.10383998133347982,0.1464464692582374
+mmlu-pro,category,philosophy,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",0.12289070905332056,0.10123127023129305,0.22476301327952097
+mmlu-pro,category,philosophy,"C(persona, Treatment(reference='no'))[T.dynamic_long]",0.11787478320903134,0.10127349774092945,0.24445429774979388
+mmlu-pro,category,philosophy,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",0.06211551196271661,0.10175650047529737,0.5415751039508183
+mmlu-pro,category,philosophy,"C(persona, Treatment(reference='no'))[T.dynamic_short]",0.06211551196271623,0.10175650047529737,0.5415751039508208
+mmlu-pro,category,philosophy,"C(persona, Treatment(reference='no'))[T.expert_teacher]",0.11787478320903233,0.10127349774092907,0.2444542977497881
+mmlu-pro,category,philosophy,"C(persona, Treatment(reference='no'))[T.helpful]",-0.005240194367049635,0.10237383405231307,0.959176628113068
+mmlu-pro,category,philosophy,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",0.1577643392651266,0.10094317953694092,0.11807554911612167
+mmlu-pro,category,philosophy,"C(persona, Treatment(reference='no'))[T.static_long]",-0.02102189546089316,0.1025239531178203,0.8375379462454787
+mmlu-pro,category,philosophy,"C(persona, Treatment(reference='no'))[T.static_medium]",-0.06893352739779728,0.10299270163916209,0.5033009551155723
+mmlu-pro,category,philosophy,"C(persona, Treatment(reference='no'))[T.static_short]",-0.03689673146997909,0.10267708823449764,0.7193353153391377
+mmlu-pro,category,philosophy,C(model)[T.gemma-3-4b-it],-2.631397208711049,0.22875837852618863,1.2747590075272126e-30
+mmlu-pro,category,philosophy,C(model)[T.gpt-4-1-nano],0.9129818875850509,0.0813475569965041,3.1362278040516646e-29
+mmlu-pro,category,philosophy,C(model)[T.gpt-5-nano],2.7042301219542915,0.07820799471951395,5.521932162454347e-262
+mmlu-pro,category,philosophy,C(model)[T.llama-3-2-1b-instruct],-1.3081159400072984,0.1330730862902873,8.35719806639875e-23
+mmlu-pro,category,philosophy,C(model)[T.llama-3-2-3b-instruct],0.8966039980181009,0.08147316186756451,3.619172974170186e-28
+mmlu-pro,category,philosophy,C(model)[T.qwen3-0-6b],-1.2947787925841474,0.1324467092353033,1.4295623296155655e-22
+mmlu-pro,category,philosophy,C(model)[T.qwen3-4b],1.2870141850031156,0.07905452639154048,1.3668530514434219e-59
+mmlu-pro,category,engineering,Intercept,-1.9824722901971845,0.09500949034478565,1.0898673982203838e-96
+mmlu-pro,category,engineering,"C(persona, Treatment(reference='no'))[T.base]",0.14352688222690613,0.10720307710669172,0.18062545551666198
+mmlu-pro,category,engineering,"C(persona, Treatment(reference='no'))[T.beginner_teacher]",0.12109452201601184,0.107425465475905,0.25964007713475523
+mmlu-pro,category,engineering,"C(persona, Treatment(reference='no'))[T.dynamic_long]",0.18782344323676564,0.10677414993535261,0.07856523906780398
+mmlu-pro,category,engineering,"C(persona, Treatment(reference='no'))[T.dynamic_medium]",0.165768339158223,0.10698602177532707,0.12127616949769424
+mmlu-pro,category,engineering,"C(persona, Treatment(reference='no'))[T.dynamic_short]",0.17681890627376237,0.10687944699778548,0.09805092264413802
+mmlu-pro,category,engineering,"C(persona, Treatment(reference='no'))[T.expert_teacher]",0.04100876615476864,0.10824815521188694,0.7048064414157145
+mmlu-pro,category,engineering,"C(persona, Treatment(reference='no'))[T.helpful]",0.1546711859452954,0.10709389232060616,0.14866648041881814
+mmlu-pro,category,engineering,"C(persona, Treatment(reference='no'))[T.intermediate_teacher]",0.17129941103574584,0.10693257355358081,0.10916920038602297
+mmlu-pro,category,engineering,"C(persona, Treatment(reference='no'))[T.static_long]",0.16576833915822423,0.10698602177532707,0.12127616949769154
+mmlu-pro,category,engineering,"C(persona, Treatment(reference='no'))[T.static_medium]",0.1041421540357194,0.1075958505478947,0.33309370952170103
+mmlu-pro,category,engineering,"C(persona, Treatment(reference='no'))[T.static_short]",0.18232689410259598,0.10682663986439783,0.0878676129630124
+mmlu-pro,category,engineering,C(model)[T.gemma-3-4b-it],-3.854053484910032,0.3591116358242972,7.18741059509477e-27
+mmlu-pro,category,engineering,C(model)[T.gpt-4-1-nano],0.3668713543219419,0.07938363869144188,3.8097838538138336e-06
+mmlu-pro,category,engineering,C(model)[T.gpt-5-nano],2.6998570407776175,0.0743796874454933,1.7202836902675363e-288
+mmlu-pro,category,engineering,C(model)[T.llama-3-2-1b-instruct],-1.1155951115720975,0.11160578852994256,1.5891232140113887e-23
+mmlu-pro,category,engineering,C(model)[T.llama-3-2-3b-instruct],0.8568080352580971,0.07518679095595955,4.3915624194498744e-30
+mmlu-pro,category,engineering,C(model)[T.qwen3-0-6b],-2.283250281907402,0.17401796594638394,2.5036703962084028e-39
+mmlu-pro,category,engineering,C(model)[T.qwen3-4b],0.3696289448542964,0.07935354824865379,3.1929392403353573e-06
