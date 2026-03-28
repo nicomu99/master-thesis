@@ -6,7 +6,7 @@ import warnings
 
 import pandas as pd
 
-from evaluate import test_binary, test_ordinal, test_nominal
+from evaluate import test_binary_baseline, test_ordinal_baseline, test_numeric_baseline
 
 
 _SUBSET_COLUMN_BY_DATASET = {
@@ -22,10 +22,10 @@ def _subset_column_for_dataset(dataset: str) -> str | None:
 
 def _test_for_dataset(dataset: str):
     if dataset == "flores":
-        return test_ordinal
+        return test_ordinal_baseline
     elif dataset == "alpaca":
-        return test_nominal
-    return test_binary
+        return test_numeric_baseline
+    return test_binary_baseline
 
 
 def _collect_results(

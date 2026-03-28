@@ -15,8 +15,8 @@ from .sig_testing import run_test_dynamic
 from .sig_testing import test_flores
 from .sig_testing import test_static_vs_dynamic
 from .sig_testing import test_vs_baseline
-from .sig_testing import test_binary
-from .sig_testing import test_ordinal, test_nominal
+from .sig_testing import test_binary_baseline
+from .sig_testing import test_ordinal_baseline, test_numeric_baseline
 from .testing_pipeline import run_evaluation_lin_tests
 
 __all__ = [
@@ -36,8 +36,8 @@ __all__ = [
     "test_static_vs_dynamic",
     "test_flores",
     "test_vs_baseline",
-    "test_binary",
-    "test_ordinal",
-    "test_nominal",
+    "test_binary_baseline",
+    "test_ordinal_baseline",
+    "test_numeric_baseline",
     "run_evaluation_lin_tests"
 ]

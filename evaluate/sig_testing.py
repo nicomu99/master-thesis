@@ -1,11 +1,14 @@
 """Module for significance testing."""
-from typing import Any
+from typing import Any, Literal
 
 import pandas as pd
 import scipy.stats as stats
 import statsmodels.formula.api as smf
 from statsmodels.miscmodels.ordinal_model import OrderedModel
 from statsmodels.stats.proportion import binom_test
+
+_DYNAMIC_LEN_COLS = ["base", "dynamic_short", "dynamic_medium", "dynamic_long"]
+_STATIC_LEN_COLS = ["base", "static_short", "static_medium", "static_long"]
 
 
 def prepare_data(
@@ -40,27 +43,29 @@ def prepare_data(
 
 
 def len_formatting(
-        df: pd.DataFrame,
-        column: str,
-        vals: list[str],
-        lengths: list[int] | None = None
+    df: pd.DataFrame,
+    mode: Literal["static", "dynamic"]
 ) -> pd.DataFrame:
     """Updates the values in `column`. The values in `cols` are turned into the respective values in `lengths`.
 
     Args:
         df (pd.DataFrame): DataFrame on which the update will happen.
-        column (str): Column identifier of the updated column.
-        vals (list[str]): Old values in the column.
-        lengths (list[int]): Newly inserted values. Defaults to [1, 3, 10].
+        mode: Literal["static", "dynamic"]
 
     Returns:
         pd.DataFrame: A dataframe with updated column.
     """
-    if lengths is None:
-        lengths = [1, 3, 10]
+    if mode == "static":
+        vals = _STATIC_LEN_COLS
+    elif mode == "dynamic":
+        vals = _STATIC_LEN_COLS
+    else:
+        raise ValueError(f"Unknown mode {mode}")
+    df = df.loc[df["persona"] in vals]
+    lengths = [1, 3, 5, 10]
     for idx, e_col in zip(lengths, vals):
-        df.loc[df[column] == e_col, column] = idx
-    df[column] = df[column].astype(float)
+        df.loc[df["persona"] == e_col, "persona"] = idx
+    df["length"] = df["persona"].astype(float)
     return df
 
 
@@ -82,8 +87,8 @@ def lin_test(
     return lin_model.fit()
 
 
-def test_binary(
-        df: pd.DataFrame
+def test_binary_baseline(
+    df: pd.DataFrame
 ) -> Any:
     """Fit a linear mixed effects model with the reference as treatment variable and grouped by the question id.
 
@@ -96,7 +101,20 @@ def test_binary(
     model = smf.logit("score ~ C(persona, Treatment(reference='no')) + C(model)", data=df)
     return model.fit()
 
-def test_ordinal(
+
+def test_binary_length(
+    df: pd.DataFrame,
+    mode: Literal["static", "dynamic"]
+):
+    df = len_formatting(df, mode)
+    model = smf.logit(
+        "score ~ length + C(model)",
+        data=df
+    )
+    return model.fit()
+
+
+def test_ordinal_baseline(
     df: pd.DataFrame
 ):
     model = OrderedModel.from_formula(
@@ -108,13 +126,39 @@ def test_ordinal(
 
     return model.fit(method="bfgs")
 
-def test_nominal(
+
+def test_ordinal_length(
+    df: pd.DataFrame,
+    mode: Literal["static", "dynamic"]
+):
+    df = len_formatting(df, mode)
+    model = OrderedModel.from_formula(
+        "score ~ length + C(model)",
+        data=df,
+        distr="logit"
+    )
+    return model.fit(method="bfgs")
+
+
+def test_numeric_baseline(
     df: pd.DataFrame
 ):
     model = smf.mixedlm("score ~ C(persona, Treatment(reference='no'))", data=df, groups=df["model"])
     # model = smf.logit("score ~ C(persona) + C(model)", data=df)
     return model.fit()
 
+
+def test_numeric_length(
+    df: pd.DataFrame,
+    mode: Literal["static", "dynamic"]
+):
+    df = len_formatting(df, mode)
+    model = smf.mixedlm(
+        "score ~ length",
+        data=df,
+        groups=df["model"]
+    )
+    return model.fit()
 
 
 def run_test_categorical(
@@ -166,7 +210,7 @@ def _length_test(
         df = df[df["correct"] != 1].copy()
         df["correct"] = (df["correct"] == 2).astype(int)
 
-    results = test_binary(df)
+    results = test_binary_baseline(df)
     results = results.pvalues
 
     # remove intercept
