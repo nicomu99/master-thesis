@@ -1,9 +1,9 @@
 """Pipeline to run statistical tests on evaluation datasets."""
-from __future__ import annotations
+from typing import Callable, Literal
 
+import re
+import argparse
 from pathlib import Path
-from typing import Callable
-import warnings
 
 import pandas as pd
 
@@ -22,16 +22,17 @@ from evaluate.sig_testing import (
     test_numeric_static_vs_dynamic,
 )
 
+from inference.utils import logging
 
-_SUBSET_COLUMN_BY_DATASET = {
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
+
+
+_CATEGORY_COLUMN_BY_DATASET = {
     "mmlu-pro": "category",
     "MATH": "subject",
     "flores": "iso_639_3",
 }
-
-
-def _subset_column_for_dataset(dataset: str) -> str | None:
-    return _SUBSET_COLUMN_BY_DATASET.get(dataset)
 
 
 def _baseline_test_for_dataset(dataset: str) -> Callable:
@@ -42,7 +43,7 @@ def _baseline_test_for_dataset(dataset: str) -> Callable:
     return test_binary_baseline
 
 
-def _length_test_for_dataset(dataset: str, mode: str) -> Callable:
+def _length_test_for_dataset(dataset: str, mode: Literal["static", "dynamic"]) -> Callable:
     if dataset == "flores":
         return lambda df: test_ordinal_length(df, mode)
     if dataset == "alpaca":
@@ -69,24 +70,17 @@ def _static_vs_dynamic_test_for_dataset(dataset: str) -> Callable:
 def _collect_results(
     df: pd.DataFrame,
     dataset: str,
-    subset_column: str | None,
-    subset_value: str | None,
-    test_fn: Callable | None = None,
+    test_fn: Callable,
+    category_name: str | None,
 ) -> pd.DataFrame:
-    if test_fn is None:
-        test_fn = _baseline_test_for_dataset(dataset)
     try:
         results = test_fn(df)
-    except Exception as exc:  # noqa: BLE001 - want a resilient pipeline
-        warnings.warn(
-            f"test failed for {dataset} "
-            f"{subset_column}={subset_value}: {exc}"
-        )
+    except Exception as e:
+        log.error("Test failed for dataset %s %s: %s", dataset, category_name, e)
         return pd.DataFrame(
             {
                 "dataset": [dataset],
-                "subset_column": [subset_column],
-                "subset_value": [subset_value],
+                "category": [category_name],
                 "term": [None],
                 "coef": [pd.NA],
                 "stderr": [pd.NA],
@@ -94,51 +88,27 @@ def _collect_results(
             }
         )
 
-    params = results.params
-    if hasattr(params, "index"):
-        terms = list(params.index)
-        coef = list(params.values)
-    else:
-        terms = _get_param_names(results, len(params))
-        coef = list(params)
-
-    stderr = _get_optional_vector(results, "bse", len(coef))
-    pvalues = _get_optional_vector(results, "pvalues", len(coef))
+    terms = list(results.params.index)
+    coef = list(results.params.values)
+    stderr = _get_results(results, "bse", len(coef))
+    pvalues = _get_results(results, "pvalues", len(coef))
 
     out = pd.DataFrame(
         {
-            "term": terms,
+            "term": [_clean_term(t) for t in terms],
             "coef": coef,
             "stderr": stderr,
             "pvalue": pvalues,
         }
     )
-    out = out[out["term"] != "Group Var"].copy()
-    out.insert(0, "subset_value", subset_value)
-    out.insert(0, "subset_column", subset_column)
+    out = out[out["term"] != "Group Var"]
+    out.insert(0, "category", category_name)
     out.insert(0, "dataset", dataset)
     return out
 
 
-def _get_param_names(results, count: int) -> list[str]:
-    if hasattr(results, "param_names"):
-        names = list(results.param_names)
-        return names[:count]
-    model = getattr(results, "model", None)
-    if model is not None:
-        names: list[str] = []
-        if hasattr(model, "exog_names"):
-            names.extend(list(model.exog_names))
-        if hasattr(model, "vcp_names"):
-            names.extend(list(model.vcp_names))
-        elif hasattr(model, "vc_names"):
-            names.extend(list(model.vc_names))
-        if names:
-            return names[:count]
-    return [f"param_{idx}" for idx in range(count)]
-
-
-def _get_optional_vector(results, attr: str, count: int) -> list:
+def _get_results(results, attr: str, count: int) -> list:
+    """Safely retrieves some attribute from statsmodels return values."""
     values = getattr(results, attr, None)
     if values is None:
         return [pd.NA] * count
@@ -150,47 +120,50 @@ def _get_optional_vector(results, attr: str, count: int) -> list:
     return values[:count]
 
 
+def _clean_term(term: str) -> str:
+    """Extract the level name from a statsmodels contrast term.
+
+    E.g. "C(persona, Treatment(reference='no'))[T.dynamic_medium]" becomes "dynamic_medium"
+    """
+    m = re.search(r'\[T\.(.+)]', term)
+    return m.group(1) if m else term
+
+
 def _iter_csv(data_dir: Path):
-    """Yield (csv_path, df, dataset) for valid evaluation CSVs."""
-    for csv_path in sorted(data_dir.iterdir()):
+    """Yields dataset name and dataframe for valid evaluation CSVs."""
+    for csv_path in data_dir.iterdir():
         if csv_path.suffix != ".csv":
             continue
         df = pd.read_csv(csv_path, index_col=0)
-        required = {"score", "persona", "model"}
-        if not required.issubset(df.columns):
-            print(csv_path)
-            warnings.warn(f"Skipping {csv_path.name}: missing {required - set(df.columns)}")
-            continue
-        yield csv_path, df, csv_path.stem
+        yield csv_path.stem, df
 
 
 def run_baseline_tests(
     data_dir: str | Path = "data/evaluation",
 ) -> pd.DataFrame:
-    """Test whether any persona has a significant effect against the 'no' baseline.
+    """Test whether any persona has a significant effect against the "no" baseline.
 
-    Runs on the full dataset and, for datasets with a subset column
-    (mmlu-pro, MATH, flores), also per subset.
+    Runs on the full dataset and, for datasets with a category column also per category.
 
     Returns:
-        pd.DataFrame: Coefficients, standard errors, and p-values per term.
+        pd.DataFrame: DataFrame with coefficients, standard errors, and p-values per term.
     """
     data_dir = Path(data_dir)
     results = []
 
-    for csv_path, df, dataset in _iter_csv(data_dir):
+    for dataset, df in _iter_csv(data_dir):
         test_fn = _baseline_test_for_dataset(dataset)
-        results.append(_collect_results(df, dataset, None, None, test_fn))
+        results.append(_collect_results(df, dataset, test_fn, None))
 
-        subset_col = _SUBSET_COLUMN_BY_DATASET.get(dataset)
-        if subset_col and subset_col in df.columns:
-            for value in df[subset_col].dropna().unique():
-                subset = df.loc[df[subset_col] == value]
-                results.append(_collect_results(subset, dataset, subset_col, str(value), test_fn))
+        category_col = _CATEGORY_COLUMN_BY_DATASET.get(dataset)
+        if not category_col or category_col not in df.columns:
+            continue
+        for category, cat_df in df.groupby(category_col):
+            results.append(_collect_results(cat_df, dataset, test_fn, category))
 
     if not results:
         return pd.DataFrame(
-            columns=["dataset", "subset_column", "subset_value", "term", "coef", "stderr", "pvalue"]
+            columns=["dataset", "category", "term", "coef", "stderr", "pvalue"]
         )
     return pd.concat(results, ignore_index=True)
 
@@ -200,24 +173,35 @@ def run_length_tests(
 ) -> pd.DataFrame:
     """Test whether persona length has a statistically significant effect on score.
 
-    Runs separate tests for static and dynamic length variants on each dataset.
+    Runs separate tests for static and dynamic length variants on each dataset and also
+    per category, if the dataset has any.
 
     Returns:
-        pd.DataFrame: Results with an additional `mode` column ("static" or "dynamic").
+        pd.DataFrame: DataFrame with coefficients, standard errors, and p-values per term and
+            `mode` column ("static" or "dynamic").
     """
     data_dir = Path(data_dir)
     results = []
 
-    for csv_path, df, dataset in _iter_csv(data_dir):
+    for dataset, df in _iter_csv(data_dir):
         for mode in ("static", "dynamic"):
+            mode: Literal["static", "dynamic"] = mode   # to silence warning
             test_fn = _length_test_for_dataset(dataset, mode)
-            out = _collect_results(df, dataset, None, None, test_fn)
+            out = _collect_results(df, dataset, test_fn, None)
             out.insert(3, "mode", mode)
             results.append(out)
 
+            category_col = _CATEGORY_COLUMN_BY_DATASET.get(dataset)
+            if not category_col or category_col not in df.columns:
+                continue
+            for category, cat_df in df.groupby(category_col):
+                out = _collect_results(cat_df, dataset, test_fn, category)
+                out.insert(3, "mode", mode)
+                results.append(out)
+
     if not results:
         return pd.DataFrame(
-            columns=["dataset", "subset_column", "subset_value", "mode", "term", "coef", "stderr", "pvalue"]
+            columns=["dataset", "category", "mode", "term", "coef", "stderr", "pvalue"]
         )
     return pd.concat(results, ignore_index=True)
 
@@ -227,21 +211,28 @@ def run_teacher_tests(
 ) -> pd.DataFrame:
     """Test whether teacher persona audience level has a statistically significant effect.
 
-    Uses beginner_teacher as the reference category.
+    The expertise is handled as a numeric value. Runs tests for the whole dataset
+    and also per category, if the dataset has any.
 
     Returns:
-        pd.DataFrame: Coefficients, standard errors, and p-values per term.
+        pd.DataFrame: DataFrame with coefficients, standard errors, and p-values per term.
     """
     data_dir = Path(data_dir)
     results = []
 
-    for csv_path, df, dataset in _iter_csv(data_dir):
+    for dataset, df in _iter_csv(data_dir):
         test_fn = _teacher_test_for_dataset(dataset)
-        results.append(_collect_results(df, dataset, None, None, test_fn))
+        results.append(_collect_results(df, dataset, test_fn, None))
+
+        category_col = _CATEGORY_COLUMN_BY_DATASET.get(dataset)
+        if not category_col or category_col not in df.columns:
+            continue
+        for category, cat_df in df.groupby(category_col):
+            results.append(_collect_results(cat_df, dataset, test_fn, category))
 
     if not results:
         return pd.DataFrame(
-            columns=["dataset", "subset_column", "subset_value", "term", "coef", "stderr", "pvalue"]
+            columns=["dataset", "category", "term", "coef", "stderr", "pvalue"]
         )
     return pd.concat(results, ignore_index=True)
 
@@ -251,21 +242,28 @@ def run_static_vs_dynamic_tests(
 ) -> pd.DataFrame:
     """Test whether dynamic personas perform significantly differently from static personas.
 
-    Excludes 'base' persona. Uses a binary is_dynamic predictor (0=static, 1=dynamic).
+    Uses a binary is_dynamic predictor (0=static, 1=dynamic). Runs tests for the whole dataset
+    and also per category, if the dataset has any.
 
     Returns:
-        pd.DataFrame: Coefficients, standard errors, and p-values per term.
+        pd.DataFrame: DataFrame with coefficients, standard errors, and p-values per term.
     """
     data_dir = Path(data_dir)
     results = []
 
-    for csv_path, df, dataset in _iter_csv(data_dir):
+    for dataset, df in _iter_csv(data_dir):
         test_fn = _static_vs_dynamic_test_for_dataset(dataset)
-        results.append(_collect_results(df, dataset, None, None, test_fn))
+        results.append(_collect_results(df, dataset, test_fn, None))
+
+        category_col = _CATEGORY_COLUMN_BY_DATASET.get(dataset)
+        if not category_col or category_col not in df.columns:
+            continue
+        for category, cat_df in df.groupby(category_col):
+            results.append(_collect_results(cat_df, dataset, test_fn, category))
 
     if not results:
         return pd.DataFrame(
-            columns=["dataset", "subset_column", "subset_value", "term", "coef", "stderr", "pvalue"]
+            columns=["dataset", "category", "term", "coef", "stderr", "pvalue"]
         )
     return pd.concat(results, ignore_index=True)
 
@@ -273,36 +271,62 @@ def run_static_vs_dynamic_tests(
 def run_all_tests(
     data_dir: str | Path = "data/evaluation",
     output_dir: str | Path = "data/evaluation/tests",
+    suite: str = "all",
 ) -> None:
-    """Run all four test suites and write one CSV per suite to output_dir.
+    """Run test suites.
 
-    Files written:
-        results_baseline.csv
-        results_length.csv
-        results_teacher.csv
-        results_static_vs_dynamic.csv
+    By default, all four test suites are executed. Optionally, a single test can be chosen
+    to be run.
 
     Args:
-        data_dir: Directory containing the evaluation CSVs.
-        output_dir: Directory where result CSVs are written.
+        data_dir (str | Path): Directory containing the evaluation CSVs.
+        output_dir (str | Path): Directory where result CSVs are written.
+        suite (str): Which suite to run.
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    suites = [
-        ("baseline", run_baseline_tests),
-        ("length", run_length_tests),
-        ("teacher", run_teacher_tests),
-        ("static_vs_dynamic", run_static_vs_dynamic_tests),
-    ]
+    suites = {
+        "baseline": run_baseline_tests,
+        "length": run_length_tests,
+        "teacher": run_teacher_tests,
+        "static_vs_dynamic": run_static_vs_dynamic_tests,
+    }
 
-    for name, fn in suites:
+    selected_suites = suites.items() if suite == "all" else [(suite, suites[suite])]
+
+    for name, fn in selected_suites:
         print(f"\n=== {name} ===")
         df = fn(data_dir)
         path = output_dir / f"results_{name}.csv"
         df.to_csv(path, index=False)
-        print(f"Saved {len(df)} rows → {path}")
+        print(f"Saved {len(df)} rows to {path}")
 
 
 if __name__ == "__main__":
-    run_all_tests()
+    parser = argparse.ArgumentParser(description="Run evaluation test suites.")
+    parser.add_argument(
+        "--data-dir",
+        type=Path,
+        default="data/evaluation",
+        help="Directory containing the evaluation CSVs.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default="data/evaluation/tests",
+        help="Directory where result CSVs are written.",
+    )
+    parser.add_argument(
+        "--suite",
+        choices=["all", "baseline", "length", "teacher", "static_vs_dynamic"],
+        default="all",
+        help="Which test suite to run. Defaults to %(default)s.",
+    )
+    args = parser.parse_args()
+
+    run_all_tests(
+        data_dir=args.data_dir,
+        output_dir=args.output_dir,
+        suite=args.suite
+    )
