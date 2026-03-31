@@ -16,14 +16,18 @@ _BASELINE_REFERENCE = "no"
 def _baseline_reference(df: pd.DataFrame) -> str:
     """Return the baseline reference persona for the given DataFrame.
 
-    Prefers 'no'; falls back to 'base' if 'no' is absent (e.g. flores).
+    Args:
+        df (pd.DataFrame): DataFrame with a "persona" column.
+
+    Returns:
+        str: "no" if this is one of the available personas, else "base".
     """
     if _BASELINE_REFERENCE in df["persona"].values:
         return _BASELINE_REFERENCE
     return "base"
 
 
-def len_formatting(
+def prepare_length(
     df: pd.DataFrame,
     mode: Literal["static", "dynamic"]
 ) -> pd.DataFrame:
@@ -45,21 +49,49 @@ def len_formatting(
     df = df.loc[df["persona"].isin(vals)].copy()
     lengths = [1, 3, 5, 10]
     for length, col in zip(lengths, vals):
-        df.loc[df["persona"] == col, "persona"] = length
-    df["length"] = df["persona"].astype(float)
+        df.loc[df["persona"] == col, "length"] = float(length)
+    return df
+
+
+def prepare_teacher(df: pd.DataFrame) -> pd.DataFrame:
+    """Filters to the teacher personas and adds a numeric `level` column.
+
+    Args:
+        df (pd.DataFrame): DataFrame with a "persona" column.
+
+    Returns:
+        pd.DataFrame: Filtered dataframe with a numeric `level` column added.
+    """
+    df = df.loc[df["persona"].isin(_TEACHER_PERSONAS)].copy()
+    for level, persona in enumerate(_TEACHER_PERSONAS):
+        df.loc[df["persona"] == persona, "level"] = float(level)
+    return df
+
+
+def prepare_static_vs_dynamic(df: pd.DataFrame) -> pd.DataFrame:
+    """Filters to the static and dynamic personas and adds a numeric `is_dynamic` column.
+
+    Args:
+        df (pd.DataFrame): DataFrame with a "persona" column.
+
+    Returns:
+        pd.DataFrame: Filtered dataframe with a numeric `is_dynamic` column added.
+    """
+    personas = _STATIC_PERSONAS + _DYNAMIC_PERSONAS
+    df = df.loc[df["persona"].isin(personas)].copy()
+    df["is_dynamic"] = df["persona"].str.startswith("dynamic").astype(int)
     return df
 
 
 def test_binary_baseline(
     df: pd.DataFrame
 ) -> Any:
-    """Logistic regression: all personas vs baseline, controlling for model.
+    """Logistic regression; testing significance of all personas vs baseline.
 
-    Uses 'no' as reference when present, otherwise 'base' (e.g. for flores, where
-    the score already encodes comparison against the baseline via LLM-as-a-judge).
+    For binary outcomes. Uses "no" as reference when present, otherwise "base".
 
     Args:
-        df (pd.DataFrame): Long-format DataFrame with columns score, persona, model.
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
 
     Returns:
         The fitted model.
@@ -72,20 +104,19 @@ def test_binary_baseline(
 def test_ordinal_baseline(
     df: pd.DataFrame
 ) -> Any:
-    """Ordered logit: all personas vs baseline, controlling for model.
+    """Ordered logistic regression; testing significance of all personas vs baseline.
 
-    Uses 'no' as reference when present, otherwise 'base' (e.g. for flores, where
-    the score already encodes comparison against the baseline via LLM-as-a-judge).
+    For ordinal outcomes. Uses "no" as reference when present, otherwise "base".
 
     Args:
-        df (pd.DataFrame): Long-format DataFrame with columns score, persona, model.
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
 
     Returns:
         The fitted model.
     """
-    ref = _baseline_reference(df)
+    df["score"] = pd.Categorical(df["score"], categories=[0, 1, 2], ordered=True)
     model = OrderedModel.from_formula(
-        f"score ~ C(persona, Treatment(reference='{ref}')) + C(model)",
+        "score ~ C(persona) + C(model)",
         data=df,
         distr="logit"
     )
@@ -95,13 +126,13 @@ def test_ordinal_baseline(
 def test_numeric_baseline(
     df: pd.DataFrame
 ) -> Any:
-    """Linear mixed model: all personas vs baseline, with model as random grouping.
+    """Linear mixed model; testing significance of all personas vs baseline.
 
-    Uses 'no' as reference when present, otherwise 'base' (e.g. for flores, where
-    the score already encodes comparison against the baseline via LLM-as-a-judge).
+    For numeric outcomes. Uses "no" as reference when present, otherwise "base". Model
+    acts as a random grouping effect.
 
     Args:
-        df (pd.DataFrame): Long-format DataFrame with columns score, persona, model.
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
 
     Returns:
         The fitted model.
@@ -117,16 +148,18 @@ def test_binary_length(
     df: pd.DataFrame,
     mode: Literal["static", "dynamic"]
 ) -> Any:
-    """Logistic regression: effect of length on binary score, controlling for model.
+    """Logistic regression; testing significance of the persona length.
+
+    For binary outcomes.
 
     Args:
-        df (pd.DataFrame): Long-format DataFrame.
-        mode: "static" or "dynamic"
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
+        mode (Literal["static", "dynamic"]): Choose whether to test static or dynamic personas.
 
     Returns:
         The fitted model.
     """
-    df = len_formatting(df, mode)
+    df = prepare_length(df, mode)
     model = smf.logit("score ~ length + C(model)", data=df)
     return model.fit()
 
@@ -135,16 +168,19 @@ def test_ordinal_length(
     df: pd.DataFrame,
     mode: Literal["static", "dynamic"]
 ) -> Any:
-    """Ordered logit: effect of length on ordinal score, controlling for model.
+    """Ordered logistic regression; testing significance of the persona length.
+
+    For ordinal outcomes.
 
     Args:
-        df (pd.DataFrame): Long-format DataFrame.
-        mode: "static" or "dynamic"
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
+        mode (Literal["static", "dynamic"]): Choose whether to test static or dynamic personas.
 
     Returns:
         The fitted model.
     """
-    df = len_formatting(df, mode)
+    df = prepare_length(df, mode)
+    df["score"] = pd.Categorical(df["score"], categories=[0, 1, 2], ordered=True)
     model = OrderedModel.from_formula(
         "score ~ length + C(model)",
         data=df,
@@ -157,16 +193,18 @@ def test_numeric_length(
     df: pd.DataFrame,
     mode: Literal["static", "dynamic"]
 ) -> Any:
-    """Linear mixed model: effect of length on numeric score, with model as random grouping.
+    """Linear mixed model; testing significance of the persona length.
+
+    For numeric outcomes. Model acts as a random grouping effect.
 
     Args:
-        df (pd.DataFrame): Long-format DataFrame.
-        mode: "static" or "dynamic"
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
+        mode (Literal["static", "dynamic"]): Choose whether to test static or dynamic personas.
 
     Returns:
         The fitted model.
     """
-    df = len_formatting(df, mode)
+    df = prepare_length(df, mode)
     model = smf.mixedlm("score ~ length", data=df, groups=df["model"])
     return model.fit()
 
@@ -174,40 +212,38 @@ def test_numeric_length(
 def test_binary_teacher(
     df: pd.DataFrame
 ) -> Any:
-    """Logistic regression: teacher persona audience level effect on binary score.
+    """Logistic regression; testing significance of the audience level effect.
 
-    Uses beginner_teacher as reference. Controls for model.
+    For binary outcomes.
 
     Args:
-        df (pd.DataFrame): Long-format DataFrame.
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
 
     Returns:
         The fitted model.
     """
-    df = df.loc[df["persona"].isin(_TEACHER_PERSONAS)].copy()
-    model = smf.logit(
-        "score ~ C(persona, Treatment(reference='beginner_teacher')) + C(model)",
-        data=df
-    )
+    df = prepare_teacher(df)
+    model = smf.logit("score ~ level + C(model)", data=df)
     return model.fit()
 
 
 def test_ordinal_teacher(
     df: pd.DataFrame
 ) -> Any:
-    """Ordered logit: teacher persona audience level effect on ordinal score.
+    """Ordered logistic regression; testing significance of the audience level effect.
 
-    Uses beginner_teacher as reference. Controls for model.
+    For ordinal outcomes.
 
     Args:
-        df (pd.DataFrame): Long-format DataFrame.
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
 
     Returns:
         The fitted model.
     """
-    df = df.loc[df["persona"].isin(_TEACHER_PERSONAS)].copy()
+    df = prepare_teacher(df)
+    df["score"] = pd.Categorical(df["score"], categories=[0, 1, 2], ordered=True)
     model = OrderedModel.from_formula(
-        "score ~ C(persona, Treatment(reference='beginner_teacher')) + C(model)",
+        "score ~ level + C(model)",
         data=df,
         distr="logit"
     )
@@ -217,45 +253,35 @@ def test_ordinal_teacher(
 def test_numeric_teacher(
     df: pd.DataFrame
 ) -> Any:
-    """Linear mixed model: teacher persona audience level effect on numeric score.
+    """Linear mixed model; testing significance of the audience level effect.
 
-    Uses beginner_teacher as reference. Random intercepts per model.
+    For numeric outcomes. Model acts as a random grouping effect.
 
     Args:
-        df (pd.DataFrame): Long-format DataFrame.
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
 
     Returns:
         The fitted model.
     """
-    df = df.loc[df["persona"].isin(_TEACHER_PERSONAS)].copy()
-    model = smf.mixedlm(
-        "score ~ C(persona, Treatment(reference='beginner_teacher'))",
-        data=df,
-        groups=df["model"]
-    )
+    df = prepare_teacher(df)
+    model = smf.mixedlm("score ~ level", data=df, groups=df["model"])
     return model.fit()
-
-
-def _prepare_static_vs_dynamic(df: pd.DataFrame) -> pd.DataFrame:
-    """Filter to static/dynamic length variants and add binary is_dynamic column."""
-    personas = _STATIC_PERSONAS + _DYNAMIC_PERSONAS
-    df = df.loc[df["persona"].isin(personas)].copy()
-    df["is_dynamic"] = df["persona"].str.startswith("dynamic").astype(int)
-    return df
 
 
 def test_binary_static_vs_dynamic(
     df: pd.DataFrame
 ) -> Any:
-    """Logistic regression: static vs. dynamic effect on binary score, controlling for model.
+    """Logistic regression; testing significance of static vs. dynamic effect.
+
+    For binary outcomes.
 
     Args:
-        df (pd.DataFrame): Long-format DataFrame.
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
 
     Returns:
         The fitted model.
     """
-    df = _prepare_static_vs_dynamic(df)
+    df = prepare_static_vs_dynamic(df)
     model = smf.logit("score ~ is_dynamic + C(model)", data=df)
     return model.fit()
 
@@ -263,15 +289,18 @@ def test_binary_static_vs_dynamic(
 def test_ordinal_static_vs_dynamic(
     df: pd.DataFrame
 ) -> Any:
-    """Ordered logit: static vs. dynamic effect on ordinal score, controlling for model.
+    """Ordered logistic regression; testing significance of static vs. dynamic effect.
+
+    For ordinal outcomes.
 
     Args:
-        df (pd.DataFrame): Long-format DataFrame.
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
 
     Returns:
         The fitted model.
     """
-    df = _prepare_static_vs_dynamic(df)
+    df = prepare_static_vs_dynamic(df)
+    df["score"] = pd.Categorical(df["score"], categories=[0, 1, 2], ordered=True)
     model = OrderedModel.from_formula(
         "score ~ is_dynamic + C(model)",
         data=df,
@@ -283,14 +312,16 @@ def test_ordinal_static_vs_dynamic(
 def test_numeric_static_vs_dynamic(
     df: pd.DataFrame
 ) -> Any:
-    """Linear mixed model: static vs. dynamic effect on numeric score, with model as random grouping.
+    """Linear mixed model; testing significance of static vs. dynamic effect.
+
+    For numeric outcomes. Model acts as a random grouping effect.
 
     Args:
-        df (pd.DataFrame): Long-format DataFrame.
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
 
     Returns:
         The fitted model.
     """
-    df = _prepare_static_vs_dynamic(df)
+    df = prepare_static_vs_dynamic(df)
     model = smf.mixedlm("score ~ is_dynamic", data=df, groups=df["model"])
     return model.fit()

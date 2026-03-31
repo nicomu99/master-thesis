@@ -13,6 +13,7 @@ from .sig_testing import test_binary_baseline, test_ordinal_baseline, test_numer
 from .sig_testing import test_binary_length, test_ordinal_length, test_numeric_length
 from .sig_testing import test_binary_teacher, test_ordinal_teacher, test_numeric_teacher
 from .sig_testing import test_binary_static_vs_dynamic, test_ordinal_static_vs_dynamic, test_numeric_static_vs_dynamic
+from .sig_testing import prepare_length, prepare_teacher, prepare_static_vs_dynamic
 from .testing_pipeline import run_baseline_tests
 from .testing_pipeline import run_length_tests
 from .testing_pipeline import run_teacher_tests
@@ -42,6 +43,9 @@ __all__ = [
     "test_binary_static_vs_dynamic",
     "test_ordinal_static_vs_dynamic",
     "test_numeric_static_vs_dynamic",
+    "prepare_length",
+    "prepare_teacher",
+    "prepare_static_vs_dynamic",
     "run_baseline_tests",
     "run_length_tests",
     "run_teacher_tests",
