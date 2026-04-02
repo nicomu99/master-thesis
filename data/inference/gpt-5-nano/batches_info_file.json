@@ -4120,5 +4120,336 @@
             "local_file_path": "temp/MATH_counting_probability/output/batch_69ce240e2a448190acacbedc0d6f6069.jsonl"
         },
         "error_file": null
+    },
+    "batch_69ce2df3934081909b0b730c6bbe8d10": {
+        "task_id": "mmlu-pro_law",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            1400,
+            1336,
+            64
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-Q67SoVjNEbgVyzQQKgw2J5",
+            "local_file_path": "temp/mmlu-pro_law/output/batch_69ce2df3934081909b0b730c6bbe8d10.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-4ms9vwD7yd4PSCEyma9Cez",
+            "local_file_path": "temp/mmlu-pro_law/output/batch_69ce2df3934081909b0b730c6bbe8d10_error.jsonl"
+        }
+    },
+    "batch_69ce2df6cc388190a0d2b7568bae2bb0": {
+        "task_id": "mmlu-pro_other",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            1400,
+            1369,
+            31
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-WbNesUiBHoDrCQXcjkT6qE",
+            "local_file_path": "temp/mmlu-pro_other/output/batch_69ce2df6cc388190a0d2b7568bae2bb0.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-H2v2FbfXMcAr7Mo4Key9zS",
+            "local_file_path": "temp/mmlu-pro_other/output/batch_69ce2df6cc388190a0d2b7568bae2bb0_error.jsonl"
+        }
+    },
+    "batch_69ce2df9b8288190a6271d48271043f8": {
+        "task_id": "mmlu-pro_health",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            1400,
+            1383,
+            17
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-WiHK1kyY4PpemcYwTN6wrm",
+            "local_file_path": "temp/mmlu-pro_health/output/batch_69ce2df9b8288190a6271d48271043f8.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-RHowp3HUi59mQRTYd87MNJ",
+            "local_file_path": "temp/mmlu-pro_health/output/batch_69ce2df9b8288190a6271d48271043f8_error.jsonl"
+        }
+    },
+    "batch_69ce2dfc27f88190924ec1704462aa05": {
+        "task_id": "mmlu-pro_psychology",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            1400,
+            1343,
+            57
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-5AffeXBUkMpoPnqJd58JW3",
+            "local_file_path": "temp/mmlu-pro_psychology/output/batch_69ce2dfc27f88190924ec1704462aa05.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-AF3FioDiiS61zYDx7AVD7W",
+            "local_file_path": "temp/mmlu-pro_psychology/output/batch_69ce2dfc27f88190924ec1704462aa05_error.jsonl"
+        }
+    },
+    "batch_69ce2dfee8bc8190a42cc38da2cc8739": {
+        "task_id": "mmlu-pro_business",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            1400,
+            1368,
+            32
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-7MmjocpFmjNi7Dd1oQYW9t",
+            "local_file_path": "temp/mmlu-pro_business/output/batch_69ce2dfee8bc8190a42cc38da2cc8739.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-SRVi8LYdTREokrcVPKDXdq",
+            "local_file_path": "temp/mmlu-pro_business/output/batch_69ce2dfee8bc8190a42cc38da2cc8739_error.jsonl"
+        }
+    },
+    "batch_69ce2e01e12c8190b877d799182241c9": {
+        "task_id": "mmlu-pro_biology",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            1400,
+            1383,
+            17
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-6K9GeMg19iuWrUxGL4C6hw",
+            "local_file_path": "temp/mmlu-pro_biology/output/batch_69ce2e01e12c8190b877d799182241c9.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-5tVtegG2zWXPct4gtob4mK",
+            "local_file_path": "temp/mmlu-pro_biology/output/batch_69ce2e01e12c8190b877d799182241c9_error.jsonl"
+        }
+    },
+    "batch_69ce2e0537788190bc1b584a60a70e75": {
+        "task_id": "mmlu-pro_computer_science",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            1400,
+            1365,
+            35
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-TuqqMCecihbFDK2nEYzWzc",
+            "local_file_path": "temp/mmlu-pro_computer_science/output/batch_69ce2e0537788190bc1b584a60a70e75.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-RUdrrS5TCo4PxETTJkGQCR",
+            "local_file_path": "temp/mmlu-pro_computer_science/output/batch_69ce2e0537788190bc1b584a60a70e75_error.jsonl"
+        }
+    },
+    "batch_69ce2e08d96c8190ba99bddbfee8a79e": {
+        "task_id": "mmlu-pro_history",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            1400,
+            1397,
+            3
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-TNjWMutxGhazPYgLEW1uNY",
+            "local_file_path": "temp/mmlu-pro_history/output/batch_69ce2e08d96c8190ba99bddbfee8a79e.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-YSYrzPsGZdV3APJprugHkS",
+            "local_file_path": "temp/mmlu-pro_history/output/batch_69ce2e08d96c8190ba99bddbfee8a79e_error.jsonl"
+        }
+    },
+    "batch_69ce2e09edd08190a2399c4181ec6217": {
+        "task_id": "MATH_geometry",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            287,
+            229,
+            58
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-NywW3s1mQHSVbxchPmif7X",
+            "local_file_path": "temp/MATH_geometry/output/batch_69ce2e09edd08190a2399c4181ec6217.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-KLYLyvNw88EmjfA9iLCVLb",
+            "local_file_path": "temp/MATH_geometry/output/batch_69ce2e09edd08190a2399c4181ec6217_error.jsonl"
+        }
+    },
+    "batch_69ce2e0b87d881909c54c8896fef5ae3": {
+        "task_id": "MATH_counting_probability",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            266,
+            266,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-7CoLckHW1roeDZgPf7Xafu",
+            "local_file_path": "temp/MATH_counting_probability/output/batch_69ce2e0b87d881909c54c8896fef5ae3.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69ce4ae9b8f481909c4dd3301cecdf64": {
+        "task_id": "mmlu-pro_law",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            64,
+            64,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-VrLksvVBSPWNaXm1zsdn32",
+            "local_file_path": "temp/mmlu-pro_law/output/batch_69ce4ae9b8f481909c4dd3301cecdf64.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69ce4aea68ec8190a6bd86edb54101c3": {
+        "task_id": "mmlu-pro_other",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            31,
+            31,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-935icB3LJdSSE8KNe2e6c9",
+            "local_file_path": "temp/mmlu-pro_other/output/batch_69ce4aea68ec8190a6bd86edb54101c3.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69ce4aeb61348190886f22040afc0404": {
+        "task_id": "mmlu-pro_health",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            17,
+            17,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-2RnTD9SWG5WXFkN61gWuEv",
+            "local_file_path": "temp/mmlu-pro_health/output/batch_69ce4aeb61348190886f22040afc0404.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69ce4aec5ee481909dd20b1cadf2c394": {
+        "task_id": "mmlu-pro_psychology",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            57,
+            57,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-KciWwqvKLR237p25iVuXih",
+            "local_file_path": "temp/mmlu-pro_psychology/output/batch_69ce4aec5ee481909dd20b1cadf2c394.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69ce4aed1d6c8190bfdfe120ea04e353": {
+        "task_id": "mmlu-pro_business",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            32,
+            32,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-FTtjQMvHYJszx2whgEepr3",
+            "local_file_path": "temp/mmlu-pro_business/output/batch_69ce4aed1d6c8190bfdfe120ea04e353.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69ce4aee0334819081c5dde5f9c1b11d": {
+        "task_id": "mmlu-pro_biology",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            17,
+            17,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-JzjQsQzKW1HoWpzbydgk4n",
+            "local_file_path": "temp/mmlu-pro_biology/output/batch_69ce4aee0334819081c5dde5f9c1b11d.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69ce4aeeb5348190a67466534017b70c": {
+        "task_id": "mmlu-pro_computer_science",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            35,
+            35,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-FW2wGMFs93nEHggso42FxZ",
+            "local_file_path": "temp/mmlu-pro_computer_science/output/batch_69ce4aeeb5348190a67466534017b70c.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69ce4aef603081908b587d2879ae290b": {
+        "task_id": "mmlu-pro_history",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            3,
+            3,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-WEhbKokE1yVYmjD2c5Mh9e",
+            "local_file_path": "temp/mmlu-pro_history/output/batch_69ce4aef603081908b587d2879ae290b.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69ce4af045e08190853c04f7550af01f": {
+        "task_id": "MATH_geometry",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            58,
+            58,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-UfXVThjL34hiyQVjxJjgJb",
+            "local_file_path": "temp/MATH_geometry/output/batch_69ce4af045e08190853c04f7550af01f.jsonl"
+        },
+        "error_file": null
     }
 }

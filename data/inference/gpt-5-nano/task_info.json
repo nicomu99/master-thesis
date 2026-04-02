@@ -31,7 +31,7 @@
         "dataset_id": "mmlu-pro",
         "field": "law",
         "need_judgment": false,
-        "status": "answers_pending",
+        "status": "finished",
         "category_name": "law"
     },
     "mmlu-pro_engineering": {
@@ -45,7 +45,7 @@
         "dataset_id": "mmlu-pro",
         "field": "polymathy",
         "need_judgment": false,
-        "status": "answers_pending",
+        "status": "finished",
         "category_name": "other"
     },
     "mmlu-pro_economics": {
@@ -59,42 +59,42 @@
         "dataset_id": "mmlu-pro",
         "field": "health studies",
         "need_judgment": false,
-        "status": "answers_pending",
+        "status": "finished",
         "category_name": "health"
     },
     "mmlu-pro_psychology": {
         "dataset_id": "mmlu-pro",
         "field": "psychology",
         "need_judgment": false,
-        "status": "answers_pending",
+        "status": "finished",
         "category_name": "psychology"
     },
     "mmlu-pro_business": {
         "dataset_id": "mmlu-pro",
         "field": "business studies",
         "need_judgment": false,
-        "status": "answers_pending",
+        "status": "finished",
         "category_name": "business"
     },
     "mmlu-pro_biology": {
         "dataset_id": "mmlu-pro",
         "field": "biology",
         "need_judgment": false,
-        "status": "answers_pending",
+        "status": "finished",
         "category_name": "biology"
     },
     "mmlu-pro_computer_science": {
         "dataset_id": "mmlu-pro",
         "field": "computer science",
         "need_judgment": false,
-        "status": "answers_pending",
+        "status": "finished",
         "category_name": "computer science"
     },
     "mmlu-pro_history": {
         "dataset_id": "mmlu-pro",
         "field": "history",
         "need_judgment": false,
-        "status": "answers_pending",
+        "status": "finished",
         "category_name": "history"
     },
     "MATH_algebra": {
@@ -136,14 +136,14 @@
         "dataset_id": "MATH",
         "field": "geometry",
         "need_judgment": false,
-        "status": "answers_pending",
+        "status": "finished",
         "category_name": "Geometry"
     },
     "MATH_counting_probability": {
         "dataset_id": "MATH",
         "field": "counting and probability",
         "need_judgment": false,
-        "status": "answers_pending",
+        "status": "finished",
         "category_name": "Counting & Probability"
     },
     "flores_deu": {
