@@ -43,7 +43,7 @@ def _baseline_test_for_dataset(dataset: str) -> Callable:
     return test_binary_baseline
 
 
-def _length_test_for_dataset(dataset: str, mode: Literal["static", "dynamic"]) -> Callable:
+def _length_test_for_dataset(dataset: str, mode: Literal["static", "dynamic", "combined"]) -> Callable:
     if dataset == "flores":
         return lambda df: test_ordinal_length(df, mode)
     if dataset == "alpaca":
@@ -184,8 +184,8 @@ def run_length_tests(
     results = []
 
     for dataset, df in _iter_csv(data_dir):
-        for mode in ("static", "dynamic"):
-            mode: Literal["static", "dynamic"] = mode   # to silence warning
+        for mode in ("static", "dynamic", "combined"):
+            mode: Literal["static", "dynamic", "combined"] = mode   # to silence warning
             test_fn = _length_test_for_dataset(dataset, mode)
             out = _collect_results(df, dataset, test_fn, None)
             out.insert(3, "mode", mode)

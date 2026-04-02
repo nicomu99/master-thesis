@@ -5,8 +5,8 @@ import pandas as pd
 import statsmodels.formula.api as smf
 from statsmodels.miscmodels.ordinal_model import OrderedModel
 
-_DYNAMIC_LEN_COLS = ["base", "dynamic_short", "dynamic_medium", "dynamic_long"]
-_STATIC_LEN_COLS = ["base", "static_short", "static_medium", "static_long"]
+_DYNAMIC_LEN_COLS = [("base", 1), ("dynamic_short", 2), ("dynamic_medium", 3), ("dynamic_long", 4)]
+_STATIC_LEN_COLS = [("base", 1), ("static_short", 2), ("static_medium", 3), ("static_long", 4)]
 _TEACHER_PERSONAS = ["beginner_teacher", "intermediate_teacher", "expert_teacher"]
 _STATIC_PERSONAS = ["static_short", "static_medium", "static_long"]
 _DYNAMIC_PERSONAS = ["dynamic_short", "dynamic_medium", "dynamic_long"]
@@ -29,7 +29,7 @@ def _baseline_reference(df: pd.DataFrame) -> str:
 
 def prepare_length(
     df: pd.DataFrame,
-    mode: Literal["static", "dynamic"]
+    mode: Literal["static", "dynamic", "combined"]
 ) -> pd.DataFrame:
     """Filters to the length variants of `mode` and adds a numeric `length` column.
 
@@ -44,12 +44,14 @@ def prepare_length(
         vals = _STATIC_LEN_COLS
     elif mode == "dynamic":
         vals = _DYNAMIC_LEN_COLS
+    elif mode == "combined":
+        vals = set(_STATIC_LEN_COLS).union(_DYNAMIC_LEN_COLS)
     else:
         raise ValueError(f"Unknown mode {mode}")
-    df = df.loc[df["persona"].isin(vals)].copy()
-    lengths = [1, 3, 5, 10]
-    for length, col in zip(lengths, vals):
-        df.loc[df["persona"] == col, "length"] = float(length)
+    personas = [persona[0] for persona in vals]
+    df = df.loc[df["persona"].isin(personas)].copy()
+    for persona, length in vals:
+        df.loc[df["persona"] == persona, "length"] = float(length)
     return df
 
 
@@ -146,7 +148,7 @@ def test_numeric_baseline(
 
 def test_binary_length(
     df: pd.DataFrame,
-    mode: Literal["static", "dynamic"]
+    mode: Literal["static", "dynamic", "combined"]
 ) -> Any:
     """Logistic regression; testing significance of the persona length.
 
@@ -166,7 +168,7 @@ def test_binary_length(
 
 def test_ordinal_length(
     df: pd.DataFrame,
-    mode: Literal["static", "dynamic"]
+    mode: Literal["static", "dynamic", "combined"]
 ) -> Any:
     """Ordered logistic regression; testing significance of the persona length.
 
@@ -191,7 +193,7 @@ def test_ordinal_length(
 
 def test_numeric_length(
     df: pd.DataFrame,
-    mode: Literal["static", "dynamic"]
+    mode: Literal["static", "dynamic", "combined"]
 ) -> Any:
     """Linear mixed model; testing significance of the persona length.
 
