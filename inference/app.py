@@ -240,7 +240,7 @@ if __name__ == "__main__":
         "--model",
         help="The model used for inference.",
         type=str,
-        default="gpt-5.0-nano"
+        default="gpt-5-nano"
     )
     args = parser.parse_args()
 

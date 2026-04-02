@@ -12,11 +12,38 @@
         "mmlu-pro_chemistry": {
             "field": "chemistry"
         },
+        "mmlu-pro_law": {
+            "field": "law"
+        },
         "mmlu-pro_engineering": {
             "field": "engineering"
         },
+        "mmlu-pro_other": {
+            "field": "polymathy",
+            "category_name": "other"
+        },
         "mmlu-pro_economics": {
             "field": "economics"
+        },
+        "mmlu-pro_health": {
+            "field": "health studies",
+            "category_name": "health"
+        },
+        "mmlu-pro_psychology": {
+            "field": "psychology"
+        },
+        "mmlu-pro_business": {
+            "field": "business studies",
+            "category_name": "business"
+        },
+        "mmlu-pro_biology": {
+            "field": "biology"
+        },
+        "mmlu-pro_computer_science": {
+            "field": "computer science"
+        },
+        "mmlu-pro_history": {
+            "field": "history"
         }
     },
     "MATH": {
@@ -39,6 +66,14 @@
         "MATH_precalculus": {
             "field": "precalculus",
             "category_name": "Precalculus"
+        },
+        "MATH_geometry": {
+            "field": "geometry",
+            "category_name": "Geometry"
+        },
+        "MATH_counting_probability": {
+            "field": "counting and probability",
+            "category_name": "Counting & Probability"
         }
     },
     "flores": {

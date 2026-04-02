@@ -163,27 +163,25 @@ class Evaluator:
 
         personas = {}
         failure_count = 0
-        for persona_name, prompt_template in persona_templates.items():
-            client_kwargs = {
-                "task_type": task_info.field, "persona_string": persona}
-            try:
+        try:
+            for persona_name, prompt_template in persona_templates.items():
+                client_kwargs = {
+                    "task_type": task_info.field, "persona_string": persona}
+
                 persona_response = self.communication_handler.get_api_response(
-                    prompt_template, "openai", **client_kwargs)
-            except Exception as e:
-                failure_count += 1
-                log.error("Static persona request failed: %s", e, exc_info=True)
-                personas[persona_name] = None
-                continue
+                        prompt_template, "openai", **client_kwargs)
 
-            if persona_response == "No response":
-                failure_count += 1
-                personas[persona_name] = None
-                continue
+                if persona_response == "No response":
+                    failure_count += 1
+                    personas[persona_name] = None
+                    continue
 
-            persona = persona_response
-
-            personas[persona_name] = persona
-        task_df = task_df.assign(**personas)
+                persona = persona_response
+                personas[persona_name] = persona
+            task_df = task_df.assign(**personas)
+        except Exception as e:
+            failure_count += 1
+            log.error("Static persona request failed: %s", e, exc_info=True)
         if failure_count > 0:
             print(
                 f"Static persona generation for task {task_info.task_id} had "
@@ -264,7 +262,7 @@ class Evaluator:
             task_df = self._generate_empty_personas(task_df)
             task_df, _ = self._generate_static_personas(task_info, task_df)
             task_df, _ = self._generate_teacher_personas(task_info, task_df)
-            self.dataset_handler.merge_and_write(tid, task_df)
+            self.dataset_handler.merge_and_write(task_info.dataset_id, task_df)
         self._save()
 
     def send_answer_requests(
