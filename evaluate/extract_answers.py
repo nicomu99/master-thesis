@@ -54,11 +54,13 @@ def extract_answer_mmlu(
         str | list[str]: The extracted number or a list of numbers.
     """
     completion = sample[column]
-    answer_range = len(sample["answers"])
+    if not completion:
+        return "Invalid response format"
 
+    answer_range = len(sample["answers"])
     option_range = f"A-{chr(65 + answer_range - 1)}"
-    pattern = rf"The correct answer is:\s*([{option_range}])\b"
-    match = re.search(pattern, completion)
+    pattern = rf"^(?:The correct answer is:\s*)?\(?([{option_range}])\)?\b"
+    match = re.search(pattern, completion.strip())
 
     if not match:
         return "Invalid response format"
@@ -80,6 +82,8 @@ def extract_answer_math(
         str: The extracted answer.
     """
     completion = sample[column]
+    if not completion:
+        return ""
     lines = [line.strip() for line in completion.splitlines() if line.strip()]
     if not lines:
         return ""
@@ -97,7 +101,7 @@ def extract_answer_math(
     if answer.startswith("\\[") and answer.endswith("\\]"):
         answer = answer[2:-2]
 
-    wrappers = ("boxed", "text", "mathrm", "mathbf")  # choose your safe list
+    wrappers = ("boxed", "text", "mathrm", "mathbf")
     wrapper_re = re.compile(rf"^\\(?:{'|'.join(wrappers)})\{{(.*)\}}$")
     while True:
         m = wrapper_re.match(answer)
