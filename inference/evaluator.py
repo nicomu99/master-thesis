@@ -248,8 +248,6 @@ class Evaluator:
         self.dataset_handler.merge_and_write(task_info.dataset_id, task_df)
 
         result = self._generate_dynamic_personas(task_info, task_df)
-        if not result:
-            return 0
 
         task_info.update_status(skip=result == 0)
         self._save()

@@ -223,16 +223,16 @@ class CommunicationHandler:
                         batch_file=output_file,
                         write_fn=client.write_response_to)
 
-                if batch_info.has_error():
-                    error_file = batch_info.get_error_file()
-                    self.request_handler.read_response_stream(
-                        batch_info=batch_info,
-                        batch_file=error_file,
-                        write_fn=client.write_response_to)
-
-                    error_messages = self.request_handler.read_error_file(error_file.local_file_path)
-                    for message in error_messages:
-                        log.error("Task %s failed: %s", tid, message)
+                # if batch_info.has_error():
+                #     error_file = batch_info.get_error_file()
+                #     self.request_handler.read_response_stream(
+                #         batch_info=batch_info,
+                #         batch_file=error_file,
+                #         write_fn=client.write_response_to)
+                #
+                #     error_messages = self.request_handler.read_error_file(error_file.local_file_path)
+                #     for message in error_messages:
+                #         log.error("Task %s failed: %s", tid, message)
 
                 retrieved_batches.append(batch_info)
             except (ValueError, APIConnectionError, ConnectionError) as e:

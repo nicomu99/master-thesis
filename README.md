@@ -1,3 +1,7 @@
+How to run inference?
+
+- Run `python3 -m inference.app --path ...` first and create personas
+
 How to run evaluation?
 
 - Run `python3 -m evaluate.preparation all --dataset-name mmlu-pro`

@@ -299,7 +299,7 @@ class BatchRequestHandler:
                 try:
                     response = response_line["response"]["body"]["error"]["message"]
                     error_messages.add(response)
-                except KeyError as e:
+                except (KeyError, TypeError) as e:
                     log.error("Error while reading file: %s", e, exc_info=True)
 
         return list(error_messages)

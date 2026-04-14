@@ -223,10 +223,35 @@ class PlottingWrapper:
             fig.savefig(save_path / f"{model}_per_category", dpi=300)
             plt.close(fig)
 
+    def create_overall_stacked_barchart(
+        self,
+        dataset_name: str,
+    ):
+        df = pd.read_csv(f"data/evaluation/{dataset_name}.csv", index_col=0)
+        df = df[df["persona"] != "helpful"]
+        if dataset_name == "alpaca":
+            df["score"] = (df["score"] >= 1.5).astype(int)
+
+        # for model, model_df in df.groupby("model"):
+        overall_series = df.set_index("persona")["score"]
+        fig_overall, ax_overall = plt.subplots(figsize=(6, 4))
+        self.plot_stacked_barchart(
+            ax_overall,
+            overall_series,
+            title="Win Rates (All Categories)",
+        )
+        fig_overall.suptitle(f"Win Rates for {dataset_name}")
+        fig_overall.tight_layout()
+
+        save_path = Path(f"plots/{dataset_name}/")
+        save_path.mkdir(parents=True, exist_ok=True)
+        fig_overall.savefig(save_path / f"stacked_overall", dpi=300)
+        plt.show()
+
     def create_stacked_barchart_plots(
         self,
         dataset_name: str,
-        category_col: str | None = None,
+        category_col: str,
     ):
         """Create per-model stacked bar chart figures from a long-format CSV.
 
@@ -240,50 +265,33 @@ class PlottingWrapper:
             category_col (str, optional): Column name for categories. Defaults to None.
         """
         df = pd.read_csv(f"data/evaluation/{dataset_name}.csv", index_col=0)
+        df = df[df["persona"] != "helpful"]
         if dataset_name == "alpaca":
             df["score"] = (df["score"] >= 1.5).astype(int)
 
-        for model, model_df in df.groupby("model"):
-            overall_series = model_df.set_index("persona")["score"]
-            fig_overall, ax_overall = plt.subplots(figsize=(6, 4))
+        categories = list(df[category_col].unique())
+        fig, axes = plt.subplots(
+            nrows=len(categories), ncols=1,
+            figsize=(6, len(categories) * 4),
+        )
+        if len(categories) == 1:
+            axes = [axes]
+
+        for idx, (category, cat_df) in enumerate(df.groupby(category_col)):
+            series = cat_df.set_index("persona")["score"]
             self.plot_stacked_barchart(
-                ax_overall,
-                overall_series,
-                title="Win Rates (All Categories)",
+                axes[idx],
+                series,
+                title=f"Win Rates for Task {category}",
             )
-            fig_overall.suptitle(f"Win Rates for {dataset_name}")
-            fig_overall.tight_layout()
 
-            save_path = Path(f"plots/{dataset_name}/")
-            save_path.mkdir(parents=True, exist_ok=True)
-            fig_overall.savefig(save_path / f"{model}_stacked_overall", dpi=300)
-            plt.close(fig_overall)
+        fig.suptitle(f"Win Rates for {dataset_name}", y=0.99)
+        fig.tight_layout()
 
-            if category_col is None:
-                continue
-
-            categories = list(model_df[category_col].unique())
-            if not categories:
-                continue
-            fig, axes = plt.subplots(
-                nrows=len(categories), ncols=1,
-                figsize=(6, len(categories) * 4),
-            )
-            if len(categories) == 1:
-                axes = [axes]
-
-            for idx, (category, cat_df) in enumerate(model_df.groupby(category_col)):
-                series = cat_df.set_index("persona")["score"]
-                self.plot_stacked_barchart(
-                    axes[idx],
-                    series,
-                    title=f"Win Rates for Task {category}",
-                )
-
-            fig.suptitle(f"Win Rates for {dataset_name}", y=0.99)
-            fig.tight_layout()
-            fig.savefig(save_path / f"{model}_stacked_per_category", dpi=300)
-            plt.close(fig)
+        save_path = Path(f"plots/{dataset_name}/")
+        save_path.mkdir(parents=True, exist_ok=True)
+        fig.savefig(save_path / f"stacked_per_category", dpi=300)
+        plt.show()
 
     def plot_stacked_barchart(
         self,
