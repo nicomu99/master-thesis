@@ -22,7 +22,8 @@ def extract_answers(
     _extraction_fns = {
         "mmlu-pro": extract_answer_mmlu,
         "MATH": extract_answer_math,
-        "flores": extract_answer_flores
+        "flores": extract_answer_flores,
+        "alpaca": extract_answer_alpaca
     }
     if extraction_fn not in _extraction_fns:
         raise ValueError(
@@ -150,6 +151,40 @@ def extract_answer_flores(
         return 2
 
     match_equal = re.match(r"Both translations are equal:\s*(.*)", completion, re.IGNORECASE | re.DOTALL)
+    if match_equal:
+        return 1
+    return 0
+
+
+def extract_answer_alpaca(
+    sample: pd.Series,
+    column: str,
+) -> int:
+    """Extracts judgments for the AlpacaEval evaluation pipeline.
+
+    Args:
+        sample (pd.Series): Sample row.
+        column (str): Column identifier.
+
+    Returns:
+        int: The extracted answer.
+    """
+    completion = sample[column]
+    sample_id = sample["static_id"]
+    sample_number = int(sample_id.split("_")[-1])
+    if completion is None:
+        return -1
+
+    match_single = re.match(r"The better response is:\s*([12])\b(.*)", completion, re.IGNORECASE | re.DOTALL)
+    if match_single:
+        if (
+            sample_number % 2 == 0 and int(match_single.group(1)) == 2 or
+            sample_number % 2 == 1 and int(match_single.group(1)) == 1
+        ):
+            return 0
+        return 2
+
+    match_equal = re.match(r"Both responses are equal:\s*(.*)", completion, re.IGNORECASE | re.DOTALL)
     if match_equal:
         return 1
     return 0

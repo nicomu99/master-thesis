@@ -10,22 +10,18 @@ import pandas as pd
 from evaluate.sig_testing import (
     test_binary_baseline,
     test_ordinal_baseline,
-    test_numeric_baseline,
     test_binary_length,
     test_ordinal_length,
-    test_numeric_length,
     test_binary_teacher,
     test_ordinal_teacher,
-    test_numeric_teacher,
     test_binary_static_vs_dynamic,
     test_ordinal_static_vs_dynamic,
-    test_numeric_static_vs_dynamic,
 )
 
 from inference.utils import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 
 _CATEGORY_COLUMN_BY_DATASET = {
@@ -36,34 +32,26 @@ _CATEGORY_COLUMN_BY_DATASET = {
 
 
 def _baseline_test_for_dataset(dataset: str) -> Callable:
-    if dataset == "flores":
+    if dataset == "flores" or dataset == "alpaca":
         return test_ordinal_baseline
-    if dataset == "alpaca":
-        return test_numeric_baseline
     return test_binary_baseline
 
 
 def _length_test_for_dataset(dataset: str, mode: Literal["static", "dynamic", "combined"]) -> Callable:
-    if dataset == "flores":
+    if dataset == "flores" or dataset == "alpaca":
         return lambda df: test_ordinal_length(df, mode)
-    if dataset == "alpaca":
-        return lambda df: test_numeric_length(df, mode)
     return lambda df: test_binary_length(df, mode)
 
 
 def _teacher_test_for_dataset(dataset: str) -> Callable:
-    if dataset == "flores":
+    if dataset == "flores" or dataset == "alpaca":
         return test_ordinal_teacher
-    if dataset == "alpaca":
-        return test_numeric_teacher
     return test_binary_teacher
 
 
 def _static_vs_dynamic_test_for_dataset(dataset: str) -> Callable:
-    if dataset == "flores":
+    if dataset == "flores" or dataset == "alpaca":
         return test_ordinal_static_vs_dynamic
-    if dataset == "alpaca":
-        return test_numeric_static_vs_dynamic
     return test_binary_static_vs_dynamic
 
 
@@ -152,6 +140,7 @@ def run_baseline_tests(
     results = []
 
     for dataset, df in _iter_csv(data_dir):
+        log.debug("Running baseline test for %s", dataset)
         test_fn = _baseline_test_for_dataset(dataset)
         results.append(_collect_results(df, dataset, test_fn, None))
 
@@ -184,6 +173,7 @@ def run_length_tests(
     results = []
 
     for dataset, df in _iter_csv(data_dir):
+        log.debug("Running length test for %s", dataset)
         for mode in ("static", "dynamic", "combined"):
             mode: Literal["static", "dynamic", "combined"] = mode   # to silence warning
             test_fn = _length_test_for_dataset(dataset, mode)
@@ -221,6 +211,7 @@ def run_teacher_tests(
     results = []
 
     for dataset, df in _iter_csv(data_dir):
+        log.debug("Running teacher test for %s", dataset)
         test_fn = _teacher_test_for_dataset(dataset)
         results.append(_collect_results(df, dataset, test_fn, None))
 
@@ -252,6 +243,7 @@ def run_static_vs_dynamic_tests(
     results = []
 
     for dataset, df in _iter_csv(data_dir):
+        log.debug("Running static vs. dynamic test for %s", dataset)
         test_fn = _static_vs_dynamic_test_for_dataset(dataset)
         results.append(_collect_results(df, dataset, test_fn, None))
 
@@ -296,11 +288,11 @@ def run_all_tests(
     selected_suites = suites.items() if suite == "all" else [(suite, suites[suite])]
 
     for name, fn in selected_suites:
-        print(f"\n=== {name} ===")
+        log.info("\n=== %s ===", name)
         df = fn(data_dir)
         path = output_dir / f"results_{name}.csv"
         df.to_csv(path, index=False)
-        print(f"Saved {len(df)} rows to {path}")
+        log.info("Saved %s rows to %s", len(df), path)
 
 
 if __name__ == "__main__":

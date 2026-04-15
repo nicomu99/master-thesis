@@ -100,7 +100,7 @@ def test_binary_baseline(
     """
     ref = _baseline_reference(df)
     model = smf.logit(f"score ~ C(persona, Treatment(reference='{ref}')) + C(model)", data=df)
-    return model.fit()
+    return model.fit(method="bfgs", maxiter=300)
 
 
 def test_ordinal_baseline(
@@ -163,7 +163,7 @@ def test_binary_length(
     """
     df = prepare_length(df, mode)
     model = smf.logit("score ~ length + C(model)", data=df)
-    return model.fit()
+    return model.fit(method="bfgs", maxiter=300)
 
 
 def test_ordinal_length(
@@ -226,7 +226,7 @@ def test_binary_teacher(
     """
     df = prepare_teacher(df)
     model = smf.logit("score ~ level + C(model)", data=df)
-    return model.fit()
+    return model.fit(method="bfgs", maxiter=300)
 
 
 def test_ordinal_teacher(
@@ -285,7 +285,7 @@ def test_binary_static_vs_dynamic(
     """
     df = prepare_static_vs_dynamic(df)
     model = smf.logit("score ~ is_dynamic + C(model)", data=df)
-    return model.fit()
+    return model.fit(method="bfgs", maxiter=300)
 
 
 def test_ordinal_static_vs_dynamic(
