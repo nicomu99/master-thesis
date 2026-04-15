@@ -191,7 +191,7 @@
     "alpaca_all": {
         "dataset_id": "alpaca",
         "field": "instruction following",
-        "need_judgment": false,
+        "need_judgment": true,
         "status": "finished",
         "category_name": "instruction following"
     }
