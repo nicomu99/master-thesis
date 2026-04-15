@@ -60,8 +60,8 @@ def extract_answer_mmlu(
 
     answer_range = len(sample["answers"])
     option_range = f"A-{chr(65 + answer_range - 1)}"
-    pattern = rf"^(?:The correct answer is:\s*)?\(?([{option_range}])\)?\b"
-    match = re.search(pattern, completion.strip())
+    pattern = rf"The correct answer is:\s*([{option_range}])\b"
+    match = re.search(pattern, completion)
 
     if not match:
         return "Invalid response format"
