@@ -270,7 +270,7 @@ class DatasetHandler:
         if isinstance(subset_df, list):
             subset_df = pd.DataFrame(subset_df)
 
-        dataframe = dataframe.set_index(STATIC_ID_COLUMN)
+        dataframe.set_index(STATIC_ID_COLUMN, inplace=True)
         subset_df = subset_df.set_index(STATIC_ID_COLUMN)
         for col in subset_df.columns:
             if col not in dataframe.columns:
