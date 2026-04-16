@@ -83,42 +83,16 @@ def extract_answer_math(
         str: The extracted answer.
     """
     completion = sample[column]
-    if not completion:
+    if not isinstance(completion, str) or not completion.strip():
         return ""
-    lines = [line.strip() for line in completion.splitlines() if line.strip()]
-    if not lines:
+
+    marker = "The final answer is:"
+    completion = completion.strip()
+
+    if marker not in completion:
         return ""
-    if lines[-1] == "\\]":
-        lines = lines[:-1]
-    if lines[-1] == "}":
-        lines = lines[:-1]
 
-    answer = lines[-1]
-    answer = "".join(answer.split())
-
-    # Get rid of leading point
-    if answer.endswith("."):
-        answer = answer[:-1]
-    if answer.startswith("\\[") and answer.endswith("\\]"):
-        answer = answer[2:-2]
-
-    wrappers = ("boxed", "text", "mathrm", "mathbf")
-    wrapper_re = re.compile(rf"^\\(?:{'|'.join(wrappers)})\{{(.*)\}}$")
-    while True:
-        m = wrapper_re.match(answer)
-        if not m:
-            break
-        answer = m.group(1)
-
-    # Remove wrapping $$...$$ or $...$
-    if answer.startswith("$$") and answer.endswith("$$"):
-        answer = answer[2:-2]
-    elif answer.startswith("$") and answer.endswith("$"):
-        answer = answer[1:-1]
-    # Remove \( and \)
-    if answer.startswith("\\(") and answer.endswith("\\)"):
-        answer = answer[2:-2]
-
+    answer = completion.rsplit(marker, 1)[-1].strip()
     return answer
 
 

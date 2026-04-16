@@ -252,12 +252,22 @@ SUMMARIZATION_TEMPLATE = (
 )
 
 MATH_TEMPLATE = (
-    "Solve the following math problem carefully and show your reasoning.\n\n"
+    "Solve the following math problem step by step.\n\n"
     "{question}\n\n"
-    "Explain your steps clearly. Use LaTeX for mathematical expressions where appropriate.\n"
-    "On the last line of your response, write exactly:\n"
-    "The final answer is: <answer>\n"
-    "Do not write anything after that final line."
+    "Show your reasoning clearly. Use standard LaTeX notation for mathematical expressions when appropriate.\n"
+    "In particular:\n"
+    "- use \\frac for fractions,\n"
+    "- use \\sqrt for square roots,\n"
+    "- use LaTeX commands for Greek letters such as \\alpha, \\beta, \\pi,\n"
+    "- wrap ordinary text inside math expressions with \\text.\n\n"
+    "and so on..\n"
+    "On the last line, write exactly:\n"
+    "The final answer is: <answer>\n\n"
+    "For the final answer:\n"
+    "- if it contains mathematical notation, write it in standard LaTeX,\n"
+    "- if it is plain text, still use LaTeX-style math text when needed(\\text)\n"
+    "- do not use \\boxed,\n"
+    "- do not write any explanation after the final line."
 )
 
 TRANSLATION_TEMPLATE = (

@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import re
 import subprocess
 from collections import defaultdict
 from pathlib import Path
@@ -220,6 +221,62 @@ def run_ifbench(
     log.info("IFBench evaluation finished")
 
 
+def normalize_answer_math(
+    completion: str
+) -> str:
+    """Normalize completions for the MATH dataset.
+
+    Args:
+        completion (str): LLM completion.
+
+    Returns:
+        str: LLM completion.
+    """
+    if pd.isna(completion):
+        return ""
+
+    # remove all whitespace
+    completion = re.sub(r"\s+", "", completion)
+
+    # remove \left and \right everywhere
+    completion = completion.replace(r"\left", "")
+    completion = completion.replace(r"\right", "")
+    completion = completion.replace(r"dfrac", "frac")
+    completion = completion.replace(r"x = ", "")
+    completion = completion.replace(r"x=", "")
+
+    # repeatedly remove outer wrappers
+    changed = True
+    while changed and completion:
+        changed = False
+        # remove $...$
+        if len(completion) >= 1 and completion.endswith("."):
+            completion = completion[:-1]
+            changed = True
+
+        if len(completion) >= 2 and completion.startswith("$") and completion.endswith("$"):
+            completion = completion[1:-1]
+            changed = True
+
+        # remove \text{...}
+        text_match = re.fullmatch(r"\\text\{(.+)\}", completion)
+        if text_match:
+            completion = text_match.group(1)
+            changed = True
+
+        # remove (...)
+        if len(completion) >= 2 and completion.startswith("(") and completion.endswith(")"):
+            completion = completion[1:-1]
+            changed = True
+
+        # remove \(...\)
+        if len(completion) >= 4 and completion.startswith("\(") and completion.endswith("\)"):
+            completion = completion[2:-2]
+            changed = True
+    completion = completion.split("=")[-1]
+    return completion
+
+
 def prepare_df(
     dataset_name: str = "mmlu-pro",
     output_folder: str = "data/evaluation",
@@ -275,9 +332,14 @@ def prepare_df(
 
         df = extract_answers(df, scoring_columns, dataset_name)
         df["model"] = model_folder_name
-        if dataset_name not in ["flores", "alpaca"]:
+        if dataset_name not in ["flores", "alpaca", "MATH"]:
             for col in extracted_columns:
                 df[col] = (df[answer_col] == df[col]).astype(int)
+        elif dataset_name == "MATH":
+            for col in extracted_columns:
+                df[col] = (
+                        df[answer_col].map(normalize_answer_math) == df[col].map(normalize_answer_math)
+                ).astype(int)
         df = pd.melt(
             df,
             id_vars=id_vars,
