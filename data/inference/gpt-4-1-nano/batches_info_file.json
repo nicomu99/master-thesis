@@ -758,5 +758,133 @@
             "local_file_path": "temp/MATH_counting_probability/output/batch_69ce4ac0919c81908ad96fd987845e98.jsonl"
         },
         "error_file": null
+    },
+    "batch_69df70ed1eb8819087f18bc98cc327f8": {
+        "task_id": "mmlu-pro_psychology",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-2H9NveFRaLNfNFhrV8et4r",
+            "local_file_path": "temp/mmlu-pro_psychology/output/batch_69df70ed1eb8819087f18bc98cc327f8.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69df76d9bb5c81908d93e215555ab881": {
+        "task_id": "mmlu-pro_law",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-P9N9QGuiJmspbvJJjr8BAk",
+            "local_file_path": "temp/mmlu-pro_law/output/batch_69df76d9bb5c81908d93e215555ab881.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69df76dc4ef48190a2f065ac1827e190": {
+        "task_id": "mmlu-pro_other",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-DgDJqEHKEgEwrBSLdRMGB7",
+            "local_file_path": "temp/mmlu-pro_other/output/batch_69df76dc4ef48190a2f065ac1827e190.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69df76de55088190a7a78c6e9b7b083d": {
+        "task_id": "mmlu-pro_health",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-TUFJTj4F8mjgQXB643Uvqw",
+            "local_file_path": "temp/mmlu-pro_health/output/batch_69df76de55088190a7a78c6e9b7b083d.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69df76e150e48190a38c8d59bde3992b": {
+        "task_id": "mmlu-pro_business",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-EsirAARxecjcjXpg2Mt5iX",
+            "local_file_path": "temp/mmlu-pro_business/output/batch_69df76e150e48190a38c8d59bde3992b.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69df76e363d081909a29643b360ba6b1": {
+        "task_id": "mmlu-pro_biology",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-T9RXHjwu1DboNbU4hnc6GJ",
+            "local_file_path": "temp/mmlu-pro_biology/output/batch_69df76e363d081909a29643b360ba6b1.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69df76e583e88190b8fb3f1ea20365b7": {
+        "task_id": "mmlu-pro_computer_science",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-6qipoYdkMMBk7aarZaSQKL",
+            "local_file_path": "temp/mmlu-pro_computer_science/output/batch_69df76e583e88190b8fb3f1ea20365b7.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69df76e7deec819089672208468f9dfe": {
+        "task_id": "mmlu-pro_history",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-PL9L4skV9eTcSR7BQjXV4b",
+            "local_file_path": "temp/mmlu-pro_history/output/batch_69df76e7deec819089672208468f9dfe.jsonl"
+        },
+        "error_file": null
     }
 }
