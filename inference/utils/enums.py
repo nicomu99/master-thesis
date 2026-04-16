@@ -128,3 +128,4 @@ class BatchStatus(StringEnum):
     COMPLETED = "completed"
     RETRIEVED = "retrieved"
     ERROR = "error"
+    CANCELLED = "cancelled"

@@ -417,8 +417,9 @@ class Evaluator:
         """
         active_batches = self.communication_handler.check_batch_statuses()
         for bid, batch_info in active_batches.items():
-            if batch_info.is_error() and bid in self.task_infos:
-                self.task_infos[bid].decrement_status()
+            tid = batch_info.task_id
+            if (batch_info.is_error() or batch_info.is_cancelled()) and tid in self.task_infos:
+                self.task_infos[tid].decrement_status()
         return active_batches
 
     def fetch_batch_responses(self):
