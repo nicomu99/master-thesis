@@ -252,10 +252,12 @@ SUMMARIZATION_TEMPLATE = (
 )
 
 MATH_TEMPLATE = (
-    "Please answer the following question: {question}\n\n"
-    "Make sure to style your output using latex. For example, all parentheses and brackets should be wrapped using "
-    "left and right, fractions should use frac, for square roots should use sqrt and so on. "
-    "State the solution at the end of your answer on a new line and only the solution."
+    "Solve the following math problem carefully and show your reasoning.\n\n"
+    "{question}\n\n"
+    "Explain your steps clearly. Use LaTeX for mathematical expressions where appropriate.\n"
+    "On the last line of your response, write exactly:\n"
+    "The final answer is: <answer>\n"
+    "Do not write anything after that final line."
 )
 
 TRANSLATION_TEMPLATE = (

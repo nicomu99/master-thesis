@@ -4592,5 +4592,136 @@
             "local_file_path": "temp/mmlu-pro_psychology/output/batch_69df9669f4508190af9b607c788d433d.jsonl"
         },
         "error_file": null
+    },
+    "batch_69e09c43640081909b12f3a3fefcb557": {
+        "task_id": "MATH_algebra",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            1488,
+            1488,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-J8RH9NedV86jzUDWv5mSy1",
+            "local_file_path": "temp/MATH_algebra/output/batch_69e09c43640081909b12f3a3fefcb557.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69e09c45a29c819086106032a8eac477": {
+        "task_id": "MATH_intermediate_algebra",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            1164,
+            1163,
+            1
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-RVAuXA5sRx7RzZr6H4haGo",
+            "local_file_path": "temp/MATH_intermediate_algebra/output/batch_69e09c45a29c819086106032a8eac477.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-76rtgPNErWKBSKqGt5m6bi",
+            "local_file_path": "temp/MATH_intermediate_algebra/output/batch_69e09c45a29c819086106032a8eac477_error.jsonl"
+        }
+    },
+    "batch_69e09c475d908190a7375e3c14cc365a": {
+        "task_id": "MATH_prealgebra",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            984,
+            984,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-B8DUbMLfJq7EbnYDx6Scw2",
+            "local_file_path": "temp/MATH_prealgebra/output/batch_69e09c475d908190a7375e3c14cc365a.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69e09c4921448190879e17fe5ab4c5f2": {
+        "task_id": "MATH_number_theory",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            744,
+            744,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-VjUQMDbGm1gU5Fg8FqUEuX",
+            "local_file_path": "temp/MATH_number_theory/output/batch_69e09c4921448190879e17fe5ab4c5f2.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69e09c4a7d30819081649848824768a5": {
+        "task_id": "MATH_precalculus",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            672,
+            672,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-NrKPvDC3NfLwzVvYL3ghiA",
+            "local_file_path": "temp/MATH_precalculus/output/batch_69e09c4a7d30819081649848824768a5.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69e09c4b4c788190857c10d12c0b6c7f": {
+        "task_id": "MATH_geometry",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            492,
+            492,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-XNcQXuwWiDpe2mNDvYdrj1",
+            "local_file_path": "temp/MATH_geometry/output/batch_69e09c4b4c788190857c10d12c0b6c7f.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69e09c4c9d588190a48042b05beaed18": {
+        "task_id": "MATH_counting_probability",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            456,
+            456,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-K46XfZEBSxBspcWvi7fzL9",
+            "local_file_path": "temp/MATH_counting_probability/output/batch_69e09c4c9d588190a48042b05beaed18.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69e0c97398388190ba3e690ee8063e30": {
+        "task_id": "MATH_intermediate_algebra",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            1,
+            1,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-K7dTfywSAyqx3wr5qLQDRo",
+            "local_file_path": "temp/MATH_intermediate_algebra/output/batch_69e0c97398388190ba3e690ee8063e30.jsonl"
+        },
+        "error_file": null
     }
 }
