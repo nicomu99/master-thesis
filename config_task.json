@@ -110,7 +110,8 @@
     },
     "alpaca": {
         "alpaca_all": {
-            "field": "instruction following"
+            "field": "instruction following",
+            "need_judgment": true
         }
     }
 }

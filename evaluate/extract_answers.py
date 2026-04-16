@@ -22,7 +22,8 @@ def extract_answers(
     _extraction_fns = {
         "mmlu-pro": extract_answer_mmlu,
         "MATH": extract_answer_math,
-        "flores": extract_answer_flores
+        "flores": extract_answer_flores,
+        "alpaca": extract_answer_alpaca
     }
     if extraction_fn not in _extraction_fns:
         raise ValueError(
@@ -54,8 +55,10 @@ def extract_answer_mmlu(
         str | list[str]: The extracted number or a list of numbers.
     """
     completion = sample[column]
-    answer_range = len(sample["answers"])
+    if not completion:
+        return "Invalid response format"
 
+    answer_range = len(sample["answers"])
     option_range = f"A-{chr(65 + answer_range - 1)}"
     pattern = rf"The correct answer is:\s*([{option_range}])\b"
     match = re.search(pattern, completion)
@@ -80,6 +83,8 @@ def extract_answer_math(
         str: The extracted answer.
     """
     completion = sample[column]
+    if not completion:
+        return ""
     lines = [line.strip() for line in completion.splitlines() if line.strip()]
     if not lines:
         return ""
@@ -97,7 +102,7 @@ def extract_answer_math(
     if answer.startswith("\\[") and answer.endswith("\\]"):
         answer = answer[2:-2]
 
-    wrappers = ("boxed", "text", "mathrm", "mathbf")  # choose your safe list
+    wrappers = ("boxed", "text", "mathrm", "mathbf")
     wrapper_re = re.compile(rf"^\\(?:{'|'.join(wrappers)})\{{(.*)\}}$")
     while True:
         m = wrapper_re.match(answer)
@@ -146,6 +151,40 @@ def extract_answer_flores(
         return 2
 
     match_equal = re.match(r"Both translations are equal:\s*(.*)", completion, re.IGNORECASE | re.DOTALL)
+    if match_equal:
+        return 1
+    return 0
+
+
+def extract_answer_alpaca(
+    sample: pd.Series,
+    column: str,
+) -> int:
+    """Extracts judgments for the AlpacaEval evaluation pipeline.
+
+    Args:
+        sample (pd.Series): Sample row.
+        column (str): Column identifier.
+
+    Returns:
+        int: The extracted answer.
+    """
+    completion = sample[column]
+    sample_id = sample["static_id"]
+    sample_number = int(sample_id.split("_")[-1])
+    if completion is None:
+        return -1
+
+    match_single = re.match(r"The better response is:\s*([12])\b(.*)", completion, re.IGNORECASE | re.DOTALL)
+    if match_single:
+        if (
+            sample_number % 2 == 0 and int(match_single.group(1)) == 2 or
+            sample_number % 2 == 1 and int(match_single.group(1)) == 1
+        ):
+            return 0
+        return 2
+
+    match_equal = re.match(r"Both responses are equal:\s*(.*)", completion, re.IGNORECASE | re.DOTALL)
     if match_equal:
         return 1
     return 0

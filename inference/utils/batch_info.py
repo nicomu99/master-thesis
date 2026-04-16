@@ -41,14 +41,15 @@ class BatchInfo:
         "starting": BatchStatus.VALIDATING,
         "validating": BatchStatus.VALIDATING,
         "in_progress": BatchStatus.IN_PROGRESS,
-        "canceling": BatchStatus.IN_PROGRESS,
         "finalizing": BatchStatus.IN_PROGRESS,
         "expired": BatchStatus.ERROR,
         "failed": BatchStatus.FAILED,
         "cancelled": BatchStatus.RETRIEVED,
         "canceled": BatchStatus.RETRIEVED,
         "ended": BatchStatus.COMPLETED,
-        "completed": BatchStatus.COMPLETED
+        "completed": BatchStatus.COMPLETED,
+        "canceling": BatchStatus.CANCELLED,
+        "cancelling": BatchStatus.CANCELLED
     }
 
     def __post_init__(self):
@@ -95,13 +96,21 @@ class BatchInfo:
         """
         return self.status == BatchStatus.IN_PROGRESS
 
+    def is_cancelled(self):
+        """Check whether the batch status is canceled.
+
+        Returns:
+            bool: True if the status equals BatchStatus.CANCELLED, otherwise False.
+        """
+        return self.status == BatchStatus.CANCELLED
+
     def has_finished(self) -> bool:
         """Check whether the batch status is retrieved or error.
 
         Returns:
             bool: True if the status equals BatchStatus.RETRIEVED or BatchStatus.ERROR, otherwise False.
         """
-        return self.status in (BatchStatus.RETRIEVED, BatchStatus.ERROR)
+        return self.status in (BatchStatus.RETRIEVED, BatchStatus.ERROR, BatchStatus.CANCELLED)
 
     def is_retrieved(self) -> bool:
         """Check whether the batch status is retrieved.

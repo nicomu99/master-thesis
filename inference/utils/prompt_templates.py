@@ -271,3 +271,12 @@ TRANSLATION_JUDGE_TEMPLATE = (
     "good, you must start your answer with \"Both translations are equal:\" followed by your reasoning. You must "
     "provide an answer in one of these two formats."
 )
+
+INSTRUCTION_JUDGE_TEMPLATE = (
+    "Please judge the following two responses to the following instruction: {reference}\n\n"
+    "Response 1: {translation_1}\n\n"
+    "Response 2: {translation_2}\n\n"
+    "Start your answer with \"The better response is: \" followed by the number. If both responses are equally "
+    "good, you must start your answer with \"Both responses are equal:\" followed by your reasoning. You must "
+    "provide an answer in one of these two formats."
+)

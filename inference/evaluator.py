@@ -11,7 +11,7 @@ from .dataset_handler import DatasetHandler
 from .communication_handler import CommunicationHandler
 from .persona_registry import PersonaRegistry
 from .utils import columns_full, load_dataclass_dict, save_dataclass_dict, load_task_config, QuestionType
-from .utils import TaskInfo, BatchInfo, TRANSLATION_JUDGE_TEMPLATE, STATIC_ID_COLUMN, QUESTION_COLUMN
+from .utils import TaskInfo, BatchInfo, TRANSLATION_JUDGE_TEMPLATE, STATIC_ID_COLUMN, QUESTION_COLUMN, INSTRUCTION_JUDGE_TEMPLATE
 from .utils import DATA_PATH
 
 from .utils import logging
@@ -248,8 +248,6 @@ class Evaluator:
         self.dataset_handler.merge_and_write(task_info.dataset_id, task_df)
 
         result = self._generate_dynamic_personas(task_info, task_df)
-        if not result:
-            return 0
 
         task_info.update_status(skip=result == 0)
         self._save()
@@ -305,10 +303,15 @@ class Evaluator:
             task_id (str): String identifier of the task.
         """
         task_info = self.task_infos[task_id]
+        dataset_config = self.dataset_handler.get_config(task_info.dataset_id)
+        question_type = dataset_config.question_type
+        if question_type == QuestionType.TRANSLATION:
+            prompt_template = TRANSLATION_JUDGE_TEMPLATE
+        else:
+            prompt_template = INSTRUCTION_JUDGE_TEMPLATE
         task_df = self.dataset_handler.get_task_df_from_info(task_info)
         persona_configs = self.persona_registry.get_configs()
         reference_config = self.persona_registry.get_reference_config()
-        prompt_template = TRANSLATION_JUDGE_TEMPLATE
 
         # Iterate over each row in the dataframe and send judgments for each persona
         failure_count = 0
@@ -414,8 +417,9 @@ class Evaluator:
         """
         active_batches = self.communication_handler.check_batch_statuses()
         for bid, batch_info in active_batches.items():
-            if batch_info.is_error() and bid in self.task_infos:
-                self.task_infos[bid].decrement_status()
+            tid = batch_info.task_id
+            if (batch_info.is_error() or batch_info.is_cancelled()) and tid in self.task_infos:
+                self.task_infos[tid].decrement_status()
         return active_batches
 
     def fetch_batch_responses(self):

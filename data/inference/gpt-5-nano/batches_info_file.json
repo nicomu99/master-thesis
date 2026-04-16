@@ -4451,5 +4451,146 @@
             "local_file_path": "temp/MATH_geometry/output/batch_69ce4af045e08190853c04f7550af01f.jsonl"
         },
         "error_file": null
+    },
+    "batch_69df67d3f5a08190b20f4616e4b20e5b": {
+        "task_id": "mmlu-pro_psychology",
+        "batch_type": "answers",
+        "status": "cancelled",
+        "progress": [
+            2400,
+            0,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
+    },
+    "batch_69df7c646af881909fb04efc18551268": {
+        "task_id": "mmlu-pro_law",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-AhL8uzW1PpJNSXZ3AL8dhC",
+            "local_file_path": "temp/mmlu-pro_law/output/batch_69df7c646af881909fb04efc18551268.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69df7c66f3488190a24492ec66e99d23": {
+        "task_id": "mmlu-pro_other",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-FtC6gZG9C4cyDeP4jSeff5",
+            "local_file_path": "temp/mmlu-pro_other/output/batch_69df7c66f3488190a24492ec66e99d23.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69df7c68e384819092fcf57440771320": {
+        "task_id": "mmlu-pro_health",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-LrmQWudLfKdkRmVCgFGPvY",
+            "local_file_path": "temp/mmlu-pro_health/output/batch_69df7c68e384819092fcf57440771320.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69df7c6abb188190ac21b85ff7bdb5eb": {
+        "task_id": "mmlu-pro_business",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-ECXnN6knKbcHrsnmxBM8yx",
+            "local_file_path": "temp/mmlu-pro_business/output/batch_69df7c6abb188190ac21b85ff7bdb5eb.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69df7c6cdf7c8190a815c60fe452a602": {
+        "task_id": "mmlu-pro_biology",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-1DNtvcnCbqxHZUxhoet4cq",
+            "local_file_path": "temp/mmlu-pro_biology/output/batch_69df7c6cdf7c8190a815c60fe452a602.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69df7c6f2a74819090653015eae97da2": {
+        "task_id": "mmlu-pro_computer_science",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-XxFdMyegFvRo2rwEBtUVvN",
+            "local_file_path": "temp/mmlu-pro_computer_science/output/batch_69df7c6f2a74819090653015eae97da2.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69df7c71e7a081909492016119c6e9cf": {
+        "task_id": "mmlu-pro_history",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-HZmoxK18U7NsE7JeUab1G7",
+            "local_file_path": "temp/mmlu-pro_history/output/batch_69df7c71e7a081909492016119c6e9cf.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69df9669f4508190af9b607c788d433d": {
+        "task_id": "mmlu-pro_psychology",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-QDhTmXBMo9XUNRkH92tsrt",
+            "local_file_path": "temp/mmlu-pro_psychology/output/batch_69df9669f4508190af9b607c788d433d.jsonl"
+        },
+        "error_file": null
     }
 }
