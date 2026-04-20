@@ -51,7 +51,7 @@ def prepare_length(
     personas = [persona[0] for persona in vals]
     df = df.loc[df["persona"].isin(personas)].copy()
     for persona, length in vals:
-        df.loc[df["persona"] == persona, "length"] = float(length)
+        df.loc[df["persona"] == persona, "length"] = int(length)
     return df
 
 
@@ -66,7 +66,7 @@ def prepare_teacher(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = df.loc[df["persona"].isin(_TEACHER_PERSONAS)].copy()
     for level, persona in enumerate(_TEACHER_PERSONAS):
-        df.loc[df["persona"] == persona, "level"] = float(level)
+        df.loc[df["persona"] == persona, "level"] = int(level)
     return df
 
 

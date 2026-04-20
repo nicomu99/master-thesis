@@ -258,6 +258,12 @@ def normalize_answer_math(
             completion = completion[1:-1]
             changed = True
 
+        # remove \boxed{...}
+        text_match = re.fullmatch(r"\\boxed\{(.+)\}", completion)
+        if text_match:
+            completion = text_match.group(1)
+            changed = True
+
         # remove \text{...}
         text_match = re.fullmatch(r"\\text\{(.+)\}", completion)
         if text_match:
