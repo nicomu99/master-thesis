@@ -998,5 +998,117 @@
             "local_file_path": "temp/MATH_counting_probability/output/batch_69e09c7c9120819086a00fa0d85ec4f6.jsonl"
         },
         "error_file": null
+    },
+    "batch_69e0e02a928881909379c0cb49732d62": {
+        "task_id": "MATH_algebra",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            1488,
+            1488,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-6bE2bcajyCPoogBydKUGRq",
+            "local_file_path": "temp/MATH_algebra/output/batch_69e0e02a928881909379c0cb49732d62.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69e0e02bf06c81909058b6fd4243c1e3": {
+        "task_id": "MATH_intermediate_algebra",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            1164,
+            1164,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-KXWHS539DUGh1cTvsdeFFi",
+            "local_file_path": "temp/MATH_intermediate_algebra/output/batch_69e0e02bf06c81909058b6fd4243c1e3.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69e0e02d8248819094224c9dd0da9801": {
+        "task_id": "MATH_prealgebra",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            984,
+            984,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-WFqpkUDbERWhqLMGfVxyqF",
+            "local_file_path": "temp/MATH_prealgebra/output/batch_69e0e02d8248819094224c9dd0da9801.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69e0e02eabfc8190a414e797c266ae88": {
+        "task_id": "MATH_number_theory",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            744,
+            744,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-EhjJtpezPqDqeqbKHGTq7k",
+            "local_file_path": "temp/MATH_number_theory/output/batch_69e0e02eabfc8190a414e797c266ae88.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69e0e02fa314819085ecad8af6e5ce41": {
+        "task_id": "MATH_precalculus",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            672,
+            672,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-5NKn6V2ENzLee7pSi9MEuz",
+            "local_file_path": "temp/MATH_precalculus/output/batch_69e0e02fa314819085ecad8af6e5ce41.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69e0e03140f08190853860ec02a4c0b6": {
+        "task_id": "MATH_geometry",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            492,
+            492,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-CRksMHGcP1cwar5zRtkaPY",
+            "local_file_path": "temp/MATH_geometry/output/batch_69e0e03140f08190853860ec02a4c0b6.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_69e0e032ea0081909467bc13c40f7d91": {
+        "task_id": "MATH_counting_probability",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            456,
+            456,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-XihBsNE5NG6KAbQNZFoqen",
+            "local_file_path": "temp/MATH_counting_probability/output/batch_69e0e032ea0081909467bc13c40f7d91.jsonl"
+        },
+        "error_file": null
     }
 }
