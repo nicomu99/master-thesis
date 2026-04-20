@@ -2,6 +2,7 @@
 import gc
 import inspect
 import argparse
+from pathlib import Path
 from collections import defaultdict
 
 import torch
@@ -117,7 +118,7 @@ def main(
     personas = persona_registry.get_names()
 
     # Load dataset
-    for dataset_id in ["mmlu-pro", "MATH", "flores", "IFBench", "alpaca"]:
+    for dataset_id in ["MATH"]:  # ["mmlu-pro", "MATH", "flores", "IFBench", "alpaca"]:
         _, dataset_df = evaluator.get_data(dataset_id)
         qs_type = evaluator.get_question_type(dataset_id)
         dataset_df = dataset_df.copy()
@@ -141,6 +142,24 @@ def main(
             var_name="persona_col",
             value_name="persona"
         )
+        print(f"{len(long_df)} total samples to process.")
+
+        temp_file_path = Path(f"temp_{dataset_id}_{dataset_path}.parquet")
+        if temp_file_path.exists():
+            temp_df = pd.read_parquet(temp_file_path)
+            print(f"{len(temp_df)} samples already processed.")
+
+            # TAKEN FROM:
+            # https://stackoverflow.com/questions/33282119/pandas-filter-dataframe-by-another-dataframe-by-row-elements
+            temp_df = temp_df.rename(columns={"persona": "persona_col"})
+            temp_df["persona_col"] = temp_df["persona_col"].str.replace("answer", "persona")
+            keys = ["static_id", "persona_col"]
+            idx_long_df = long_df.set_index(keys).index
+            idx_temp_df = temp_df.set_index(keys).index
+            print(idx_long_df[:3], idx_temp_df[:3])
+            long_df = long_df[~idx_long_df.isin(idx_temp_df)]
+            print(f"{len(temp_df)} samples already processed, {len(long_df)} remaining samples.")
+
         dataset_hf = Dataset.from_pandas(long_df)
 
         # Apply the chat template here
@@ -152,8 +171,10 @@ def main(
         )
 
         gen_cfg = GenerationConfig(
-            max_new_tokens=1024,
+            max_new_tokens=2048,
             do_sample=False,
+            top_p=1.0,
+            temperature=1.0,
             pad_token_id=pipe.tokenizer.eos_token_id
         )
         for batch_size in [16, 8, 4, 3, 2, 1]:
@@ -172,12 +193,29 @@ def main(
                             )
                         ), total=len(dataset_hf)
                 ):
-                    responses["static_id"].append(static_id)
-                    responses["persona"].append(persona.replace("persona", "answer"))
-                    responses["completion"].append(out[0]["generated_text"])
+                    row = {
+                        "static_id": static_id,
+                        "persona": persona.replace("persona", "answer"),
+                        "completion": out[0]["generated_text"]
+                    }
+
+                    responses["static_id"].append(row["static_id"])
+                    responses["persona"].append(row["persona"])
+                    responses["completion"].append(row["completion"])
+
+                    row_df = pd.DataFrame([row])
+                    if temp_file_path.exists():
+                        temp_df = pd.read_parquet(temp_file_path)
+                        temp_df = pd.concat([temp_df, row_df])
+                    else:
+                        temp_df = row_df
+                    temp_df.to_parquet(temp_file_path)
 
                 # pivot back from long to wide
-                response_df = pd.DataFrame(responses)
+                if temp_file_path.exists():
+                    response_df = pd.read_parquet(temp_file_path)
+                else:
+                    response_df = pd.DataFrame(responses)
                 response_df = response_df.pivot(index="static_id", columns="persona", values="completion")
                 response_df = response_df.reset_index()
 
