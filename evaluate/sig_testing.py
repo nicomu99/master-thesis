@@ -10,7 +10,7 @@ _STATIC_LEN_COLS = [("base", 1), ("static_short", 2), ("static_medium", 3), ("st
 _TEACHER_PERSONAS = ["beginner_teacher", "intermediate_teacher", "expert_teacher"]
 _STATIC_PERSONAS = ["static_short", "static_medium", "static_long"]
 _DYNAMIC_PERSONAS = ["dynamic_short", "dynamic_medium", "dynamic_long"]
-_BASELINE_REFERENCE = "no"
+_BASELINE_REFERENCE = "helpful"
 
 
 def _baseline_reference(df: pd.DataFrame) -> str:
@@ -79,7 +79,7 @@ def prepare_static_vs_dynamic(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Filtered dataframe with a numeric `is_dynamic` column added.
     """
-    personas = _STATIC_PERSONAS + _DYNAMIC_PERSONAS
+    personas = _STATIC_PERSONAS + _DYNAMIC_PERSONAS + ["base"]
     df = df.loc[df["persona"].isin(personas)].copy()
     df["is_dynamic"] = df["persona"].str.startswith("dynamic").astype(int)
     return df

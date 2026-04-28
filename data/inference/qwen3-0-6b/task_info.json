@@ -164,7 +164,7 @@
         "dataset_id": "flores",
         "field": "Swahili to English translation",
         "need_judgment": true,
-        "status": "finished",
+        "status": "judgment_pending",
         "category_name": "swh"
     },
     "flores_spa": {

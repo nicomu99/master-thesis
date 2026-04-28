@@ -310,6 +310,7 @@ class Evaluator:
         else:
             prompt_template = INSTRUCTION_JUDGE_TEMPLATE
         task_df = self.dataset_handler.get_task_df_from_info(task_info)
+        task_df = task_df.copy()
         persona_configs = self.persona_registry.get_configs()
         reference_config = self.persona_registry.get_reference_config()
 

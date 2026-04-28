@@ -84,8 +84,8 @@ class PersonaRegistry:
         self.helpful_persona_string = HELPFUL_PERSONA
 
         self.persona_configs = [
-            PersonaConfig("no_persona", PersonaCategory.EMPTY, " "),
             PersonaConfig("helpful_persona", PersonaCategory.EMPTY, HELPFUL_PERSONA),
+            PersonaConfig("no_persona", PersonaCategory.EMPTY, " "),
             PersonaConfig("base_persona", PersonaCategory.STATIC, BASE_TEMPLATE),
             PersonaConfig("static_short_persona", PersonaCategory.STATIC, STATIC_SHORT_TEMPLATE),
             PersonaConfig("static_medium_persona", PersonaCategory.STATIC, STATIC_MEDIUM_TEMPLATE),
