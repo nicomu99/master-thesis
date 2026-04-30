@@ -166,6 +166,31 @@ def test_binary_length(
     return model.fit(method="bfgs", maxiter=300)
 
 
+def test_binary_length_by_model(
+    df: pd.DataFrame,
+    mode: Literal["static", "dynamic", "combined"]
+) -> Any:
+    """Logistic regression with interaction between length and model.
+
+    For numeric outcomes. Model acts as a random grouping effect.
+
+    Args:
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
+        mode (Literal["static", "dynamic"]): Choose whether to test static or dynamic personas.
+
+    Returns:
+        The fitted model.
+    """
+    df = prepare_length(df, mode)
+
+    model = smf.logit(
+        "score ~ length * C(model)",
+        data=df
+    )
+
+    return model.fit(method="bfgs", maxiter=300)
+
+
 def test_ordinal_length(
     df: pd.DataFrame,
     mode: Literal["static", "dynamic", "combined"]
@@ -191,6 +216,33 @@ def test_ordinal_length(
     return model.fit(method="bfgs")
 
 
+def test_ordinal_length_by_model(
+    df: pd.DataFrame,
+    mode: Literal["static", "dynamic", "combined"]
+) -> Any:
+    """Ordered logistic regression with interaction between length and model.
+
+    For ordinal outcomes.
+
+    Args:
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
+        mode (Literal["static", "dynamic"]): Choose whether to test static or dynamic personas.
+
+    Returns:
+        The fitted model.
+    """
+    df = prepare_length(df, mode)
+    df["score"] = pd.Categorical(df["score"], categories=[0, 1, 2], ordered=True)
+
+    model = OrderedModel.from_formula(
+        "score ~ length * C(model)",
+        data=df,
+        distr="logit"
+    )
+
+    return model.fit(method="bfgs")
+
+
 def test_numeric_length(
     df: pd.DataFrame,
     mode: Literal["static", "dynamic", "combined"]
@@ -209,6 +261,31 @@ def test_numeric_length(
     df = prepare_length(df, mode)
     model = smf.mixedlm("score ~ length", data=df, groups=df["model"])
     return model.fit()
+
+
+def test_numeric_length_by_model(
+    df: pd.DataFrame,
+    mode: Literal["static", "dynamic", "combined"]
+) -> Any:
+    """Linear mixed model; testing whether the length effect varies by model.
+
+    Model acts as a random grouping effect with both random intercepts and
+    random slopes for length.
+
+    This allows each model to have:
+    - its own baseline score
+    - its own length effect
+    """
+    df = prepare_length(df, mode)
+
+    model = smf.mixedlm(
+        "score ~ length",
+        data=df,
+        groups=df["model"],
+        re_formula="~length"
+    )
+
+    return model.fit(reml=False, method="lbfgs")
 
 
 def test_binary_teacher(

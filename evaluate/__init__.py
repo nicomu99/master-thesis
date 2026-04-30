@@ -12,6 +12,7 @@ from .extract_answers import extract_answer_alpaca
 from .plotting_wrapper import PlottingWrapper
 from .sig_testing import test_binary_baseline, test_ordinal_baseline, test_numeric_baseline
 from .sig_testing import test_binary_length, test_ordinal_length, test_numeric_length
+from .sig_testing import test_binary_length_by_model, test_ordinal_length_by_model, test_numeric_length_by_model
 from .sig_testing import test_binary_teacher, test_ordinal_teacher, test_numeric_teacher
 from .sig_testing import test_binary_static_vs_dynamic, test_ordinal_static_vs_dynamic, test_numeric_static_vs_dynamic
 from .sig_testing import prepare_length, prepare_teacher, prepare_static_vs_dynamic
@@ -34,6 +35,9 @@ __all__ = [
     "test_binary_length",
     "test_ordinal_length",
     "test_numeric_length",
+    "test_binary_length_by_model",
+    "test_ordinal_length_by_model",
+    "test_numeric_length_by_model",
     "test_binary_teacher",
     "test_ordinal_teacher",
     "test_numeric_teacher",

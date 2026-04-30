@@ -234,7 +234,7 @@ class PlottingWrapper:
 
         # for model, model_df in df.groupby("model"):
         overall_series = df.set_index("persona")["score"]
-        fig_overall, ax_overall = plt.subplots(figsize=(6, 4))
+        fig_overall, ax_overall = plt.subplots(figsize=(5, 3))
         self.plot_stacked_barchart(
             ax_overall,
             overall_series,
@@ -331,7 +331,7 @@ class PlottingWrapper:
                 values = [loss, 0.0, win]
 
             bottom = 0
-            x_label = " ".join([c.capitalize() for c in persona.split("_")])
+            x_label = persona.replace("static_", "s_").replace("dynamic_", "d_").replace("_teacher", "")
             if x_label == "No":
                 x_label = "No Persona"
             for val_idx, val in enumerate(values):
@@ -352,7 +352,7 @@ class PlottingWrapper:
         ax.set_ylim(0, 1)
         if title is not None:
             ax.set_title(title, fontsize=12, loc="left")
-        ax.legend()
+        # ax.legend()
         ax.spines[["right", "top"]].set_visible(False)
 
         for label in ax.get_xticklabels()[1::2]:

@@ -6,12 +6,15 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
+from scipy.stats import chi2
 
 from evaluate.sig_testing import (
     test_binary_baseline,
     test_ordinal_baseline,
     test_binary_length,
     test_ordinal_length,
+    test_binary_length_by_model,
+    test_ordinal_length_by_model,
     test_binary_teacher,
     test_ordinal_teacher,
     test_binary_static_vs_dynamic,
@@ -41,6 +44,12 @@ def _length_test_for_dataset(dataset: str, mode: Literal["static", "dynamic", "c
     if dataset == "flores" or dataset == "alpaca":
         return lambda df: test_ordinal_length(df, mode)
     return lambda df: test_binary_length(df, mode)
+
+
+def _length_model_test_for_dataset(dataset: str, mode: Literal["static", "dynamic", "combined"]) -> Callable:
+    if dataset == "flores" or dataset == "alpaca":
+        return lambda df: test_ordinal_length_by_model(df, mode)
+    return lambda df: test_binary_length_by_model(df, mode)
 
 
 def _teacher_test_for_dataset(dataset: str) -> Callable:
@@ -93,6 +102,23 @@ def _collect_results(
     out.insert(0, "category", category_name)
     out.insert(0, "dataset", dataset)
     return out
+
+
+def _collect_model_results(
+    df: pd.DataFrame,
+    dataset: str,
+    full_test_fn: Callable,
+    const_test_fn: Callable,
+    category_name: str | None,
+):
+    full = full_test_fn(df)
+    constrained = const_test_fn(df)
+
+    lr_stat = 2 * (full.llf - constrained.llf)
+    df_diff = full.df_model - constrained.df_model
+    p_value = chi2.sf(lr_stat, df_diff)
+
+    return [dataset, category_name, lr_stat, df_diff, p_value]
 
 
 def _get_results(results, attr: str, count: int) -> list:
@@ -196,6 +222,85 @@ def run_length_tests(
     return pd.concat(results, ignore_index=True)
 
 
+def run_length_model_tests(
+    data_dir: str | Path = "data/evaluation",
+) -> pd.DataFrame:
+    """Test whether persona length has a statistically significant effect on score.
+
+    Runs separate tests for static and dynamic length variants on each dataset and also
+    per category, if the dataset has any.
+
+    Returns:
+        pd.DataFrame: DataFrame with coefficients, standard errors, and p-values per term and
+            `mode` column ("static" or "dynamic").
+    """
+    data_dir = Path(data_dir)
+    results = []
+
+    for dataset, df in _iter_csv(data_dir):
+        log.debug("Running length test for %s", dataset)
+        for model_name, model_df in df.groupby("model"):
+            for mode in ("static", "dynamic", "combined"):
+                mode: Literal["static", "dynamic", "combined"] = mode   # to silence warning
+                test_fn = _length_test_for_dataset(dataset, mode)
+                out = _collect_results(model_df, dataset, test_fn, None)
+                out.insert(3, "mode", mode)
+                out.insert(4, "model", model_name)
+                results.append(out)
+
+                # category_col = _CATEGORY_COLUMN_BY_DATASET.get(dataset)
+                # if not category_col or category_col not in df.columns:
+                #     continue
+                # for category, cat_df in df.groupby(category_col):
+                #     out = _collect_results(cat_df, dataset, test_fn, category)
+                #     out.insert(3, "mode", mode)
+                #     results.append(out)
+
+    if not results:
+        return pd.DataFrame(
+            columns=["dataset", "category", "mode", "model", "term", "coef", "stderr", "pvalue"]
+        )
+    return pd.concat(results, ignore_index=True)
+
+
+def run_length_model_lr_tests(
+    data_dir: str | Path = "data/evaluation",
+) -> pd.DataFrame:
+    """Test whether the persona length effect significantly differs between models.
+
+    Runs separate tests for static and dynamic length variants on each dataset and also
+    per category, if the dataset has any.
+
+    Returns:
+        pd.DataFrame: DataFrame with coefficients, standard errors, and p-values per term and
+            `mode` column ("static" or "dynamic").
+    """
+    data_dir = Path(data_dir)
+    results = []
+
+    for dataset, df in _iter_csv(data_dir):
+        log.debug("Running length test for %s", dataset)
+        for mode in ("static", "dynamic", "combined"):
+            mode: Literal["static", "dynamic", "combined"] = mode   # to silence warning
+            full_test_fn = _length_model_test_for_dataset(dataset, mode)
+            const_test_fn = _length_test_for_dataset(dataset, mode)
+            out = _collect_model_results(df, dataset, full_test_fn, const_test_fn, None)
+            out.append(mode)
+            results.append(out)
+
+            # category_col = _CATEGORY_COLUMN_BY_DATASET.get(dataset)
+            # if not category_col or category_col not in df.columns:
+            #     continue
+            # for category, cat_df in df.groupby(category_col):
+            #     out = _collect_model_results(cat_df, dataset, full_test_fn, const_test_fn, category)
+            #     out.append(mode)
+            #     results.append(out)
+    return pd.DataFrame(
+        results,
+        columns=["dataset", "category", "lr_stat", "diff", "pvalue", "mode"]
+    )
+
+
 def run_teacher_tests(
     data_dir: str | Path = "data/evaluation",
 ) -> pd.DataFrame:
@@ -283,6 +388,8 @@ def run_all_tests(
         "length": run_length_tests,
         "teacher": run_teacher_tests,
         "static_vs_dynamic": run_static_vs_dynamic_tests,
+        "length_model": run_length_model_tests,
+        "length_model_lr": run_length_model_lr_tests,
     }
 
     selected_suites = suites.items() if suite == "all" else [(suite, suites[suite])]
@@ -311,7 +418,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--suite",
-        choices=["all", "baseline", "length", "teacher", "static_vs_dynamic"],
+        choices=["all", "baseline", "length", "teacher", "static_vs_dynamic", "length_model", "length_model_lr"],
         default="all",
         help="Which test suite to run. Defaults to %(default)s.",
     )
