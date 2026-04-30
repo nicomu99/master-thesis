@@ -61,6 +61,7 @@ def _teacher_test_for_dataset(dataset: str) -> Callable:
         return test_ordinal_teacher
     return test_binary_teacher
 
+
 def _teacher_model_test_for_dataset(dataset: str) -> Callable:
     if dataset == "flores" or dataset == "alpaca":
         return test_ordinal_teacher_by_model
@@ -255,6 +256,7 @@ def run_length_model_tests(
     for dataset, df in _iter_csv(data_dir):
         log.debug("Running length test for %s", dataset)
         for model_name, model_df in df.groupby("model"):
+            log.debug("Model: %s", model_name)
             for mode in ("static", "dynamic", "combined"):
                 mode: Literal["static", "dynamic", "combined"] = mode   # to silence warning
                 test_fn = _length_test_for_dataset(dataset, mode)
@@ -355,8 +357,9 @@ def run_teacher_model_tests(
     results = []
 
     for dataset, df in _iter_csv(data_dir):
+        log.debug("Running teacher test for %s", dataset)
         for model_name, model_df in df.groupby("model"):
-            log.debug("Running teacher test for %s", dataset)
+            log.debug("Model: %s", model_name)
             test_fn = _teacher_test_for_dataset(dataset)
             out = _collect_results(model_df, dataset, test_fn, None)
             out.insert(3, "model", model_name)
@@ -551,8 +554,8 @@ if __name__ == "__main__":
         "--suite",
         choices=[
             "all", "baseline",
-            "length", "length_model", "length_model_lr"
-            "teacher", "teacher_model", "teacher_model_lr"
+            "length", "length_model", "length_model_lr",
+            "teacher", "teacher_model", "teacher_model_lr",
             "static_vs_dynamic", "static_vs_dynamic_model", "static_vs_dynamic_model_lr"
         ],
         default="all",
