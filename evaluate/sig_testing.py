@@ -182,12 +182,7 @@ def test_binary_length_by_model(
         The fitted model.
     """
     df = prepare_length(df, mode)
-
-    model = smf.logit(
-        "score ~ length * C(model)",
-        data=df
-    )
-
+    model = smf.logit("score ~ length * C(model)",data=df)
     return model.fit(method="bfgs", maxiter=300)
 
 
@@ -306,6 +301,24 @@ def test_binary_teacher(
     return model.fit(method="bfgs", maxiter=300)
 
 
+def test_binary_teacher_by_model(
+    df: pd.DataFrame
+) -> Any:
+    """Logistic regression with interaction between level and model.
+
+    For binary outcomes.
+
+    Args:
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
+
+    Returns:
+        The fitted model.
+    """
+    df = prepare_teacher(df)
+    model = smf.logit("score ~ level * C(model)", data=df)
+    return model.fit(method="bfgs", maxiter=300)
+
+
 def test_ordinal_teacher(
     df: pd.DataFrame
 ) -> Any:
@@ -323,6 +336,29 @@ def test_ordinal_teacher(
     df["score"] = pd.Categorical(df["score"], categories=[0, 1, 2], ordered=True)
     model = OrderedModel.from_formula(
         "score ~ level + C(model)",
+        data=df,
+        distr="logit"
+    )
+    return model.fit(method="bfgs")
+
+
+def test_ordinal_teacher_by_model(
+    df: pd.DataFrame
+) -> Any:
+    """Ordered logistic regression with interaction between level and model.
+
+    For ordinal outcomes.
+
+    Args:
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
+
+    Returns:
+        The fitted model.
+    """
+    df = prepare_teacher(df)
+    df["score"] = pd.Categorical(df["score"], categories=[0, 1, 2], ordered=True)
+    model = OrderedModel.from_formula(
+        "score ~ level * C(model)",
         data=df,
         distr="logit"
     )
@@ -365,6 +401,24 @@ def test_binary_static_vs_dynamic(
     return model.fit(method="bfgs", maxiter=300)
 
 
+def test_binary_static_vs_dynamic_by_model(
+    df: pd.DataFrame
+) -> Any:
+    """Logistic regression with interaction between is_dynamic and model.
+
+    For binary outcomes.
+
+    Args:
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
+
+    Returns:
+        The fitted model.
+    """
+    df = prepare_static_vs_dynamic(df)
+    model = smf.logit("score ~ is_dynamic * C(model)", data=df)
+    return model.fit(method="bfgs", maxiter=300)
+
+
 def test_ordinal_static_vs_dynamic(
     df: pd.DataFrame
 ) -> Any:
@@ -382,6 +436,29 @@ def test_ordinal_static_vs_dynamic(
     df["score"] = pd.Categorical(df["score"], categories=[0, 1, 2], ordered=True)
     model = OrderedModel.from_formula(
         "score ~ is_dynamic + C(model)",
+        data=df,
+        distr="logit"
+    )
+    return model.fit(method="bfgs")
+
+
+def test_ordinal_static_vs_dynamic_by_model(
+    df: pd.DataFrame
+) -> Any:
+    """Ordered logistic regression with interaction between is_dynamic and model.
+
+    For ordinal outcomes.
+
+    Args:
+        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
+
+    Returns:
+        The fitted model.
+    """
+    df = prepare_static_vs_dynamic(df)
+    df["score"] = pd.Categorical(df["score"], categories=[0, 1, 2], ordered=True)
+    model = OrderedModel.from_formula(
+        "score ~ is_dynamic * C(model)",
         data=df,
         distr="logit"
     )

@@ -17,8 +17,12 @@ from evaluate.sig_testing import (
     test_ordinal_length_by_model,
     test_binary_teacher,
     test_ordinal_teacher,
+    test_binary_teacher_by_model,
+    test_ordinal_teacher_by_model,
     test_binary_static_vs_dynamic,
     test_ordinal_static_vs_dynamic,
+    test_binary_static_vs_dynamic_by_model,
+    test_ordinal_static_vs_dynamic_by_model
 )
 
 from inference.utils import logging
@@ -57,11 +61,22 @@ def _teacher_test_for_dataset(dataset: str) -> Callable:
         return test_ordinal_teacher
     return test_binary_teacher
 
+def _teacher_model_test_for_dataset(dataset: str) -> Callable:
+    if dataset == "flores" or dataset == "alpaca":
+        return test_ordinal_teacher_by_model
+    return test_binary_teacher_by_model
+
 
 def _static_vs_dynamic_test_for_dataset(dataset: str) -> Callable:
     if dataset == "flores" or dataset == "alpaca":
         return test_ordinal_static_vs_dynamic
     return test_binary_static_vs_dynamic
+
+
+def _static_vs_dynamic_model_test_for_dataset(dataset: str) -> Callable:
+    if dataset == "flores" or dataset == "alpaca":
+        return test_ordinal_static_vs_dynamic_by_model
+    return test_binary_static_vs_dynamic_by_model
 
 
 def _collect_results(
@@ -333,6 +348,58 @@ def run_teacher_tests(
     return pd.concat(results, ignore_index=True)
 
 
+def run_teacher_model_tests(
+    data_dir: str | Path = "data/evaluation",
+) -> pd.DataFrame:
+    data_dir = Path(data_dir)
+    results = []
+
+    for dataset, df in _iter_csv(data_dir):
+        for model_name, model_df in df.groupby("model"):
+            log.debug("Running teacher test for %s", dataset)
+            test_fn = _teacher_test_for_dataset(dataset)
+            out = _collect_results(model_df, dataset, test_fn, None)
+            out.insert(3, "model", model_name)
+            results.append(out)
+
+            # category_col = _CATEGORY_COLUMN_BY_DATASET.get(dataset)
+            # if not category_col or category_col not in df.columns:
+            #     continue
+            # for category, cat_df in df.groupby(category_col):
+            #     results.append(_collect_results(cat_df, dataset, test_fn, category))
+
+    if not results:
+        return pd.DataFrame(
+            columns=["dataset", "category", "model", "term", "coef", "stderr", "pvalue"]
+        )
+    return pd.concat(results, ignore_index=True)
+
+
+def run_teacher_model_lr_tests(
+        data_dir: str | Path = "data/evaluation",
+) -> pd.DataFrame:
+    data_dir = Path(data_dir)
+    results = []
+
+    for dataset, df in _iter_csv(data_dir):
+        log.debug("Running teacher test for %s", dataset)
+        full_test_fn = _teacher_model_test_for_dataset(dataset)
+        const_test_fn = _teacher_test_for_dataset(dataset)
+        out = _collect_model_results(df, dataset, full_test_fn, const_test_fn, None)
+        results.append(out)
+
+        # category_col = _CATEGORY_COLUMN_BY_DATASET.get(dataset)
+        # if not category_col or category_col not in df.columns:
+        #     continue
+        # for category, cat_df in df.groupby(category_col):
+        #     results.append(_collect_results(cat_df, dataset, test_fn, category))
+
+    return pd.DataFrame(
+        results,
+        columns=["dataset", "category", "lr_stat", "diff", "pvalue"]
+    )
+
+
 def run_static_vs_dynamic_tests(
     data_dir: str | Path = "data/evaluation",
 ) -> pd.DataFrame:
@@ -365,6 +432,66 @@ def run_static_vs_dynamic_tests(
     return pd.concat(results, ignore_index=True)
 
 
+def run_static_vs_dynamic_model_tests(
+    data_dir: str | Path = "data/evaluation",
+) -> pd.DataFrame:
+    data_dir = Path(data_dir)
+    results = []
+
+    for dataset, df in _iter_csv(data_dir):
+        for model_name, model_df in df.groupby("model"):
+            log.debug("Running static vs. dynamic test for %s", dataset)
+            test_fn = _static_vs_dynamic_test_for_dataset(dataset)
+            out = _collect_results(model_df, dataset, test_fn, None)
+            out.insert(3, "model", model_name)
+            results.append(out)
+
+            # category_col = _CATEGORY_COLUMN_BY_DATASET.get(dataset)
+            # if not category_col or category_col not in df.columns:
+            #     continue
+            # for category, cat_df in df.groupby(category_col):
+            #     results.append(_collect_results(cat_df, dataset, test_fn, category))
+
+    if not results:
+        return pd.DataFrame(
+            columns=["dataset", "category", "model", "term", "coef", "stderr", "pvalue"]
+        )
+    return pd.concat(results, ignore_index=True)
+
+
+def run_static_vs_dynamic_model_lr_tests(
+    data_dir: str | Path = "data/evaluation",
+) -> pd.DataFrame:
+    """Test whether dynamic personas perform significantly differently from static personas.
+
+    Uses a binary is_dynamic predictor (0=static, 1=dynamic). Runs tests for the whole dataset
+    and also per category, if the dataset has any.
+
+    Returns:
+        pd.DataFrame: DataFrame with coefficients, standard errors, and p-values per term.
+    """
+    data_dir = Path(data_dir)
+    results = []
+
+    for dataset, df in _iter_csv(data_dir):
+        log.debug("Running static vs. dynamic test for %s", dataset)
+        full_test_fn = _static_vs_dynamic_model_test_for_dataset(dataset)
+        const_test_fn = _static_vs_dynamic_test_for_dataset(dataset)
+        out = _collect_model_results(df, dataset, full_test_fn, const_test_fn, None)
+        results.append(out)
+
+        # category_col = _CATEGORY_COLUMN_BY_DATASET.get(dataset)
+        # if not category_col or category_col not in df.columns:
+        #     continue
+        # for category, cat_df in df.groupby(category_col):
+        #     results.append(_collect_results(cat_df, dataset, test_fn, category))
+
+    return pd.DataFrame(
+        results,
+        columns=["dataset", "category", "lr_stat", "diff", "pvalue"]
+    )
+
+
 def run_all_tests(
     data_dir: str | Path = "data/evaluation",
     output_dir: str | Path = "data/evaluation/tests",
@@ -386,10 +513,14 @@ def run_all_tests(
     suites = {
         "baseline": run_baseline_tests,
         "length": run_length_tests,
-        "teacher": run_teacher_tests,
-        "static_vs_dynamic": run_static_vs_dynamic_tests,
         "length_model": run_length_model_tests,
         "length_model_lr": run_length_model_lr_tests,
+        "teacher": run_teacher_tests,
+        "teacher_model": run_teacher_model_tests,
+        "teacher_model_lr": run_teacher_model_lr_tests,
+        "static_vs_dynamic": run_static_vs_dynamic_tests,
+        "static_vs_dynamic_model": run_static_vs_dynamic_model_tests,
+        "static_vs_dynamic_model_lr": run_static_vs_dynamic_model_lr_tests
     }
 
     selected_suites = suites.items() if suite == "all" else [(suite, suites[suite])]
@@ -418,7 +549,12 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--suite",
-        choices=["all", "baseline", "length", "teacher", "static_vs_dynamic", "length_model", "length_model_lr"],
+        choices=[
+            "all", "baseline",
+            "length", "length_model", "length_model_lr"
+            "teacher", "teacher_model", "teacher_model_lr"
+            "static_vs_dynamic", "static_vs_dynamic_model", "static_vs_dynamic_model_lr"
+        ],
         default="all",
         help="Which test suite to run. Defaults to %(default)s.",
     )
