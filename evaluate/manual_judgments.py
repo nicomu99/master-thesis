@@ -26,7 +26,7 @@ def _create_sample_df(
         sample = df.sample(10, random_state=42)
         sample["model"] = model_path.stem
         judgment_samples.append(sample)
-    judgment_df = pd.concat(judgment_samples)
+    judgment_df: pd.DataFrame = pd.concat(judgment_samples)
     judgment_df.to_parquet(save_file)
 
 
@@ -84,6 +84,7 @@ def main(
                 continue
 
             print(f"Sample {processed_samples}/{len(judgment_sample_df) * len(persona_configs)}")
+            print(f"Static ID: ", static_id, ", model: ", model)
             print("Question: ", row_dict["question"], "\n")
             print("Reference: ", _remove_think_block(row_dict[reference_column]).strip(), "\n")
             print("Answer:    ", _remove_think_block(row_dict[answer_column]).strip(), "\n")
@@ -106,6 +107,7 @@ def main(
             manual_judgments_df.loc[len(manual_judgments_df)] = judgment_dict
             manual_judgments_df.to_parquet(judgments_file)
             clear_cli()
+    print("All samples were processed.")
 
 
 if __name__ == "__main__":
