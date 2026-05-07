@@ -22,9 +22,18 @@ def _create_sample_df(
 
         if dataset_id == "flores":
             df = df[df["iso_639_3"] == "deu"]
-        df = df.dropna()
-        sample = df.sample(10, random_state=42)
-        sample["model"] = model_path.stem
+
+        if dataset_id == "flores":
+            df = df.dropna()
+            sample = df.sample(10, random_state=42)
+        else:
+            df = df.dropna(thresh=16)
+            alpaca_ids = [
+                "alpaca_110", "alpaca_559", "alpaca_586", "alpaca_247", "alpaca_192",
+                "alpaca_589", "alpaca_725", "alpaca_101", "alpaca_507", "alpaca_742",
+            ]
+            sample = df[df["static_id"].isin(alpaca_ids)].copy()
+        sample.loc[:, "model"] = model_path.stem
         judgment_samples.append(sample)
     judgment_df: pd.DataFrame = pd.concat(judgment_samples)
     judgment_df.to_parquet(save_file)
@@ -46,8 +55,8 @@ def main(
     dataset_id: Literal["flores", "alpaca"]
 ):
     judgment_sample_file = Path(f"data/judgments/{dataset_id}_judgment_samples.parquet")
-    if not judgment_sample_file.exists():
-        _create_sample_df(dataset_id, judgment_sample_file)
+    # if not judgment_sample_file.exists():
+    _create_sample_df(dataset_id, judgment_sample_file)
     judgment_sample_df = pd.read_parquet(judgment_sample_file)
 
     persona_registry = PersonaRegistry()
@@ -64,6 +73,7 @@ def main(
         manual_judgments_df = pd.DataFrame(columns=columns)
 
     processed_samples = 0
+    judgment_sample_df = judgment_sample_df.sort_values(reference_column, key=lambda x: x.str.len(), ascending=False)
     for row_dict in judgment_sample_df.to_dict(orient="records"):
         for persona in persona_configs:
             processed_samples += 1
@@ -84,10 +94,10 @@ def main(
                 continue
 
             print(f"Sample {processed_samples}/{len(judgment_sample_df) * len(persona_configs)}")
-            print(f"Static ID: ", static_id, ", model: ", model)
+            print(f"Static ID: ", static_id, ", model: ", model, "reference length: ", len(row_dict[reference_column]))
             print("Question: ", row_dict["question"], "\n")
-            print("Reference: ", _remove_think_block(row_dict[reference_column]).strip(), "\n")
-            print("Answer:    ", _remove_think_block(row_dict[answer_column]).strip(), "\n")
+            print("\033[32mReference:\033[0m\n", _remove_think_block(row_dict[reference_column]).strip(), "\n")
+            print("\033[32mAnswer:\033[0m\n", _remove_think_block(row_dict[answer_column]).strip(), "\n")
 
             while True:
                 judgment = input("0 reference wins; 1 tie; 2 persona wins: ")
