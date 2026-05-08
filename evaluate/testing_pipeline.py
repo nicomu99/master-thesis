@@ -199,6 +199,28 @@ def run_baseline_tests(
     return pd.concat(results, ignore_index=True)
 
 
+def run_baseline_model_tests(
+    data_dir: str | Path = "data/evaluation",
+) -> pd.DataFrame:
+    data_dir = Path(data_dir)
+    results = []
+
+    for dataset, df in _iter_csv(data_dir):
+        log.debug("Running baseline test for %s", dataset)
+        for model_name, model_df in df.groupby("model"):
+            log.debug("Model: %s", model_name)
+            test_fn = _baseline_test_for_dataset(dataset)
+            out = _collect_results(model_df, dataset, test_fn, None)
+            out.insert(4, "model", model_name)
+            results.append(out)
+
+    if not results:
+        return pd.DataFrame(
+            columns=["dataset", "category", "model", "term", "coef", "stderr", "pvalue"]
+        )
+    return pd.concat(results, ignore_index=True)
+
+
 def run_length_tests(
     data_dir: str | Path = "data/evaluation",
 ) -> pd.DataFrame:
@@ -515,6 +537,7 @@ def run_all_tests(
 
     suites = {
         "baseline": run_baseline_tests,
+        "baseline_model": run_baseline_model_tests,
         "length": run_length_tests,
         "length_model": run_length_model_tests,
         "length_model_lr": run_length_model_lr_tests,
@@ -553,7 +576,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--suite",
         choices=[
-            "all", "baseline",
+            "all", "baseline", "baseline_model",
             "length", "length_model", "length_model_lr",
             "teacher", "teacher_model", "teacher_model_lr",
             "static_vs_dynamic", "static_vs_dynamic_model", "static_vs_dynamic_model_lr"
