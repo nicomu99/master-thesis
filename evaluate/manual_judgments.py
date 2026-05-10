@@ -201,7 +201,7 @@ def calculate_agreement():
         key_cols = ["static_id", "model", "persona"]
         if dataset_id == "flores":
             key_cols.append("iso_639_3")
-
+        log.info("%s pairwise judgments: %s", dataset_id, len(manual_df))
         agreement_df = pd.merge(
             llm_df, manual_df, suffixes=("_llm", "_manual"),
             left_on=key_cols, right_on=key_cols,
@@ -209,6 +209,58 @@ def calculate_agreement():
         agreement_df["agreement"] = agreement_df["score_llm"] == agreement_df["score_manual"]
         agreement_file = judgment_path / f"{dataset_id}_agreement.csv"
         agreement_df.to_csv(agreement_file, index=False)
+
+        log.info("total agreement: %.3f", agreement_df["agreement"].mean())
+        for grouping_col in ["model", "persona"]:
+            for group_name, group_df in agreement_df.groupby(grouping_col):
+                log.info("  %-25s %.3f", group_name, group_df["agreement"].mean())
+
+
+def print_disagreements(
+    dataset_id: Literal["flores", "alpaca"]
+):
+    agreement_file = Path(f"data/judgments/{dataset_id}_agreement.csv")
+    if not agreement_file.exists():
+        raise RuntimeError(f"Agreement file for {dataset_id} does not exist")
+    agreement_df = pd.read_csv(agreement_file)
+
+    reference_column = PersonaRegistry().get_reference_config().answer_column
+
+    judgment_sample_file = Path(f"data/judgments/{dataset_id}_judgment_samples.parquet")
+    if not judgment_sample_file.exists():
+        raise RuntimeError(f"Judgment file for {dataset_id} does not exist")
+    judgment_df = pd.read_parquet(judgment_sample_file)
+
+    disagreements = agreement_df[~agreement_df["agreement"]]
+    for static_id, group_df in disagreements.groupby("static_id"):
+        next_id = False
+        for model, model_df in group_df.groupby("model"):
+            for row in model_df.to_dict(orient="records"):
+                print(row)
+                persona = row["persona"]
+                sample_row = judgment_df[
+                    (judgment_df["static_id"] == static_id) &
+                    (judgment_df["model"] == model)
+                ]
+
+                if len(sample_row) == 0:
+                    log.info("Sample could not be found, skipping.")
+                    continue
+                sample = sample_row.iloc[0]
+
+                print("\033[32mTask:\033[0m \n", sample["question"], "\n")
+                print("\033[32mReference answer:\033[0m \n", _remove_think_block(sample[reference_column]), "\n")
+                print("\033[32mPersona answer:\033[0m \n", _remove_think_block(sample[f"{persona}_answer"]), "\n")
+                print("\033[32mHuman judgment:\033[0m ", row["score_manual"])
+                print("\033[32mLLM judgment:\033[0m \n", sample[f"{persona}_judgment"])
+                print("\033[32mExtract:\033[0m ", extract_answer_flores(sample, f"{persona}_judgment"))
+                choice = input("Next sample? [y]es [s]kip id skip [m]odel: ")
+                clear_cli()
+                if choice == "s" or choice == "m":
+                    next_id = choice == "s"
+                    break
+            if next_id:
+                break
 
 
 if __name__ == "__main__":
@@ -222,12 +274,14 @@ if __name__ == "__main__":
         ),
     )
     parser.add_argument(
-        "command", nargs="?", choices=["judgments", "agreement"],
+        "command", nargs="?", choices=["judgments", "agreement", "print"],
         default="judgments", help="Command to run"
     )
     args = parser.parse_args()
 
     if args.command == "agreement":
         calculate_agreement()
+    elif args.command == "print":
+        print_disagreements(args.dataset_name)
     else:
         create_manual_judgments(args.dataset_name)
