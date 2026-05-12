@@ -211,7 +211,8 @@ def calculate_agreement():
         agreement_df.to_csv(agreement_file, index=False)
 
         log.info("total agreement: %.3f", agreement_df["agreement"].mean())
-        for grouping_col in ["model", "persona"]:
+        for grouping_col in ["model", "persona", "static_id"]:
+            print(grouping_col)
             for group_name, group_df in agreement_df.groupby(grouping_col):
                 log.info("  %-25s %.3f", group_name, group_df["agreement"].mean())
 
@@ -253,7 +254,12 @@ def print_disagreements(
                 print("\033[32mPersona answer:\033[0m \n", _remove_think_block(sample[f"{persona}_answer"]), "\n")
                 print("\033[32mHuman judgment:\033[0m ", row["score_manual"])
                 print("\033[32mLLM judgment:\033[0m \n", sample[f"{persona}_judgment"])
-                print("\033[32mExtract:\033[0m ", extract_answer_flores(sample, f"{persona}_judgment"))
+
+                if dataset_id == "flores":
+                    extract_fn = extract_answer_flores
+                else:
+                    extract_fn = extract_answer_alpaca
+                print("\033[32mExtract:\033[0m ", extract_fn(sample, f"{persona}_judgment"))
                 choice = input("Next sample? [y]es [s]kip id skip [m]odel: ")
                 clear_cli()
                 if choice == "s" or choice == "m":
