@@ -161,4 +161,4 @@ def extract_answer_alpaca(
     match_equal = re.match(r"Both responses are equal:\s*(.*)", completion, re.IGNORECASE | re.DOTALL)
     if match_equal:
         return 1
-    return 0
+    return -1
