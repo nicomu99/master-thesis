@@ -21,7 +21,7 @@ class PlottingWrapper:
         ]   # hardcoded to preserve ordering
 
         self.color_map = self.create_persona_colormap(self.personas)
-        self.judgment_colors = ["red", "grey", "green"]
+        self.judgment_colors = ["green", "grey", "red"]
         self.judgment_labels = ["No Persona win", "Equal", "Persona win"]
 
     @staticmethod
@@ -177,9 +177,6 @@ class PlottingWrapper:
                 Defaults to "helpful".
         """
         df = pd.read_csv(f"data/evaluation/{dataset_name}.csv", index_col=0)
-        if dataset_name == "alpaca":
-            df["score"] = df["score"] >= 1.5
-
         for model, model_df in df.groupby("model"):
             overall_series = model_df.set_index("persona")["score"]
             fig_overall, axes_overall = plt.subplots(
@@ -229,8 +226,7 @@ class PlottingWrapper:
     ):
         df = pd.read_csv(f"data/evaluation/{dataset_name}.csv", index_col=0)
         df = df[df["persona"] != "helpful"]
-        if dataset_name == "alpaca":
-            df["score"] = (df["score"] >= 1.5).astype(int)
+        df = df[df["persona"] != "no"]
 
         # for model, model_df in df.groupby("model"):
         overall_series = df.set_index("persona")["score"]
@@ -243,9 +239,9 @@ class PlottingWrapper:
         fig_overall.suptitle(f"Win Rates for {dataset_name}")
         fig_overall.tight_layout()
 
-        save_path = Path(f"plots/{dataset_name}/")
+        save_path = Path(f"plots/results/")
         save_path.mkdir(parents=True, exist_ok=True)
-        fig_overall.savefig(save_path / f"stacked_overall", dpi=300)
+        fig_overall.savefig(save_path / f"1_1_{dataset_name}", dpi=300)
         plt.show()
 
     def create_stacked_barchart_plots(
@@ -266,8 +262,7 @@ class PlottingWrapper:
         """
         df = pd.read_csv(f"data/evaluation/{dataset_name}.csv", index_col=0)
         df = df[df["persona"] != "helpful"]
-        if dataset_name == "alpaca":
-            df["score"] = (df["score"] >= 1.5).astype(int)
+        df = df[df["persona"] != "no"]
 
         categories = list(df[category_col].unique())
         fig, axes = plt.subplots(
@@ -319,15 +314,15 @@ class PlottingWrapper:
             if total == 0:
                 continue
 
-            counts = counts.reindex([0, 1, 2], fill_value=0)
+            counts = counts.reindex([2, 1, 0], fill_value=0)
             if counts[2] > 0:
-                loss = counts[0] / total
+                loss = counts[2] / total
                 tie = counts[1] / total
-                win = counts[2] / total
+                win = counts[0] / total
                 values = [loss, tie, win]
             else:
-                loss = counts[0] / total
-                win = counts[1] / total
+                loss = counts[1] / total
+                win = counts[0] / total
                 values = [loss, 0.0, win]
 
             bottom = 0
@@ -344,7 +339,7 @@ class PlottingWrapper:
                 if val > 0.05:
                     ax.text(
                         bar_idx, bottom + val / 2, f"{val * 100:.1f}%",
-                        ha="center", va="center", color="white", fontsize=9)
+                        ha="center", va="center", color="white", fontsize=6)
                 bottom += val
             bar_idx += 1
 
