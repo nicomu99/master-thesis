@@ -182,7 +182,7 @@ def test_binary_length_by_model(
         The fitted model.
     """
     df = prepare_length(df, mode)
-    model = smf.logit("score ~ length * C(model)",data=df)
+    model = smf.logit("score ~ length * C(model)", data=df)
     return model.fit(method="bfgs", maxiter=300)
 
 
