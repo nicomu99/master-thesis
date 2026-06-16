@@ -20,7 +20,7 @@ def _baseline_reference(df: pd.DataFrame) -> str:
         df (pd.DataFrame): DataFrame with a "persona" column.
 
     Returns:
-        str: "no" if this is one of the available personas, else "base".
+        str: "helpful" if this is one of the available personas, else "base".
     """
     if _BASELINE_REFERENCE in df["persona"].values:
         return _BASELINE_REFERENCE
@@ -90,7 +90,7 @@ def test_binary_baseline(
 ) -> Any:
     """Logistic regression; testing significance of all personas vs baseline.
 
-    For binary outcomes. Uses "no" as reference when present, otherwise "base".
+    For binary outcomes. Uses "helpful" as reference when present, otherwise "base".
 
     Args:
         df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
@@ -108,7 +108,7 @@ def test_ordinal_baseline(
 ) -> Any:
     """Ordered logistic regression; testing significance of all personas vs baseline.
 
-    For ordinal outcomes. Uses "no" as reference when present, otherwise "base".
+    For ordinal outcomes. Uses "helpful" as reference when present, otherwise "base".
 
     Args:
         df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
@@ -123,27 +123,6 @@ def test_ordinal_baseline(
         distr="logit"
     )
     return model.fit(method="bfgs")
-
-
-def test_numeric_baseline(
-    df: pd.DataFrame
-) -> Any:
-    """Linear mixed model; testing significance of all personas vs baseline.
-
-    For numeric outcomes. Uses "no" as reference when present, otherwise "base". Model
-    acts as a random grouping effect.
-
-    Args:
-        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
-
-    Returns:
-        The fitted model.
-    """
-    ref = _baseline_reference(df)
-    model = smf.mixedlm(
-        f"score ~ C(persona, Treatment(reference='{ref}'))", data=df, groups=df["model"]
-    )
-    return model.fit()
 
 
 def test_binary_length(
@@ -238,51 +217,6 @@ def test_ordinal_length_by_model(
     return model.fit(method="bfgs")
 
 
-def test_numeric_length(
-    df: pd.DataFrame,
-    mode: Literal["static", "dynamic", "combined"]
-) -> Any:
-    """Linear mixed model; testing significance of the persona length.
-
-    For numeric outcomes. Model acts as a random grouping effect.
-
-    Args:
-        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
-        mode (Literal["static", "dynamic"]): Choose whether to test static or dynamic personas.
-
-    Returns:
-        The fitted model.
-    """
-    df = prepare_length(df, mode)
-    model = smf.mixedlm("score ~ length", data=df, groups=df["model"])
-    return model.fit()
-
-
-def test_numeric_length_by_model(
-    df: pd.DataFrame,
-    mode: Literal["static", "dynamic", "combined"]
-) -> Any:
-    """Linear mixed model; testing whether the length effect varies by model.
-
-    Model acts as a random grouping effect with both random intercepts and
-    random slopes for length.
-
-    This allows each model to have:
-    - its own baseline score
-    - its own length effect
-    """
-    df = prepare_length(df, mode)
-
-    model = smf.mixedlm(
-        "score ~ length",
-        data=df,
-        groups=df["model"],
-        re_formula="~length"
-    )
-
-    return model.fit(reml=False, method="lbfgs")
-
-
 def test_binary_teacher(
     df: pd.DataFrame
 ) -> Any:
@@ -365,24 +299,6 @@ def test_ordinal_teacher_by_model(
     return model.fit(method="bfgs")
 
 
-def test_numeric_teacher(
-    df: pd.DataFrame
-) -> Any:
-    """Linear mixed model; testing significance of the audience level effect.
-
-    For numeric outcomes. Model acts as a random grouping effect.
-
-    Args:
-        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
-
-    Returns:
-        The fitted model.
-    """
-    df = prepare_teacher(df)
-    model = smf.mixedlm("score ~ level", data=df, groups=df["model"])
-    return model.fit()
-
-
 def test_binary_static_vs_dynamic(
     df: pd.DataFrame
 ) -> Any:
@@ -463,21 +379,3 @@ def test_ordinal_static_vs_dynamic_by_model(
         distr="logit"
     )
     return model.fit(method="bfgs")
-
-
-def test_numeric_static_vs_dynamic(
-    df: pd.DataFrame
-) -> Any:
-    """Linear mixed model; testing significance of static vs. dynamic effect.
-
-    For numeric outcomes. Model acts as a random grouping effect.
-
-    Args:
-        df (pd.DataFrame): Long-format DataFrame with columns "score", "persona", "model".
-
-    Returns:
-        The fitted model.
-    """
-    df = prepare_static_vs_dynamic(df)
-    model = smf.mixedlm("score ~ is_dynamic", data=df, groups=df["model"])
-    return model.fit()
