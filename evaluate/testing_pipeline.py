@@ -44,13 +44,13 @@ def _baseline_test_for_dataset(dataset: str) -> Callable:
     return test_binary_baseline
 
 
-def _length_test_for_dataset(dataset: str, mode: Literal["static", "dynamic", "combined"]) -> Callable:
+def _length_test_for_dataset(dataset: str, mode: Literal["static", "dynamic"]) -> Callable:
     if dataset == "flores" or dataset == "alpaca":
         return lambda df: test_ordinal_length(df, mode)
     return lambda df: test_binary_length(df, mode)
 
 
-def _length_model_test_for_dataset(dataset: str, mode: Literal["static", "dynamic", "combined"]) -> Callable:
+def _length_model_test_for_dataset(dataset: str, mode: Literal["static", "dynamic"]) -> Callable:
     if dataset == "flores" or dataset == "alpaca":
         return lambda df: test_ordinal_length_by_model(df, mode)
     return lambda df: test_binary_length_by_model(df, mode)
@@ -238,8 +238,8 @@ def run_length_tests(
 
     for dataset, df in _iter_csv(data_dir):
         log.debug("Running length test for %s", dataset)
-        for mode in ("static", "dynamic", "combined"):
-            mode: Literal["static", "dynamic", "combined"] = mode   # to silence warning
+        for mode in ("static", "dynamic"):
+            mode: Literal["static", "dynamic"] = mode   # to silence warning
             test_fn = _length_test_for_dataset(dataset, mode)
             out = _collect_results(df, dataset, test_fn, None)
             out.insert(3, "mode", mode)
@@ -279,8 +279,8 @@ def run_length_model_tests(
         log.debug("Running length test for %s", dataset)
         for model_name, model_df in df.groupby("model"):
             log.debug("Model: %s", model_name)
-            for mode in ("static", "dynamic", "combined"):
-                mode: Literal["static", "dynamic", "combined"] = mode   # to silence warning
+            for mode in ("static", "dynamic"):
+                mode: Literal["static", "dynamic"] = mode   # to silence warning
                 test_fn = _length_test_for_dataset(dataset, mode)
                 out = _collect_results(model_df, dataset, test_fn, None)
                 out.insert(3, "mode", mode)
@@ -319,8 +319,8 @@ def run_length_model_lr_tests(
 
     for dataset, df in _iter_csv(data_dir):
         log.debug("Running length test for %s", dataset)
-        for mode in ("static", "dynamic", "combined"):
-            mode: Literal["static", "dynamic", "combined"] = mode   # to silence warning
+        for mode in ("static", "dynamic"):
+            mode: Literal["static", "dynamic"] = mode   # to silence warning
             full_test_fn = _length_model_test_for_dataset(dataset, mode)
             const_test_fn = _length_test_for_dataset(dataset, mode)
             out = _collect_model_results(df, dataset, full_test_fn, const_test_fn, None)

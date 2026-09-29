@@ -5,7 +5,7 @@ import pandas as pd
 import statsmodels.formula.api as smf
 from statsmodels.miscmodels.ordinal_model import OrderedModel
 
-_DYNAMIC_LEN_COLS = [("base", 1), ("dynamic_short", 2), ("dynamic_medium", 3), ("dynamic_long", 4)]
+_DYNAMIC_LEN_COLS = [("dynamic_short", 2), ("dynamic_medium", 3), ("dynamic_long", 4)]
 _STATIC_LEN_COLS = [("base", 1), ("static_short", 2), ("static_medium", 3), ("static_long", 4)]
 _TEACHER_PERSONAS = ["beginner_teacher", "intermediate_teacher", "expert_teacher"]
 _STATIC_PERSONAS = ["static_short", "static_medium", "static_long"]
