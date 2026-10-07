@@ -7,13 +7,11 @@ PyQt6
 python-dotenv~=1.1.1
 accelerate
 transformers~=5.2.0
-flash-attn
 tqdm~=4.67.1
 
 absl-py
 langdetect
 nltk
-immutabledict
 spacy
 emoji
 syllapy
@@ -21,5 +19,4 @@ unicodedata2
 scipy~=1.17.0
 statsmodels~=0.14.6
 google~=3.0.0
-huggingface_hub~=1.4.1
 huggingface-hub~=0.35.1
