@@ -234,7 +234,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Inference script for HF open weight models.")
     parser.add_argument(
-        "--dataset",
+        "--model-path",
         help="The dataset to use for inference.",
         type=str,
         default=None)
@@ -245,4 +245,4 @@ if __name__ == "__main__":
         default="meta-llama/Llama-3.2-3B-Instruct")
     args = parser.parse_args()
 
-    main(args.dataset, args.model)
+    main(args.model_path, args.model)
