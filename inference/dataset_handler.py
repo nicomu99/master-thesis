@@ -124,10 +124,18 @@ class DatasetHandler:
             hf_id = hf_config.huggingface_id
             load_name = hf_config.load_name
             dataset_split = hf_config.split
-            if load_name:
-                dataset = load_dataset(hf_id, split=dataset_split, name=load_name, trust_remote_code=True)
+            if hf_id == "tatsu-lab/alpaca_eval":
+                # This repo only provides a loading script, which datasets>=4 no longer runs,
+                # so load the raw eval-set JSON directly. It has a single split, named "train".
+                dataset = load_dataset(
+                    "json",
+                    data_files="hf://datasets/tatsu-lab/alpaca_eval/alpaca_eval.json",
+                    split="train",
+                )
+            elif load_name:
+                dataset = load_dataset(hf_id, split=dataset_split, name=load_name)
             else:
-                dataset = load_dataset(hf_id, split=dataset_split, trust_remote_code=True)
+                dataset = load_dataset(hf_id, split=dataset_split)
 
             assert isinstance(dataset, Dataset), \
                 f"Error while loading {dataset_id}: Wrong dataset type {type(dataset)}, should be Dataset."
@@ -303,3 +311,5 @@ class DatasetHandler:
         else:
             dataframe.loc[:, columns] = None
         self.write_dataframe(dataset_id)
+
+
