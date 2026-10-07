@@ -118,7 +118,7 @@ def main(
     personas = persona_registry.get_names()
 
     # Load dataset
-    for dataset_id in ["MATH"]:  # ["mmlu-pro", "MATH", "flores", "IFBench", "alpaca"]:
+    for dataset_id in ["mmlu-pro", "MATH", "flores", "IFBench", "alpaca"]:
         _, dataset_df = evaluator.get_data(dataset_id)
         qs_type = evaluator.get_question_type(dataset_id)
         dataset_df = dataset_df.copy()
