@@ -1,10 +1,12 @@
 """Local HF inference."""
 import gc
-import inspect
+import re
+import json
 import argparse
 from pathlib import Path
-from collections import defaultdict
+from datetime import datetime
 
+import numpy as np
 import torch
 import pandas as pd
 from dotenv import load_dotenv
@@ -17,6 +19,10 @@ from transformers import pipeline, GenerationConfig, AutoTokenizer, AutoModelFor
 
 from inference.evaluator import Evaluator
 from inference.batch_request_handler import BatchRequestHandler
+from inference.utils import TEMP_PATH, DATA_PATH
+
+CHECKPOINT_KEYS = ["static_id", "persona"]
+DONE_MARKER = "hf_inference_done.json"
 
 
 # def merge_and_write(
@@ -52,6 +58,72 @@ from inference.batch_request_handler import BatchRequestHandler
 #     dataframe.to_parquet(df_file)
 
 
+def get_checkpoint_path(
+    dataset_id: str,
+    dataset_path: str,
+    model_string: str
+) -> Path:
+    """Returns the checkpoint file for one dataset of one inference run.
+
+    The file name contains both the data folder and the model, so that jobs for different models never
+    share a checkpoint and a checkpoint is never picked up by a different model.
+
+    Args:
+        dataset_id (str): Dataset identifier.
+        dataset_path (str): Data folder of the run.
+        model_string (str): Model identifier.
+
+    Returns:
+        Path: Path to the checkpoint file.
+    """
+    run_id = re.sub(r"[^A-Za-z0-9._-]+", "-", f"{dataset_path}_{model_string}")
+    return TEMP_PATH / "hf_inference" / f"{dataset_id}_{run_id}.jsonl"
+
+
+def load_checkpoint(checkpoint_path: Path) -> pd.DataFrame:
+    """Reads the completions that were already generated.
+
+    Args:
+        checkpoint_path (Path): Path to the checkpoint file.
+
+    Returns:
+        pd.DataFrame: One row per finished static_id and answer column.
+    """
+    rows = []
+    if checkpoint_path.exists():
+        with checkpoint_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError:
+                    # A job killed while writing leaves a partial line, that sample is generated again
+                    continue
+    checkpoint_df = pd.DataFrame(rows, columns=[*CHECKPOINT_KEYS, "completion"])
+    return checkpoint_df.drop_duplicates(CHECKPOINT_KEYS, keep="last")
+
+
+def open_checkpoint(checkpoint_path: Path):
+    """Opens the checkpoint file for appending.
+
+    Args:
+        checkpoint_path (Path): Path to the checkpoint file.
+
+    Returns:
+        A text file object in append mode.
+    """
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    ends_with_partial_line = False
+    if checkpoint_path.exists() and checkpoint_path.stat().st_size > 0:
+        with checkpoint_path.open("rb") as f:
+            f.seek(-1, 2)
+            ends_with_partial_line = f.read(1) != b"\n"
+
+    file = checkpoint_path.open("a", encoding="utf-8")
+    if ends_with_partial_line:
+        file.write("\n")
+    return file
+
+
 def prepare_prompt(
     batch: dict,
     fn_tokenizer: PreTrainedTokenizer
@@ -68,7 +140,8 @@ def prepare_prompt(
     kwargs = dict(
         tokenize=False,
         add_generation_prompt=True)
-    if "enable_thinking" in inspect.signature(fn_tokenizer.apply_chat_template).parameters:
+    # The switch is a variable of the chat template, not a parameter of apply_chat_template
+    if "enable_thinking" in str(fn_tokenizer.chat_template):
         kwargs["enable_thinking"] = False
 
     prompts_list = []
@@ -89,6 +162,7 @@ def prepare_prompt(
 def main(
     dataset_path: str,
     model_string: str,
+    force: bool = False,
 ):
     """Main inference pipeline.
 
@@ -96,7 +170,19 @@ def main(
         dataset_path (str): Dataset identifier of the dataset to use.
         model_string (str): Model identifier. Must be the same as the repository
             name on HF.
+        force (bool): If true, generations are created again even if the data folder is marked as
+            completed. Defaults to False.
     """
+    marker_path = DATA_PATH / dataset_path / DONE_MARKER
+    if marker_path.exists():
+        if not force:
+            raise SystemExit(
+                f"All generations in {marker_path.parent} are already completed: {marker_path.read_text()}\n"
+                "Use --force to generate them again."
+            )
+        # The folder holds a mix of old and new generations until the forced run has finished
+        marker_path.unlink()
+
     tokenizer = AutoTokenizer.from_pretrained(model_string, padding_side="left")
     model = AutoModelForCausalLM.from_pretrained(
         model_string,
@@ -116,6 +202,8 @@ def main(
     evaluator = Evaluator(dataset_path)
     persona_registry = evaluator.get_persona_registry()
     personas = persona_registry.get_names()
+
+    checkpoint_paths = []
 
     # Load dataset
     for dataset_id in ["mmlu-pro", "MATH", "flores", "IFBench", "alpaca"]:
@@ -144,25 +232,11 @@ def main(
         )
         print(f"{len(long_df)} total samples to process.")
 
-        temp_file_path = Path(f"temp_{dataset_id}_{dataset_path}.parquet")
-        if temp_file_path.exists():
-            temp_df = pd.read_parquet(temp_file_path)
-            print(f"{len(temp_df)} samples already processed.")
-
-            # TAKEN FROM:
-            # https://stackoverflow.com/questions/33282119/pandas-filter-dataframe-by-another-dataframe-by-row-elements
-            temp_df = temp_df.rename(columns={"persona": "persona_col"})
-            temp_df["persona_col"] = temp_df["persona_col"].str.replace("answer", "persona")
-            keys = ["static_id", "persona_col"]
-            idx_long_df = long_df.set_index(keys).index
-            idx_temp_df = temp_df.set_index(keys).index
-            print(idx_long_df[:3], idx_temp_df[:3])
-            long_df = long_df[~idx_long_df.isin(idx_temp_df)]
-            print(f"{len(temp_df)} samples already processed, {len(long_df)} remaining samples.")
-
-        dataset_hf = Dataset.from_pandas(long_df)
+        long_df["answer_col"] = long_df["persona_col"].str.replace("persona", "answer")
+        long_index = pd.MultiIndex.from_frame(long_df[["static_id", "answer_col"]])
 
         # Apply the chat template here
+        dataset_hf = Dataset.from_pandas(long_df, preserve_index=False)
         dataset_hf = dataset_hf.map(
             prepare_prompt,
             batched=True,
@@ -177,54 +251,70 @@ def main(
             temperature=1.0,
             pad_token_id=pipe.tokenizer.eos_token_id
         )
+        checkpoint_path = get_checkpoint_path(dataset_id, dataset_path, model_string)
+        checkpoint_paths.append(checkpoint_path)
         for batch_size in [16, 8, 4, 3, 2, 1]:
+            # Read the checkpoint before every attempt, so that samples finished by an earlier job or by an
+            # attempt that ran out of memory are not generated twice
+            checkpoint_df = load_checkpoint(checkpoint_path)
+            is_done = long_index.isin(pd.MultiIndex.from_frame(checkpoint_df[CHECKPOINT_KEYS]))
+            remaining = np.flatnonzero(~is_done)
+            print(f"{is_done.sum()} samples already processed, {len(remaining)} remaining samples.")
+            if len(remaining) == 0:
+                break
+
+            remaining_df = long_df.iloc[remaining]
             print(f"Testing batch size {batch_size}")
             try:
-                responses = defaultdict(list)
-                # noinspection PyTypeChecker
-                for static_id, persona, out in tqdm(
-                        zip(
-                            long_df["static_id"],
-                            long_df["persona_col"],
-                            pipe(
-                                KeyDataset(dataset_hf, "prompt"),
-                                batch_size=batch_size, return_full_text=False,
-                                generation_config=gen_cfg
-                            )
-                        ), total=len(dataset_hf)
-                ):
-                    row = {
-                        "static_id": static_id,
-                        "persona": persona.replace("persona", "answer"),
-                        "completion": out[0]["generated_text"]
-                    }
-
-                    responses["static_id"].append(row["static_id"])
-                    responses["persona"].append(row["persona"])
-                    responses["completion"].append(row["completion"])
-
-                    row_df = pd.DataFrame([row])
-                    if temp_file_path.exists():
-                        temp_df = pd.read_parquet(temp_file_path)
-                        temp_df = pd.concat([temp_df, row_df])
-                    else:
-                        temp_df = row_df
-                    temp_df.to_parquet(temp_file_path)
-
-                # pivot back from long to wide
-                if temp_file_path.exists():
-                    response_df = pd.read_parquet(temp_file_path)
-                else:
-                    response_df = pd.DataFrame(responses)
-                response_df = response_df.pivot(index="static_id", columns="persona", values="completion")
-                response_df = response_df.reset_index()
-
-                # merge and save
-                evaluator.save_data(dataset_id, response_df)
+                with open_checkpoint(checkpoint_path) as checkpoint_file:
+                    # noinspection PyTypeChecker
+                    for static_id, answer_col, out in tqdm(
+                            zip(
+                                remaining_df["static_id"],
+                                remaining_df["answer_col"],
+                                pipe(
+                                    KeyDataset(dataset_hf.select(remaining), "prompt"),
+                                    batch_size=batch_size, return_full_text=False,
+                                    generation_config=gen_cfg
+                                )
+                            ), total=len(remaining)
+                    ):
+                        row = {
+                            "static_id": static_id,
+                            "persona": answer_col,
+                            "completion": out[0]["generated_text"]
+                        }
+                        checkpoint_file.write(json.dumps(row, ensure_ascii=False) + "\n")
+                        checkpoint_file.flush()
                 break
             except torch.cuda.OutOfMemoryError:
                 gc.collect()
                 torch.cuda.empty_cache()
+        else:
+            raise RuntimeError(f"Ran out of memory for {dataset_id} even with batch size 1.")
+
+        response_df = load_checkpoint(checkpoint_path)
+        response_index = pd.MultiIndex.from_frame(response_df[CHECKPOINT_KEYS])
+        response_df = response_df[response_index.isin(long_index)]
+        if len(response_df) != len(long_df):
+            raise RuntimeError(
+                f"Expected {len(long_df)} completions for {dataset_id}, but found {len(response_df)} "
+                f"in {checkpoint_path}."
+            )
+
+        # pivot back from long to wide
+        response_df = response_df.pivot(index="static_id", columns="persona", values="completion")
+        response_df = response_df.reset_index()
+
+        # merge and save
+        evaluator.save_data(dataset_id, response_df)
+
+    # The checkpoints are kept until the whole run has finished, so that a restarted job skips finished datasets
+    for checkpoint_path in checkpoint_paths:
+        checkpoint_path.unlink()
+
+    marker = {"model": model_string, "completed_at": datetime.now().isoformat(timespec="seconds")}
+    marker_path.write_text(json.dumps(marker), encoding="utf-8")
 
 
 if __name__ == "__main__":
@@ -237,12 +327,16 @@ if __name__ == "__main__":
         "--model-path",
         help="The dataset to use for inference.",
         type=str,
-        default=None)
+        required=True)
     parser.add_argument(
         "--model",
         help="The model used for inference.",
         type=str,
         default="meta-llama/Llama-3.2-3B-Instruct")
+    parser.add_argument(
+        "--force",
+        help="Generate again, even if the data folder is marked as completed.",
+        action="store_true")
     args = parser.parse_args()
 
-    main(args.model_path, args.model)
+    main(args.model_path, args.model, args.force)
