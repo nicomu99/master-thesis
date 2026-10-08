@@ -40,6 +40,7 @@ and a torch version that a pre-compiled flash-attn wheel exists for. The depende
 declared in the script header and `uv run vllm_inference.py` (without `python`) runs it in its own
 environment, locked in vllm_inference.py.lock.
 """
+import os
 import json
 import argparse
 from datetime import datetime
@@ -212,7 +213,10 @@ def main(
 # vLLM starts worker processes that import this module again, so the entry point has to be guarded
 if __name__ == "__main__":
     load_dotenv()
-    login()
+    # huggingface_hub reads HF_TOKEN on its own. Without it, login() asks for a token, which only works in
+    # an interactive session and not in a batch job.
+    if not os.environ.get("HF_TOKEN"):
+        login()
 
     parser = argparse.ArgumentParser(
         description="Inference script for HF open weight models, served with vLLM.")
