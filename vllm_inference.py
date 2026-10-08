@@ -1,7 +1,44 @@
+# /// script
+# requires-python = ">=3.12,<3.13"
+# dependencies = [
+#     "vllm==0.11.0",
+#     "transformers>=4.56,<5",
+#     "anthropic",
+#     "datasets>=4.1.1",
+#     "google-genai",
+#     "huggingface-hub",
+#     "numpy",
+#     "openai~=1.109.1",
+#     "pandas~=2.3.2",
+#     "pyarrow",
+#     "python-dotenv~=1.1.1",
+#     "tqdm",
+#     "torch==2.8.0",
+#     "torchaudio==2.8.0",
+#     "torchvision==0.23.0",
+#     "xformers==0.0.32.post1",
+# ]
+#
+# [tool.uv.sources]
+# torch = { index = "pytorch" }
+# torchaudio = { index = "pytorch" }
+# torchvision = { index = "pytorch" }
+# xformers = { index = "pytorch" }
+#
+# [[tool.uv.index]]
+# name = "pytorch"
+# url = "https://download.pytorch.org/whl/cu129"
+# explicit = true
+# ///
 """Local vLLM inference.
 
 Produces the same data as hf_inference.py, but generates the completions with vLLM instead of the
 transformers pipeline. Checkpoints and the done marker are shared with hf_inference.py.
+
+vLLM cannot share an environment with the rest of the project: no release supports both transformers 5.2
+and a torch version that a pre-compiled flash-attn wheel exists for. The dependencies are therefore
+declared in the script header and `uv run vllm_inference.py` (without `python`) runs it in its own
+environment, locked in vllm_inference.py.lock.
 """
 import json
 import argparse

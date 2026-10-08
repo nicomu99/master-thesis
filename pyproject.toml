@@ -29,8 +29,6 @@ dependencies = [
     "tqdm>=4.66.5",
     "transformers~=5.2.0",
     "unicodedata2>=18.0.0",
-    # 0.11.0 is the vLLM release built against torch 2.8.0, the newest torch the flash-attn wheel below exists for
-    "vllm==0.11.0",
 ]
 
 [tool.uv.sources]
