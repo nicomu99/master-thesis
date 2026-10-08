@@ -112,6 +112,11 @@ def main(
     )
     if max_model_len is not None:
         llm_kwargs["max_model_len"] = max_model_len
+    if gpus > 1:
+        # The faster all-reduce implementations share GPU memory between the worker processes, which the
+        # CUDA driver refuses on the cluster. Plain NCCL works everywhere.
+        os.environ["VLLM_ALLREDUCE_USE_SYMM_MEM"] = "0"
+        llm_kwargs["disable_custom_all_reduce"] = True
     llm = LLM(**llm_kwargs)
 
     # Greedy decoding, same as do_sample=False in hf_inference.py
