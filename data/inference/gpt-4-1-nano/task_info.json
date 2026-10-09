@@ -178,7 +178,7 @@
         "dataset_id": "flores",
         "field": "Arabic to English translation",
         "need_judgment": true,
-        "status": "answers_requested",
+        "status": "judgment_pending",
         "category_name": "arb"
     },
     "IfBench_all": {

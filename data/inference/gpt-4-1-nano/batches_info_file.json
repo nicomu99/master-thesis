@@ -1114,14 +1114,17 @@
     "batch_6ac88f866dc481909eedb43606cca6ab": {
         "task_id": "flores_arb",
         "batch_type": "answers",
-        "status": "in_progress",
+        "status": "retrieved",
         "progress": [
             2400,
-            2399,
+            2400,
             0
         ],
         "client": "openai",
-        "output_file": null,
+        "output_file": {
+            "remote_file_id": "file-GnBBmWngxGn9MaYMjzE3D1",
+            "local_file_path": "temp/flores_arb/output/batch_6ac88f866dc481909eedb43606cca6ab.jsonl"
+        },
         "error_file": null
     }
 }
