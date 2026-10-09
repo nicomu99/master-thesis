@@ -174,12 +174,12 @@
         "status": "finished",
         "category_name": "spa"
     },
-    "flores_ace": {
+    "flores_arb": {
         "dataset_id": "flores",
-        "field": "Arab to English translation",
+        "field": "Arabic to English translation",
         "need_judgment": true,
-        "status": "finished",
-        "category_name": "ace"
+        "status": "judgment_pending",
+        "category_name": "arb"
     },
     "IfBench_all": {
         "dataset_id": "IFBench",
