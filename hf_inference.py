@@ -23,6 +23,7 @@ from inference.utils import TEMP_PATH, DATA_PATH
 
 CHECKPOINT_KEYS = ["static_id", "persona"]
 DONE_MARKER = "hf_inference_done.json"
+DATASET_IDS = ["mmlu-pro", "MATH", "flores", "IFBench", "alpaca"]
 
 
 # def merge_and_write(
@@ -124,6 +125,32 @@ def open_checkpoint(checkpoint_path: Path):
     return file
 
 
+def drop_answered(
+    long_df: pd.DataFrame,
+    dataset_df: pd.DataFrame
+) -> pd.DataFrame:
+    """Removes the samples that already have an answer in the dataset.
+
+    Args:
+        long_df (pd.DataFrame): Long format samples, one row per static_id and answer column.
+        dataset_df (pd.DataFrame): The dataset the samples were created from.
+
+    Returns:
+        pd.DataFrame: The samples whose answer is still missing.
+    """
+    answer_cols = [col for col in long_df["answer_col"].unique() if col in dataset_df.columns]
+    answered_df = pd.melt(
+        dataset_df,
+        id_vars=["static_id"],
+        value_vars=answer_cols,
+        var_name="answer_col",
+        value_name="answer"
+    ).dropna(subset=["answer"])
+    long_index = pd.MultiIndex.from_frame(long_df[["static_id", "answer_col"]])
+    is_answered = long_index.isin(pd.MultiIndex.from_frame(answered_df[["static_id", "answer_col"]]))
+    return long_df[~is_answered].reset_index(drop=True)
+
+
 def prepare_prompt(
     batch: dict,
     fn_tokenizer: PreTrainedTokenizer
@@ -163,6 +190,8 @@ def main(
     dataset_path: str,
     model_string: str,
     force: bool = False,
+    datasets: list[str] | None = None,
+    only_missing: bool = False,
 ):
     """Main inference pipeline.
 
@@ -172,9 +201,14 @@ def main(
             name on HF.
         force (bool): If true, generations are created again even if the data folder is marked as
             completed. Defaults to False.
+        datasets (list[str] | None): Datasets to generate for. Defaults to all datasets.
+        only_missing (bool): If true, only the samples without an answer in the data folder are generated,
+            all existing answers are kept. Defaults to False.
     """
+    datasets = datasets or DATASET_IDS
     marker_path = DATA_PATH / dataset_path / DONE_MARKER
-    if marker_path.exists():
+    was_completed = marker_path.exists()
+    if was_completed:
         if not force:
             raise SystemExit(
                 f"All generations in {marker_path.parent} are already completed: {marker_path.read_text()}\n"
@@ -206,7 +240,7 @@ def main(
     checkpoint_paths = []
 
     # Load dataset
-    for dataset_id in ["mmlu-pro", "MATH", "flores", "IFBench", "alpaca"]:
+    for dataset_id in datasets:
         _, dataset_df = evaluator.get_data(dataset_id)
         qs_type = evaluator.get_question_type(dataset_id)
         dataset_df = dataset_df.copy()
@@ -233,6 +267,11 @@ def main(
         print(f"{len(long_df)} total samples to process.")
 
         long_df["answer_col"] = long_df["persona_col"].str.replace("persona", "answer")
+        if only_missing:
+            long_df = drop_answered(long_df, dataset_df)
+            print(f"{len(long_df)} samples without an answer.")
+            if len(long_df) == 0:
+                continue
         long_index = pd.MultiIndex.from_frame(long_df[["static_id", "answer_col"]])
 
         # Apply the chat template here
@@ -313,6 +352,9 @@ def main(
     for checkpoint_path in checkpoint_paths:
         checkpoint_path.unlink()
 
+    # A run on a subset of the datasets only completes a folder that was already completed before
+    if not was_completed and set(datasets) != set(DATASET_IDS):
+        return
     marker = {"model": model_string, "completed_at": datetime.now().isoformat(timespec="seconds")}
     marker_path.write_text(json.dumps(marker), encoding="utf-8")
 
@@ -337,6 +379,16 @@ if __name__ == "__main__":
         "--force",
         help="Generate again, even if the data folder is marked as completed.",
         action="store_true")
+    parser.add_argument(
+        "--datasets",
+        help="The datasets to generate for. Defaults to all datasets.",
+        nargs="+",
+        choices=DATASET_IDS,
+        default=None)
+    parser.add_argument(
+        "--only-missing",
+        help="Only generate the samples without an answer in the data folder, existing answers are kept.",
+        action="store_true")
     args = parser.parse_args()
 
-    main(args.model_path, args.model, args.force)
+    main(args.model_path, args.model, args.force, args.datasets, args.only_missing)
