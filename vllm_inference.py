@@ -56,7 +56,9 @@ from vllm import LLM, SamplingParams
 
 from hf_inference import (
     CHECKPOINT_KEYS,
+    DATASET_IDS,
     DONE_MARKER,
+    drop_answered,
     get_checkpoint_path,
     load_checkpoint,
     open_checkpoint,
@@ -74,6 +76,8 @@ def main(
     dataset_path: str,
     model_string: str,
     force: bool = False,
+    datasets: list[str] | None = None,
+    only_missing: bool = False,
     gpus: int = 1,
     max_model_len: int | None = None,
     gpu_memory_utilization: float = 0.9,
@@ -86,13 +90,18 @@ def main(
             name on HF.
         force (bool): If true, generations are created again even if the data folder is marked as
             completed. Defaults to False.
+        datasets (list[str] | None): Datasets to generate for. Defaults to all datasets.
+        only_missing (bool): If true, only the samples without an answer in the data folder are generated,
+            all existing answers are kept. Defaults to False.
         gpus (int): Number of GPUs the model is split across. Defaults to 1.
         max_model_len (int | None): Context length (prompt and completion) vLLM reserves memory for.
             Defaults to the context length of the model.
         gpu_memory_utilization (float): Fraction of the GPU memory vLLM may use. Defaults to 0.9.
     """
+    datasets = datasets or DATASET_IDS
     marker_path = DATA_PATH / dataset_path / DONE_MARKER
-    if marker_path.exists():
+    was_completed = marker_path.exists()
+    if was_completed:
         if not force:
             raise SystemExit(
                 f"All generations in {marker_path.parent} are already completed: {marker_path.read_text()}\n"
@@ -133,7 +142,7 @@ def main(
     checkpoint_paths = []
 
     # Load dataset
-    for dataset_id in ["mmlu-pro", "MATH", "flores", "IFBench", "alpaca"]:
+    for dataset_id in datasets:
         _, dataset_df = evaluator.get_data(dataset_id)
         qs_type = evaluator.get_question_type(dataset_id)
         dataset_df = dataset_df.copy()
@@ -154,6 +163,11 @@ def main(
         print(f"{len(long_df)} total samples to process.")
 
         long_df["answer_col"] = long_df["persona_col"].str.replace("persona", "answer")
+        if only_missing:
+            long_df = drop_answered(long_df, dataset_df)
+            print(f"{len(long_df)} samples without an answer.")
+            if len(long_df) == 0:
+                continue
         long_index = pd.MultiIndex.from_frame(long_df[["static_id", "answer_col"]])
 
         checkpoint_path = get_checkpoint_path(dataset_id, dataset_path, model_string)
@@ -211,6 +225,9 @@ def main(
     for checkpoint_path in checkpoint_paths:
         checkpoint_path.unlink()
 
+    # A run on a subset of the datasets only completes a folder that was already completed before
+    if not was_completed and set(datasets) != set(DATASET_IDS):
+        return
     marker = {"model": model_string, "completed_at": datetime.now().isoformat(timespec="seconds")}
     marker_path.write_text(json.dumps(marker), encoding="utf-8")
 
@@ -240,6 +257,16 @@ if __name__ == "__main__":
         help="Generate again, even if the data folder is marked as completed.",
         action="store_true")
     parser.add_argument(
+        "--datasets",
+        help="The datasets to generate for. Defaults to all datasets.",
+        nargs="+",
+        choices=DATASET_IDS,
+        default=None)
+    parser.add_argument(
+        "--only-missing",
+        help="Only generate the samples without an answer in the data folder, existing answers are kept.",
+        action="store_true")
+    parser.add_argument(
         "--gpus",
         help="Number of GPUs the model is split across.",
         type=int,
@@ -257,5 +284,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(
-        args.model_path, args.model, args.force,
+        args.model_path, args.model, args.force, args.datasets, args.only_missing,
         args.gpus, args.max_model_len, args.gpu_memory_utilization)
