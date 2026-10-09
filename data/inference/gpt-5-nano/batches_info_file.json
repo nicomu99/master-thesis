@@ -4835,5 +4835,37 @@
             "local_file_path": "temp/MATH_counting_probability/output/batch_69e0d443d3c08190b4abd777e10a5b6e.jsonl"
         },
         "error_file": null
+    },
+    "batch_6ac88b2a19288190a5369c2c639afbd0": {
+        "task_id": "flores_arb",
+        "batch_type": "personas",
+        "status": "retrieved",
+        "progress": [
+            1200,
+            1200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-958KwhFnJiXdXSfwD8WBi8",
+            "local_file_path": "temp/flores_arb/output/batch_6ac88b2a19288190a5369c2c639afbd0.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ac88d7fbf3c81909f7315bd81376b73": {
+        "task_id": "flores_arb",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2400,
+            2400,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-BXT7QD1e7kKXCioGDZ7jgT",
+            "local_file_path": "temp/flores_arb/output/batch_6ac88d7fbf3c81909f7315bd81376b73.jsonl"
+        },
+        "error_file": null
     }
 }

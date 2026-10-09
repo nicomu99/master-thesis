@@ -1110,5 +1110,18 @@
             "local_file_path": "temp/MATH_counting_probability/output/batch_69e0e032ea0081909467bc13c40f7d91.jsonl"
         },
         "error_file": null
+    },
+    "batch_6ac88f866dc481909eedb43606cca6ab": {
+        "task_id": "flores_arb",
+        "batch_type": "answers",
+        "status": "in_progress",
+        "progress": [
+            2400,
+            2399,
+            0
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": null
     }
 }

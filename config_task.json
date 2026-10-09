@@ -97,10 +97,10 @@
             "need_judgment": true,
             "category_name": "spa"
         },
-        "flores_ace": {
-            "field": "Arab to English translation",
+        "flores_arb": {
+            "field": "Arabic to English translation",
             "need_judgment": true,
-            "category_name": "ace"
+            "category_name": "arb"
         }
     },
     "IFBench": {
