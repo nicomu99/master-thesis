@@ -140,7 +140,7 @@ def drop_answered(
     """
     answer_cols = [col for col in long_df["answer_col"].unique() if col in dataset_df.columns]
     answered_df = pd.melt(
-        dataset_df,
+        dataset_df[["static_id", *answer_cols]],
         id_vars=["static_id"],
         value_vars=answer_cols,
         var_name="answer_col",
