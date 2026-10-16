@@ -35,6 +35,7 @@ class App:
             "ra": ("Reset tasks to answers pending", self.reset_to_answers),
             "rm": ("Reset tasks to answers pending, keeping existing answers", self.reset_to_missing_answers),
             "rj": ("Reset tasks to judgment pending", self.reset_to_judgments),
+            "rd": ("Delete derived personas with their answers and judgments", self.reset_derived_personas),
             "clear": ("Clears the CLI", self.clear_cli),
             "h": ("Show this help", self.show_help),
         }
@@ -54,6 +55,12 @@ class App:
         task_ids = self.evaluator.get_tasks()
         chosen_task_ids = self._print_and_evaluate_input(task_ids)
         self.evaluator.reset_tasks_to_answers(chosen_task_ids, clear=False)
+
+    def reset_derived_personas(self):
+        """Lets the user pick for which tasks to delete derived personas, answers and judgments."""
+        task_ids = self.evaluator.get_tasks()
+        chosen_task_ids = self._print_and_evaluate_input(task_ids)
+        self.evaluator.reset_derived_personas(chosen_task_ids)
 
     def reset_to_judgments(self):
         """Lets the user pick which tasks to reset to the judgment pending status."""

@@ -150,28 +150,28 @@
         "dataset_id": "flores",
         "field": "german to english translation",
         "need_judgment": true,
-        "status": "finished",
+        "status": "judgment_pending",
         "category_name": "deu"
     },
     "flores_cmn": {
         "dataset_id": "flores",
         "field": "chinese to english translation",
         "need_judgment": true,
-        "status": "finished",
+        "status": "judgment_pending",
         "category_name": "cmn"
     },
     "flores_swh": {
         "dataset_id": "flores",
         "field": "swahili to english translation",
         "need_judgment": true,
-        "status": "finished",
+        "status": "judgment_pending",
         "category_name": "swh"
     },
     "flores_spa": {
         "dataset_id": "flores",
         "field": "Spanish to English translation",
         "need_judgment": true,
-        "status": "finished",
+        "status": "judgment_pending",
         "category_name": "spa"
     },
     "flores_arb": {
@@ -192,7 +192,7 @@
         "dataset_id": "alpaca",
         "field": "instruction following",
         "need_judgment": true,
-        "status": "finished",
+        "status": "judgment_pending",
         "category_name": "instruction following"
     }
 }

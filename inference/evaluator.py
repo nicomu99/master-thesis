@@ -154,6 +154,24 @@ class Evaluator:
             tinfo.reset_to_judgments()
         self._save()
 
+    def reset_derived_personas(self, task_ids: list[str]):
+        """Deletes derived personas and their answers and judgments for the specified tasks.
+
+        The task status is not changed.
+
+        Args:
+            task_ids (list[str]): List of tasks to update.
+        """
+        derived_columns = [
+            col
+            for cfg in self.persona_registry.get_derived_configs()
+            for col in (cfg.name, cfg.answer_column, cfg.judgment_column)]
+        for tid in task_ids:
+            tinfo = self.task_infos[tid]
+            dataframe = self.dataset_handler.dataframes[tinfo.dataset_id]
+            columns = [col for col in derived_columns if col in dataframe.columns]
+            self.dataset_handler.clear_columns(tinfo.dataset_id, tinfo.category_name, columns)
+
     def _static_persona_helper(
         self,
         task_info: TaskInfo,
