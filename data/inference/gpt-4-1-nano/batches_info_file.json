@@ -1126,5 +1126,567 @@
             "local_file_path": "temp/flores_arb/output/batch_6ac88f866dc481909eedb43606cca6ab.jsonl"
         },
         "error_file": null
+    },
+    "batch_6ad1e84e3134819085bf3ebfa7abdc67": {
+        "task_id": "mmlu-pro_math",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            200,
+            198,
+            2
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-4n7jypULdf8dPATYf6EnUe",
+            "local_file_path": "temp/mmlu-pro_math/output/batch_6ad1e84e3134819085bf3ebfa7abdc67.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-B5KnQYQ2Lh8GjEo1cD6FRW",
+            "local_file_path": "temp/mmlu-pro_math/output/batch_6ad1e84e3134819085bf3ebfa7abdc67_error.jsonl"
+        }
+    },
+    "batch_6ad1e8507a408190b4fe4bd347a26d53": {
+        "task_id": "mmlu-pro_physics",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            200,
+            199,
+            1
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-V862wRKTQipazZArKWqFwQ",
+            "local_file_path": "temp/mmlu-pro_physics/output/batch_6ad1e8507a408190b4fe4bd347a26d53.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-JdoPH3MevWvxg1xn6mMHsk",
+            "local_file_path": "temp/mmlu-pro_physics/output/batch_6ad1e8507a408190b4fe4bd347a26d53_error.jsonl"
+        }
+    },
+    "batch_6ad1e851e3fc8190b3a66a49a9b7eced": {
+        "task_id": "mmlu-pro_philosophy",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            200,
+            200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-So8GpaqWaTsLRVG7GJrNar",
+            "local_file_path": "temp/mmlu-pro_philosophy/output/batch_6ad1e851e3fc8190b3a66a49a9b7eced.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e853807c8190b2a1bc546b236428": {
+        "task_id": "mmlu-pro_chemistry",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            200,
+            198,
+            2
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-BWgBWdpYstrTdEwXxQMxEV",
+            "local_file_path": "temp/mmlu-pro_chemistry/output/batch_6ad1e853807c8190b2a1bc546b236428.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-Db4Z1Ve8iRsFzFfDRxWUf2",
+            "local_file_path": "temp/mmlu-pro_chemistry/output/batch_6ad1e853807c8190b2a1bc546b236428_error.jsonl"
+        }
+    },
+    "batch_6ad1e8559c688190813bd3b55e4df6db": {
+        "task_id": "mmlu-pro_law",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            200,
+            200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-XPXdGQnwBWCoEeHTQkRq46",
+            "local_file_path": "temp/mmlu-pro_law/output/batch_6ad1e8559c688190813bd3b55e4df6db.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e858218c8190b44adc7afac508bf": {
+        "task_id": "mmlu-pro_engineering",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            200,
+            198,
+            2
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-QLmCYM3wvtBPd6zvGnjhRG",
+            "local_file_path": "temp/mmlu-pro_engineering/output/batch_6ad1e858218c8190b44adc7afac508bf.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-36mwV1qzvRJnqFewxhKd6B",
+            "local_file_path": "temp/mmlu-pro_engineering/output/batch_6ad1e858218c8190b44adc7afac508bf_error.jsonl"
+        }
+    },
+    "batch_6ad1e859df548190aedc0f97bac783cf": {
+        "task_id": "mmlu-pro_other",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            200,
+            200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-JtixrVQnERjaCu6j5Yzj4S",
+            "local_file_path": "temp/mmlu-pro_other/output/batch_6ad1e859df548190aedc0f97bac783cf.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e85b44788190b02a3fbdd7309733": {
+        "task_id": "mmlu-pro_economics",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            200,
+            200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-6APLyx316KMWMERC2rnoPn",
+            "local_file_path": "temp/mmlu-pro_economics/output/batch_6ad1e85b44788190b02a3fbdd7309733.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e85d84008190b40be4ab00be5101": {
+        "task_id": "mmlu-pro_health",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            200,
+            200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-SBJyif2QToiM39p729AaTN",
+            "local_file_path": "temp/mmlu-pro_health/output/batch_6ad1e85d84008190b40be4ab00be5101.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e85f0e688190bcf4186a573bafae": {
+        "task_id": "mmlu-pro_psychology",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            200,
+            200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-MG3EApeHn7H6UJzbMjMdtY",
+            "local_file_path": "temp/mmlu-pro_psychology/output/batch_6ad1e85f0e688190bcf4186a573bafae.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e86075848190a9d254cda3f90f6c": {
+        "task_id": "mmlu-pro_business",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            200,
+            200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-SWt7hL8k79344WENccATAp",
+            "local_file_path": "temp/mmlu-pro_business/output/batch_6ad1e86075848190a9d254cda3f90f6c.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e861fcd081909fd959cd9580eecb": {
+        "task_id": "mmlu-pro_biology",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            200,
+            200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-TvM7R1pHjrg6UaPw68Pm61",
+            "local_file_path": "temp/mmlu-pro_biology/output/batch_6ad1e861fcd081909fd959cd9580eecb.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e86351f88190b3ad95c828e51adb": {
+        "task_id": "mmlu-pro_computer_science",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            200,
+            199,
+            1
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-SoXZBnEjwxUF87fvypENUu",
+            "local_file_path": "temp/mmlu-pro_computer_science/output/batch_6ad1e86351f88190b3ad95c828e51adb.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-JkjYVE5xohE5mcxQ85nY8N",
+            "local_file_path": "temp/mmlu-pro_computer_science/output/batch_6ad1e86351f88190b3ad95c828e51adb_error.jsonl"
+        }
+    },
+    "batch_6ad1e864a5008190b52f12e93704b2b5": {
+        "task_id": "mmlu-pro_history",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            200,
+            200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-BExgivdiYvJcyMib47m88U",
+            "local_file_path": "temp/mmlu-pro_history/output/batch_6ad1e864a5008190b52f12e93704b2b5.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e8660d488190b4d971403a9770bd": {
+        "task_id": "MATH_algebra",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            124,
+            124,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-B2FnkgJsAZkbrjGczyAtTr",
+            "local_file_path": "temp/MATH_algebra/output/batch_6ad1e8660d488190b4d971403a9770bd.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e867445881909eeebed1e963312d": {
+        "task_id": "MATH_intermediate_algebra",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            97,
+            97,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-VJoR7xoVPy1xqT6b7KU1z5",
+            "local_file_path": "temp/MATH_intermediate_algebra/output/batch_6ad1e867445881909eeebed1e963312d.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e86856f08190b43eb8238baab76b": {
+        "task_id": "MATH_prealgebra",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            82,
+            82,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-K5wGhvK1DkBUgS4VjvBBf4",
+            "local_file_path": "temp/MATH_prealgebra/output/batch_6ad1e86856f08190b43eb8238baab76b.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e86953908190b483b09407e5f2e6": {
+        "task_id": "MATH_number_theory",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            62,
+            62,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-U214h7as3bzcDzFY3eMWY5",
+            "local_file_path": "temp/MATH_number_theory/output/batch_6ad1e86953908190b483b09407e5f2e6.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e86a94d08190b11fa9f41da475c3": {
+        "task_id": "MATH_precalculus",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            56,
+            56,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-WGJzsEJUpYsZAv7WbTXjhq",
+            "local_file_path": "temp/MATH_precalculus/output/batch_6ad1e86a94d08190b11fa9f41da475c3.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e86c37648190a2e4fa744f4c9e6e": {
+        "task_id": "MATH_geometry",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            41,
+            41,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-BajLfS3N279GRubgPj73ae",
+            "local_file_path": "temp/MATH_geometry/output/batch_6ad1e86c37648190a2e4fa744f4c9e6e.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e86d2de48190b3c662a1993c7a92": {
+        "task_id": "MATH_counting_probability",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            38,
+            38,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-UcvuuHE1eKTVLthDXwbBW9",
+            "local_file_path": "temp/MATH_counting_probability/output/batch_6ad1e86d2de48190b3c662a1993c7a92.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e86e9f008190868d8b6d4c6468e3": {
+        "task_id": "flores_deu",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            200,
+            200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-GjrJ8emWzXAmvhh9GaGvGA",
+            "local_file_path": "temp/flores_deu/output/batch_6ad1e86e9f008190868d8b6d4c6468e3.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e86faba081909f417e77a2ee2d4b": {
+        "task_id": "flores_cmn",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            200,
+            200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-72sQ9k8JzHZ8H474urBJq8",
+            "local_file_path": "temp/flores_cmn/output/batch_6ad1e86faba081909f417e77a2ee2d4b.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e870e4208190905ab7e392d61d72": {
+        "task_id": "flores_swh",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            200,
+            200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-M9mhiaTYTVmHrGGqZYUu5G",
+            "local_file_path": "temp/flores_swh/output/batch_6ad1e870e4208190905ab7e392d61d72.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e87207148190903f72fa2cb96f9e": {
+        "task_id": "flores_spa",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            200,
+            200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-3zzZwkH9fhtQtkqkv4EeJ5",
+            "local_file_path": "temp/flores_spa/output/batch_6ad1e87207148190903f72fa2cb96f9e.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e8734a24819098cc6c642c6667fc": {
+        "task_id": "flores_arb",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            200,
+            200,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-LBUkcJtrcBWyAC9WNeLHSU",
+            "local_file_path": "temp/flores_arb/output/batch_6ad1e8734a24819098cc6c642c6667fc.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e874f00c8190abcaf391ca7dca90": {
+        "task_id": "IfBench_all",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            300,
+            300,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-13VGNPWXi1LMmJRJNJ563V",
+            "local_file_path": "temp/IfBench_all/output/batch_6ad1e874f00c8190abcaf391ca7dca90.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e87602cc8190ad4a844f4244f1c1": {
+        "task_id": "alpaca_all",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            500,
+            500,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-7aALzo1QvoLkk7t2fJyzog",
+            "local_file_path": "temp/alpaca_all/output/batch_6ad1e87602cc8190ad4a844f4244f1c1.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e99af9248190b7bd8399fdcb73ec": {
+        "task_id": "mmlu-pro_math",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2,
+            2,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-LmSXK5ACBS2chwPog9PGEU",
+            "local_file_path": "temp/mmlu-pro_math/output/batch_6ad1e99af9248190b7bd8399fdcb73ec.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e99bf3208190ae9f9afd87fcd0fe": {
+        "task_id": "mmlu-pro_physics",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            1,
+            1,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-KeGX98XXgswY1fqoN637gL",
+            "local_file_path": "temp/mmlu-pro_physics/output/batch_6ad1e99bf3208190ae9f9afd87fcd0fe.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e99cf6b881909ac3725a9e2b298f": {
+        "task_id": "mmlu-pro_chemistry",
+        "batch_type": "answers",
+        "status": "error",
+        "progress": [
+            2,
+            1,
+            1
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-PAsFiH1vdPZztLr8EJZF8v",
+            "local_file_path": "temp/mmlu-pro_chemistry/output/batch_6ad1e99cf6b881909ac3725a9e2b298f.jsonl"
+        },
+        "error_file": {
+            "remote_file_id": "file-KRURVmZhiVNQ9ntzU2fKqC",
+            "local_file_path": "temp/mmlu-pro_chemistry/output/batch_6ad1e99cf6b881909ac3725a9e2b298f_error.jsonl"
+        }
+    },
+    "batch_6ad1e99ed01881908ca09053a100d0d6": {
+        "task_id": "mmlu-pro_engineering",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            2,
+            2,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-FDyM6irUfbp4ZGBR5aPDQb",
+            "local_file_path": "temp/mmlu-pro_engineering/output/batch_6ad1e99ed01881908ca09053a100d0d6.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1e99f94788190abd94900892e93ba": {
+        "task_id": "mmlu-pro_computer_science",
+        "batch_type": "answers",
+        "status": "retrieved",
+        "progress": [
+            1,
+            1,
+            0
+        ],
+        "client": "openai",
+        "output_file": {
+            "remote_file_id": "file-JVB4y6JjCefb3tGLtQub99",
+            "local_file_path": "temp/mmlu-pro_computer_science/output/batch_6ad1e99f94788190abd94900892e93ba.jsonl"
+        },
+        "error_file": null
+    },
+    "batch_6ad1eb5795c881909e0f006c719efb54": {
+        "task_id": "mmlu-pro_chemistry",
+        "batch_type": "answers",
+        "status": "completed",
+        "progress": [
+            1,
+            0,
+            1
+        ],
+        "client": "openai",
+        "output_file": null,
+        "error_file": {
+            "remote_file_id": "file-4v2RN5cgLyme6xeZ6ZYDt1",
+            "local_file_path": "temp/mmlu-pro_chemistry/output/batch_6ad1eb5795c881909e0f006c719efb54_error.jsonl"
+        }
     }
 }
