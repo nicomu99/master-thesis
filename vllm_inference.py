@@ -41,8 +41,10 @@ declared in the script header and `uv run vllm_inference.py` (without `python`) 
 environment, locked in vllm_inference.py.lock.
 """
 import os
+import sys
 import json
 import argparse
+import traceback
 from datetime import datetime
 
 import numpy as np
@@ -283,6 +285,21 @@ if __name__ == "__main__":
         default=0.9)
     args = parser.parse_args()
 
-    main(
-        args.model_path, args.model, args.force, args.datasets, args.only_missing,
-        args.gpus, args.max_model_len, args.gpu_memory_utilization)
+    exit_code = 0
+    try:
+        main(
+            args.model_path, args.model, args.force, args.datasets, args.only_missing,
+            args.gpus, args.max_model_len, args.gpu_memory_utilization)
+    except SystemExit as error:
+        print(error, file=sys.stderr)
+        exit_code = 1
+    except Exception:
+        traceback.print_exc()
+        exit_code = 1
+
+    # The engine process of vLLM can keep this process alive after the work is done or has failed, the job
+    # then idles until its time limit. All files are written and closed at this point, so the process is
+    # ended without waiting for the engine.
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(exit_code)
