@@ -26,7 +26,7 @@ class BatchRequestHandler:
     @staticmethod
     def _create_file(
         task_id: str,
-        file_type: Literal["personas", "answers", "judgments"]
+        file_type: Literal["personas", "derived_personas", "answers", "judgments"]
     ) -> Path:
         request_file = TEMP_PATH / f"{task_id}/requests/{file_type}.jsonl"
         request_file.parent.mkdir(parents=True, exist_ok=True)
@@ -82,8 +82,46 @@ class BatchRequestHandler:
         Raises:
             OSError: If the request file cannot be written to disk.
         """
+        return self._create_persona_request_file(
+            "personas", task_config, dataframe, persona_configs, llm_client)
+
+    def create_derived_persona_batch_request_file(
+        self,
+        task_config: TaskInfo,
+        dataframe: pd.DataFrame,
+        persona_configs: list[PersonaConfig],
+        llm_client: LLMClient
+    ) -> tuple[Path, int]:
+        """Creates a request file for derived persona generation.
+
+        Derived personas are created by rewriting the source persona of the same sample. Samples whose source
+        persona is missing are skipped.
+
+        Args:
+            task_config (TaskConfig): Task configuration attributes.
+            dataframe (pd.DataFrame): Dataframe containing samples of the task.
+            persona_configs (list[PersonaConfig]): List of derived persona configurations.
+            llm_client (LLMClient): LLM client instance.
+
+        Returns:
+            tuple[Path, int]: A string identifier of the created task request file and number of requests created.
+
+        Raises:
+            OSError: If the request file cannot be written to disk.
+        """
+        return self._create_persona_request_file(
+            "derived_personas", task_config, dataframe, persona_configs, llm_client)
+
+    def _create_persona_request_file(
+        self,
+        file_type: Literal["personas", "derived_personas"],
+        task_config: TaskInfo,
+        dataframe: pd.DataFrame,
+        persona_configs: list[PersonaConfig],
+        llm_client: LLMClient
+    ) -> tuple[Path, int]:
         request_count = 0
-        request_file = self._create_file(task_config.task_id, "personas")
+        request_file = self._create_file(task_config.task_id, file_type)
         with request_file.open("w", encoding="utf-8") as f:
             for row_dict in dataframe.to_dict(orient="records"):
                 for persona_config in persona_configs:
@@ -93,9 +131,16 @@ class BatchRequestHandler:
                     if persona_name in row_dict and row_dict[persona_name] is not None:
                         continue
 
-                    prompt = template.format(
-                        task_type=task_config.field,
-                        question=row_dict[QUESTION_COLUMN])
+                    prompt_kwargs = {
+                        "task_type": task_config.field,
+                        "question": row_dict[QUESTION_COLUMN]}
+                    if persona_config.source is not None:
+                        source_persona = row_dict.get(persona_config.source)
+                        if source_persona is None or pd.isna(source_persona):
+                            continue
+                        prompt_kwargs["persona"] = source_persona
+
+                    prompt = template.format(**prompt_kwargs)
 
                     custom_id = f"{row_dict[STATIC_ID_COLUMN]}_{persona_name}"
                     llm_client.write_prompt(f, custom_id, prompt)

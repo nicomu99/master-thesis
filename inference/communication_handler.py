@@ -99,6 +99,32 @@ class CommunicationHandler:
             persona_configs,
             llm_name=llm_name)
 
+    def send_derived_persona_batch(
+        self,
+        task_info: TaskInfo,
+        task_df: pd.DataFrame,
+        persona_configs: list[PersonaConfig],
+        llm_name: Literal["openai", "genai", "claude"] = "openai"
+    ) -> int | bool:
+        """Sends a derived persona batch request to the LLM API.
+
+        Args:
+            task_info (TaskConfig): Configuration parameters of the task.
+            task_df (pd.DataFrame): Dataframe containing task samples.
+            persona_configs (list[PersonaConfig]): List of derived persona configurations.
+            llm_name (Literal["openai", "genai", "claude"]): String identifier of the LLM client. Defaults to "openai".
+
+        Returns:
+            int: Number of sent requests.
+        """
+        return self._send_batch(
+            task_info,
+            task_df,
+            BatchType.DERIVED_PERSONAS,
+            self.request_handler.create_derived_persona_batch_request_file,
+            persona_configs,
+            llm_name=llm_name)
+
     def send_answer_batch(
         self,
         task_info: TaskInfo,

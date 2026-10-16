@@ -31,10 +31,12 @@ class BatchType(StringEnum):
         PERSONAS: Batch containing persona-related data.
         ANSWERS: Batch containing model-generated answers.
         JUDGMENT: Batch containing LLM-as-a-judge requests.
+        DERIVED_PERSONAS: Batch containing derived persona requests. These batches do not change the task status.
     """
     PERSONAS = "personas"
     ANSWERS = "answers"
     JUDGMENT = "judgment"
+    DERIVED_PERSONAS = "derived_personas"
 
 
 class QuestionType(StringEnum):
@@ -99,11 +101,13 @@ class PersonaCategory(StringEnum):
         STATIC: Refers to static personas, that do not change between samples of a task.
         STATIC_TEACHER: Refers to the static teacher persona.
         DYNAMIC: Refers to personas that are specific to task samples, i.e. each sample has its own persona.
+        DERIVED: Refers to personas that are created by rewriting another, already generated persona of the sample.
     """
     EMPTY = "empty"
     STATIC = "static"
     STATIC_TEACHER = "static_teacher"
     DYNAMIC = "dynamic"
+    DERIVED = "derived"
 
 
 class BatchStatus(StringEnum):

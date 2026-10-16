@@ -233,6 +233,33 @@ EXPERT_TEACHER_TEMPLATE = (
     "The string should be tailored to the question:\n \"{question}\""
 )
 
+TASK_DESCRIPTION_TEMPLATE = (
+    "For the field of {task_type}, rewrite the following persona string into a task description containing three "
+    "sentences. The persona string is written in second person perspective and describes the knowledge, experience "
+    "and expertise one would need to answer a question correctly. The task description should describe the same "
+    "knowledge, experience and expertise as what the task concerns and requires, instead of describing who the "
+    "reader is. Do not address the reader, do not describe a person and do not use the words \"you\" or \"your\". "
+    "Keep the content as close to the persona string as possible: do not add or remove any knowledge, experience or "
+    "expertise, and do not add any hints, clues, implications or conclusions about the answer. "
+    "Start your description with \"This task concerns\". \n\n"
+
+    "Use the following example as guidance: \n"
+
+    "Persona string\n"
+    "You are a knowledgeable macroeconomist who synthesizes theory and empirical evidence on output, inflation and "
+    "the price level. You have extensive experience building and interpreting aggregate demand and aggregate supply "
+    "models and assessing the effects of fiscal and monetary policy. You communicate clear, rigorous reasoning about "
+    "how policy changes propagate through the economy.\n"
+
+    "Answer\n"
+    "This task concerns macroeconomics, in particular the synthesis of theory and empirical evidence on output, "
+    "inflation and the price level. It requires extensive experience in building and interpreting aggregate demand "
+    "and aggregate supply models and in assessing the effects of fiscal and monetary policy. It calls for clear, "
+    "rigorous reasoning about how policy changes propagate through the economy.\n\n"
+
+    "The persona string to rewrite:\n \"{persona}\""
+)
+
 OPEN_QUESTION_TEMPLATE = "{question}"
 
 MC_QUESTION_TEMPLATE = (

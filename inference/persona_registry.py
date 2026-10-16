@@ -13,7 +13,8 @@ from .utils import (
     DYNAMIC_LONG_TEMPLATE,
     BEGINNER_TEACHER_TEMPLATE,
     INTERMEDIATE_TEACHER_TEMPLATE,
-    EXPERT_TEACHER_TEMPLATE
+    EXPERT_TEACHER_TEMPLATE,
+    TASK_DESCRIPTION_TEMPLATE
 )
 
 
@@ -25,6 +26,8 @@ class PersonaConfig:
         name (str): String identifier of the persona
         category (PersonaCategory): The category of the persona. Can be STATIC or DYNAMIC.
         template (str): The template used to generate personas of this class. Defaults to None.
+        source (str | None): Name of the persona this persona is derived from. Only used by DERIVED personas.
+            Defaults to None.
         answer_column (str): A string identifier of the column in dataframes where the answer of this persona will be
             saved into. Is simply the name of the persona with "persona" changed to "answer".
         judgment_column (str): A string identifier of the dataframe column name, where LLM-as-a-judge judgments of
@@ -33,6 +36,7 @@ class PersonaConfig:
     name: str
     category: PersonaCategory
     template: str
+    source: str | None = None
     answer_column: str = field(init=False)
     judgment_column: str = field(init=False)
 
@@ -72,6 +76,14 @@ class PersonaConfig:
         """
         return self.category == PersonaCategory.STATIC_TEACHER
 
+    def is_derived(self) -> bool:
+        """Returns true if the category is PersonaCategory.DERIVED.
+
+        Returns:
+            bool: True if the category is PersonaCategory.DERIVED, else false.
+        """
+        return self.category == PersonaCategory.DERIVED
+
 
 class PersonaRegistry:
     """A registry containing persona configurations.
@@ -95,7 +107,10 @@ class PersonaRegistry:
             PersonaConfig("dynamic_long_persona", PersonaCategory.DYNAMIC, DYNAMIC_LONG_TEMPLATE),
             PersonaConfig("beginner_teacher_persona", PersonaCategory.DYNAMIC, BEGINNER_TEACHER_TEMPLATE),
             PersonaConfig("intermediate_teacher_persona", PersonaCategory.DYNAMIC, INTERMEDIATE_TEACHER_TEMPLATE),
-            PersonaConfig("expert_teacher_persona", PersonaCategory.DYNAMIC, EXPERT_TEACHER_TEMPLATE)
+            PersonaConfig("expert_teacher_persona", PersonaCategory.DYNAMIC, EXPERT_TEACHER_TEMPLATE),
+            PersonaConfig(
+                "task_description_persona", PersonaCategory.DERIVED, TASK_DESCRIPTION_TEMPLATE,
+                source="dynamic_medium_persona")
         ]
 
     def get_reference_config(self) -> PersonaConfig:
@@ -195,6 +210,22 @@ class PersonaRegistry:
             dict[str, str]: A dictionary with persona names as items and templates as values.
         """
         return {p.name: p.template for p in self.persona_configs if p.is_static_teacher()}
+
+    def get_derived_names(self) -> list[str]:
+        """Returns derived persona names.
+
+        Returns:
+            list[str]: list containing all derived persona names.
+        """
+        return [p.name for p in self.persona_configs if p.is_derived()]
+
+    def get_derived_configs(self) -> list[PersonaConfig]:
+        """Returns the derived persona configs.
+
+        Returns:
+            list[PersonaConfig]: A list with persona configs.
+        """
+        return [p for p in self.persona_configs if p.is_derived()]
 
     def get_dynamic_configs(self) -> list[PersonaConfig]:
         """Returns the dynamic persona configs.

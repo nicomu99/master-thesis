@@ -11,7 +11,7 @@ from .dataset_handler import DatasetHandler
 from .communication_handler import CommunicationHandler
 from .persona_registry import PersonaRegistry
 from .utils import columns_full, load_dataclass_dict, save_dataclass_dict, load_task_config, QuestionType
-from .utils import TaskInfo, BatchInfo, TRANSLATION_JUDGE_TEMPLATE, STATIC_ID_COLUMN, QUESTION_COLUMN, INSTRUCTION_JUDGE_TEMPLATE
+from .utils import TaskInfo, BatchInfo, BatchType, TRANSLATION_JUDGE_TEMPLATE, STATIC_ID_COLUMN, QUESTION_COLUMN, INSTRUCTION_JUDGE_TEMPLATE
 from .utils import DATA_PATH
 
 from .utils import logging
@@ -121,17 +121,20 @@ class Evaluator:
             task_info.reset()
         self._save()
 
-    def reset_tasks_to_answers(self, task_ids: list[str]):
+    def reset_tasks_to_answers(self, task_ids: list[str], clear: bool = True):
         """Resets the specified tasks to the answer pending stage.
 
         Args:
             task_ids (list[str]): List of tasks to update.
+            clear (bool, optional): If true, existing answers are deleted. If false, they are kept, so that only
+                missing answers will be requested. Defaults to True.
         """
         answer_columns = self.persona_registry.get_answer_columns()
         for tid in task_ids:
             tinfo = self.task_infos[tid]
             dataset_id = tinfo.dataset_id
-            self.dataset_handler.clear_columns(dataset_id, tinfo.category_name, answer_columns)
+            if clear:
+                self.dataset_handler.clear_columns(dataset_id, tinfo.category_name, answer_columns)
             tinfo.reset_to_answers()
         self._save()
 
@@ -226,6 +229,43 @@ class Evaluator:
         request_count = self.communication_handler.send_persona_batch(
             task_info, task_df, self.persona_registry.get_dynamic_configs())
         return request_count
+
+    def get_derived_personas_pending_tasks(self) -> list[str]:
+        """Returns a list with all tasks that have missing derived personas, but complete source personas.
+
+        Returns:
+            list[str]: A list of string identifiers of tasks for which derived personas can be generated.
+        """
+        derived_configs = self.persona_registry.get_derived_configs()
+        source_names = list({cfg.source for cfg in derived_configs})
+        derived_names = [cfg.name for cfg in derived_configs]
+
+        task_ids = []
+        for tid, task_info in self.task_infos.items():
+            task_df = self.dataset_handler.get_task_df_from_info(task_info)
+            if columns_full(task_df, source_names) and not columns_full(task_df, derived_names):
+                task_ids.append(tid)
+        return task_ids
+
+    def generate_derived_personas(
+        self,
+        task_id: str
+    ) -> int:
+        """Sends requests for personas that are derived from already generated personas.
+
+        The task status is not changed, so that derived personas can be added to tasks in any stage.
+
+        Args:
+            task_id (str): String identifier of the task.
+
+        Returns:
+            int: Number of requests sent to the LLM API.
+        """
+        task_info = self.task_infos[task_id]
+        task_df = self.dataset_handler.get_task_df_from_info(task_info)
+        result = self.communication_handler.send_derived_persona_batch(
+            task_info, task_df, self.persona_registry.get_derived_configs())
+        return 0 if result is False else result
 
     def generate_personas(
         self,
@@ -419,6 +459,8 @@ class Evaluator:
         active_batches = self.communication_handler.check_batch_statuses()
         for bid, batch_info in active_batches.items():
             tid = batch_info.task_id
+            if batch_info.batch_type == BatchType.DERIVED_PERSONAS:
+                continue
             if (batch_info.is_error() or batch_info.is_cancelled()) and tid in self.task_infos:
                 self.task_infos[tid].decrement_status()
         return active_batches
@@ -440,7 +482,7 @@ class Evaluator:
                 self.dataset_handler.merge_and_write(dataset_id, response)
                 batch_info.finish_batch()
 
-            if response is not False:
+            if response is not False and batch_info.batch_type != BatchType.DERIVED_PERSONAS:
                 task_info.update_status(increment=batch_info.is_retrieved())
         self.communication_handler.save()
         self._save()

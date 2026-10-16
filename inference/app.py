@@ -24,6 +24,7 @@ class App:
             "q": ("Quit program", self.quit_program),
             "p": ("Generate personas", self.generate_personas),
             "ps": ("Generate static personas for all tasks", self.generate_static_personas),
+            "pd": ("Generate derived personas (task status unchanged)", self.generate_derived_personas),
             "t": ("Send task requests", self.generate_answers),
             "j": ("Send judgment requests", self.generate_judgment_evaluation),
             "js": ("Generate judgments synchronously for all tasks", self.generate_judgments),
@@ -32,6 +33,7 @@ class App:
             "c": ("Check task statuses", self.check_task_statuses),
             "r": ("Reset tasks", self.reset_tasks),
             "ra": ("Reset tasks to answers pending", self.reset_to_answers),
+            "rm": ("Reset tasks to answers pending, keeping existing answers", self.reset_to_missing_answers),
             "rj": ("Reset tasks to judgment pending", self.reset_to_judgments),
             "clear": ("Clears the CLI", self.clear_cli),
             "h": ("Show this help", self.show_help),
@@ -46,6 +48,12 @@ class App:
         task_ids = self.evaluator.get_tasks()
         chosen_task_ids = self._print_and_evaluate_input(task_ids)
         self.evaluator.reset_tasks_to_answers(chosen_task_ids)
+
+    def reset_to_missing_answers(self):
+        """Lets the user pick which tasks to reset to the answer pending status without deleting answers."""
+        task_ids = self.evaluator.get_tasks()
+        chosen_task_ids = self._print_and_evaluate_input(task_ids)
+        self.evaluator.reset_tasks_to_answers(chosen_task_ids, clear=False)
 
     def reset_to_judgments(self):
         """Lets the user pick which tasks to reset to the judgment pending status."""
@@ -98,6 +106,18 @@ class App:
         for tid in chosen_task_ids:
             print(f"Generating personas for {tid}")
             request_count = self.evaluator.generate_personas(tid)
+            total_request_count += request_count
+        print(f"{total_request_count} requests sent.")
+
+    def generate_derived_personas(self) -> None:
+        """Lets the user pick which task to generate derived personas for."""
+        task_ids = self.evaluator.get_derived_personas_pending_tasks()
+        chosen_task_ids = self._print_and_evaluate_input(task_ids)
+
+        total_request_count = 0
+        for tid in chosen_task_ids:
+            print(f"Generating derived personas for {tid}")
+            request_count = self.evaluator.generate_derived_personas(tid)
             total_request_count += request_count
         print(f"{total_request_count} requests sent.")
 
